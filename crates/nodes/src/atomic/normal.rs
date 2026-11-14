@@ -1,7 +1,7 @@
 use super::ATOMIC;
 use crate::ops;
 use crate::{CookContext, CookResult, NodeDefinition, node};
-use materialcraft_image::{Image, Kind};
+use craft_texture::{Image, Kind};
 
 pub(super) fn definition() -> NodeDefinition {
     node("normal", "Normal", ATOMIC)
@@ -22,7 +22,7 @@ fn normal(context: &CookContext) -> CookResult {
 }
 
 pub fn height_to_normal(h: &Image, k: f32, directx: bool, tile: bool, alpha_height: bool) -> Image {
-    Image::generate(h.w, h.h, Kind::Color, |x, y| {
+    Image::generate(h.width(), h.height(), Kind::Color, |x, y| {
         let (dx, dy) = ops::slope(h, x as i64, y as i64, tile);
         let (nx, ny, nz) = (-dx * k, dy * k, 1.0);
         let l = (nx * nx + ny * ny + nz * nz).sqrt();

@@ -51,7 +51,7 @@ fn iterate_sets_number_and_switch_selects_one_child() {
     let dot = graph.add(PatternNodeKind::Dot).unwrap();
     graph.nodes[1].children[0] = Some(dot);
     graph.nodes[3].children[0] = Some(quadrant);
-    assert_eq!(cook(graph.clone()).unwrap()[0].data, image.data);
+    assert_eq!(cook(graph.clone()).unwrap()[0].data(), image.data());
     graph.nodes[1].parameters.insert("switch".into(), Value::Bool(true));
     assert_eq!(cook(graph).unwrap()[0].mean()[0], 0.0);
 }

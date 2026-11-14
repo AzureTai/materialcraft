@@ -1,9 +1,7 @@
 //! Image operations shared by many nodes: Gaussian blur, Euclidean distance transform, slopes,
 //! color space helpers and blend modes.
 
-use std::sync::Arc;
-
-use materialcraft_image::{Image, Kind};
+use craft_texture::{Image, Kind, Limits};
 use rayon::prelude::*;
 
 /// Gaussian blur with standard deviation `sigma` (pixels). Small sigmas use a sampled kernel;
@@ -12,7 +10,7 @@ pub fn gaussian(img: &Image, sigma: f32, tile: bool) -> Image {
     if sigma.is_nan() || sigma <= 0.05 || !sigma.is_finite() {
         return img.clone();
     }
-    let sigma = sigma.min(img.w.max(img.h) as f32);
+    let sigma = sigma.min(img.width().max(img.height()) as f32);
     if sigma < 3.0 {
         let r = (sigma * 3.0).ceil() as i64;
         let k: Vec<f32> = (-r..=r).map(|i| (-(i * i) as f32 / (2.0 * sigma * sigma)).exp()).collect();
@@ -37,7 +35,7 @@ pub fn gaussian(img: &Image, sigma: f32, tile: bool) -> Image {
 
 fn convolve_1d(src: &Image, k: &[f32], r: i64, horizontal: bool, tile: bool) -> Image {
     let c = src.channels();
-    Image::generate(src.w, src.h, src.kind, |x, y| {
+    Image::generate(src.width(), src.height(), src.kind(), |x, y| {
         let mut acc = [0.0f32; 4];
         for (i, kv) in k.iter().enumerate() {
             let o = i as i64 - r;
@@ -55,26 +53,27 @@ fn box_1d(src: &Image, r: i64, horizontal: bool, tile: bool) -> Image {
     if r <= 0 {
         return src.clone();
     }
-    let (w, h) = (src.w as usize, src.h as usize);
+    let (w, h) = (src.width() as usize, src.height() as usize);
     let c = src.channels();
-    let inv = 1.0 / (2 * r + 1) as f32;
+    let inv = 1.0 / (2 * r + 1) as f64;
     let mut data = vec![0.0f32; w * h * c];
     let line_len = if horizontal { w } else { h };
     let lines = if horizontal { h } else { w };
-    let get = |line: usize, i: i64, ch: usize| -> f32 {
+    // The running sum is kept in f64, so a window of finite values near `f32::MAX` does not overflow.
+    let get = |line: usize, i: i64, ch: usize| -> f64 {
         let n = line_len as i64;
         let i = if tile { i.rem_euclid(n) } else { i.clamp(0, n - 1) } as usize;
         let (x, y) = if horizontal { (i, line) } else { (line, i) };
-        src.data.get((y * w + x) * c + ch).copied().unwrap_or(0.0)
+        f64::from(src.data().get((y * w + x) * c + ch).copied().unwrap_or(0.0))
     };
     let results: Vec<Vec<f32>> = (0..lines)
         .into_par_iter()
         .map(|line| {
             let mut out = vec![0.0f32; line_len * c];
             for ch in 0..c {
-                let mut sum: f32 = (-r..=r).map(|i| get(line, i, ch)).sum();
+                let mut sum: f64 = (-r..=r).map(|i| get(line, i, ch)).sum();
                 for i in 0..line_len {
-                    out[i * c + ch] = sum * inv;
+                    out[i * c + ch] = (sum * inv) as f32;
                     sum += get(line, i as i64 + r + 1, ch) - get(line, i as i64 - r, ch);
                 }
             }
@@ -88,7 +87,8 @@ fn box_1d(src: &Image, r: i64, horizontal: bool, tile: bool) -> Image {
             data[dst..dst + c].copy_from_slice(&vals[i * c..i * c + c]);
         }
     }
-    Image { w: src.w, h: src.h, kind: src.kind, data: Arc::new(data) }
+    // `data` has the size and kind of `src`, which is a valid image.
+    Image::from_data(src.width(), src.height(), src.kind(), data, &Limits::default()).unwrap_or_else(|_| src.clone())
 }
 
 /// Squared Euclidean distance (pixels) from every pixel to the nearest pixel where `inside` is
@@ -337,9 +337,10 @@ pub fn blend_px(mode: i32, bg: [f32; 4], fg: [f32; 4], opacity: f32, use_alpha: 
     o
 }
 
-/// A gray image of the output size from per-pixel values.
-pub fn gray_from(w: u32, h: u32, v: Vec<f32>) -> Image {
-    Image { w, h, kind: Kind::Gray, data: Arc::new(v) }
+/// A gray image of the output size from per-pixel values, or an error when the size is out of
+/// range or `v` does not hold one value per pixel.
+pub fn gray_from(w: u32, h: u32, v: Vec<f32>) -> Result<Image, String> {
+    Image::from_data(w, h, Kind::Gray, v, &Limits::default()).map_err(|e| e.to_string())
 }
 
 #[cfg(test)]
@@ -368,6 +369,23 @@ mod tests {
         }
         let flat = gaussian(&Image::filled(8, 8, Kind::Color, [0.2, 0.4, 0.6, 1.0]), 4.0, false);
         assert!((flat.get(3, 3, false)[1] - 0.4).abs() < 1e-5);
+    }
+
+    #[test]
+    fn box_blur_of_large_hdr_values_stays_finite() {
+        let value = 0.75 * f32::MAX;
+        let blurred = gaussian(&Image::filled(16, 4, Kind::Gray, [value; 4]), 5.0, true);
+        for x in 0..16 {
+            let v = blurred.get(x, 1, false)[0];
+            assert!(v.is_finite() && (v / value - 1.0).abs() < 1e-5, "pixel {x} is {v}");
+        }
+    }
+
+    #[test]
+    fn gray_from_rejects_an_empty_size_and_a_wrong_value_count() {
+        assert!(gray_from(0, 4, Vec::new()).is_err());
+        assert!(gray_from(2, 2, vec![0.0; 3]).is_err());
+        assert_eq!(gray_from(2, 2, vec![0.5; 4]).map(|image| image.mean()[0]), Ok(0.5));
     }
 
     #[test]

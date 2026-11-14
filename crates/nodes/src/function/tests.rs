@@ -1,5 +1,5 @@
+use craft_texture::{Image, Kind};
 use materialcraft_core::{FunctionGraph, Value};
-use materialcraft_image::{Image, Kind};
 use std::collections::{BTreeMap, BTreeSet};
 
 use super::{EvaluationContext, EvaluationState, FUNCTIONS, compile, default_value};

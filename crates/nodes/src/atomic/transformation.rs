@@ -1,6 +1,6 @@
 use super::ATOMIC;
 use crate::{CookContext, CookResult, NodeDefinition, node};
-use materialcraft_image::{Image, Kind};
+use craft_texture::{Image, Kind};
 
 pub(super) fn definition() -> NodeDefinition {
     node("transformation", "Transformation 2D", ATOMIC)
@@ -26,7 +26,7 @@ fn transformation(context: &CookContext) -> CookResult {
 
     let nearest = context.i("filtering") == 1;
     let matte = context.v4("matte");
-    Ok(vec![Image::generate_uv(context.w, context.h, input.kind, |u, v| {
+    Ok(vec![Image::generate_uv(context.w, context.h, input.kind(), |u, v| {
         let x = u - 0.5 - offset[0];
         let y = v - 0.5 - offset[1];
         let source_u = (matrix[3] * x - matrix[1] * y) / determinant + 0.5;

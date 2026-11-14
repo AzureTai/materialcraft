@@ -2,7 +2,7 @@ use super::ATOMIC;
 use crate::ops;
 use crate::ops::BLEND_MODES;
 use crate::{CookContext, CookResult, NodeDefinition, node};
-use materialcraft_image::{Image, Kind};
+use craft_texture::{Image, Kind};
 
 pub(super) fn definition() -> NodeDefinition {
     node("blend", "Blend", ATOMIC)

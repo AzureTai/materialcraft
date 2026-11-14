@@ -1,6 +1,6 @@
 use super::{ATOMIC, direction};
 use crate::{CookContext, CookResult, NodeDefinition, node};
-use materialcraft_image::{Image, Kind};
+use craft_texture::{Image, Kind};
 
 pub(super) fn definition() -> NodeDefinition {
     node("directional_warp", "Directional warp", ATOMIC)
@@ -19,7 +19,7 @@ fn directional_warp(context: &CookContext) -> CookResult {
     let map = context.gray_or(1, 0.0);
     let (dx, dy) = direction(context.f("angle"));
     let k = context.f("intensity") / 256.0;
-    Ok(vec![Image::generate_uv(context.w, context.h, img.kind, |u, v| {
+    Ok(vec![Image::generate_uv(context.w, context.h, img.kind(), |u, v| {
         let m = map.sample_gray(u, v, context.tile) * k;
         img.sample(u + dx * m, v + dy * m, context.tile)
     })])

@@ -1,4 +1,4 @@
-use materialcraft_image::{Image, Kind};
+use craft_texture::{Image, Kind};
 
 use crate::CookContext;
 

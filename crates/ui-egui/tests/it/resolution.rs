@@ -25,8 +25,8 @@ fn choose_4k(h: &mut Harness<'static, MaterialCraftApp>) {
     h.step();
     let app = h.state();
     let (_, image) = app.session.view2d_image().unwrap();
-    assert_eq!((image.w, image.h), (4096, 4096));
-    assert!(app.session.material_maps().iter().all(|(_, image)| (image.w, image.h) == (4096, 4096)));
+    assert_eq!((image.width(), image.height()), (4096, 4096));
+    assert!(app.session.material_maps().iter().all(|(_, image)| (image.width(), image.height()) == (4096, 4096)));
     assert!(!app.session.material_maps().is_empty());
     assert_eq!(app.view2d.shown.as_ref().map(|(w, h, _)| (*w, *h)), Some((4096, 4096)));
 }
@@ -66,7 +66,7 @@ fn four_k_preview_refreshes_texture_after_size_change() {
     h.state_mut().ui.prefs.preview_size = 4096;
     h.step();
     let (_, image) = h.state().session.view2d_image().unwrap();
-    assert_eq!((image.w, image.h), (4096, 4096));
+    assert_eq!((image.width(), image.height()), (4096, 4096));
     assert_eq!(h.state().view2d.shown.as_ref().map(|(w, h, _)| (*w, *h)), Some((4096, 4096)));
     h.state_mut().session.preview_size = Some(256);
     h.state_mut().session.cook();
@@ -74,7 +74,7 @@ fn four_k_preview_refreshes_texture_after_size_change() {
     h.state_mut().ui.prefs.preview_size = 256;
     h.step();
     let (_, image) = h.state().session.view2d_image().unwrap();
-    assert_eq!((image.w, image.h), (256, 256));
+    assert_eq!((image.width(), image.height()), (256, 256));
     assert_eq!(h.state().view2d.shown.as_ref().map(|(w, h, _)| (*w, *h)), Some((256, 256)));
 }
 

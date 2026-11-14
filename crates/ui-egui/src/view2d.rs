@@ -47,7 +47,7 @@ fn rgba8(img: &Image, channel: &str) -> Vec<u8> {
         _ => None,
     };
     match pick {
-        Some(k) if img.kind == Kind::Color => base.chunks(4).flat_map(|p| [p[k], p[k], p[k], 255]).collect(),
+        Some(k) if img.kind() == Kind::Color => base.chunks(4).flat_map(|p| [p[k], p[k], p[k], 255]).collect(),
         _ => base,
     }
 }
@@ -95,23 +95,24 @@ pub fn show(app: &mut MaterialCraftApp, ui: &mut Ui) {
     let texture_limit = ctx.input(|i| i.max_texture_side).max(1);
     let key = app.session.cooked.nodes.get(&id).map_or(0, |r| r.key)
         ^ (texture_limit as u64).rotate_left(32)
-        ^ (img.w as u64).rotate_left(16)
-        ^ img.h as u64
+        ^ (img.width() as u64).rotate_left(16)
+        ^ img.height() as u64
         ^ (app.session.view2d.port as u64).wrapping_mul(0x9e37)
         ^ (app.session.view2d.channel.len() as u64 * 31)
         ^ app.session.view2d.channel.bytes().next().unwrap_or(0) as u64;
     if app.view2d.tex.as_ref().is_none_or(|(k, _)| *k != key) {
         let px = rgba8(&img, &app.session.view2d.channel);
         // Keep source pixels for readout/screenshots, but respect the renderer's upload limit.
-        let ci = if img.w.max(img.h) as usize > texture_limit {
-            let scale = texture_limit as f64 / f64::from(img.w.max(img.h));
-            let display = img.resize((f64::from(img.w) * scale).floor().max(1.0) as u32, (f64::from(img.h) * scale).floor().max(1.0) as u32, false);
-            ColorImage::from_rgba_unmultiplied([display.w as usize, display.h as usize], &rgba8(&display, &app.session.view2d.channel))
+        let ci = if img.width().max(img.height()) as usize > texture_limit {
+            let scale = texture_limit as f64 / f64::from(img.width().max(img.height()));
+            let display =
+                img.resize((f64::from(img.width()) * scale).floor().max(1.0) as u32, (f64::from(img.height()) * scale).floor().max(1.0) as u32, false);
+            ColorImage::from_rgba_unmultiplied([display.width() as usize, display.height() as usize], &rgba8(&display, &app.session.view2d.channel))
         } else {
-            ColorImage::from_rgba_unmultiplied([img.w as usize, img.h as usize], &px)
+            ColorImage::from_rgba_unmultiplied([img.width() as usize, img.height() as usize], &px)
         };
         app.view2d.tex = Some((key, ctx.load_texture("view2d", ci, TextureOptions::NEAREST)));
-        app.view2d.shown = Some((img.w, img.h, px));
+        app.view2d.shown = Some((img.width(), img.height(), px));
     }
     let avail = ui.available_size();
     let (rect, resp) = ui.allocate_exact_size(vec2(avail.x, (avail.y - 20.0).max(40.0)), Sense::click_and_drag());
@@ -122,7 +123,7 @@ pub fn show(app: &mut MaterialCraftApp, ui: &mut Ui) {
     app.ui.image_camera = app.ui.image_camera.sanitized();
     let cam = &mut app.ui.image_camera;
     let tiles = if app.session.view2d.tiled { 3.0 } else { 1.0 };
-    let fit_zoom = ((rect.width() - 16.0) / (img.w as f32 * tiles)).min((rect.height() - 16.0) / (img.h as f32 * tiles)).max(0.01);
+    let fit_zoom = ((rect.width() - 16.0) / (img.width() as f32 * tiles)).min((rect.height() - 16.0) / (img.height() as f32 * tiles)).max(0.01);
     if cam.fit {
         cam.zoom = fit_zoom;
         cam.offset = [0.0, 0.0];
@@ -146,11 +147,11 @@ pub fn show(app: &mut MaterialCraftApp, ui: &mut Ui) {
         let d = resp.drag_delta();
         cam.offset = [cam.offset[0] + d.x, cam.offset[1] + d.y];
     }
-    let size = vec2(img.w as f32, img.h as f32) * cam.zoom;
+    let size = vec2(img.width() as f32, img.height() as f32) * cam.zoom;
     let center = rect.center() + vec2(cam.offset[0], cam.offset[1]);
     let full = Rect::from_center_size(center, size * tiles);
     // A checker behind transparent images.
-    if img.kind == Kind::Color && app.session.view2d.channel == "rgba" {
+    if img.kind() == Kind::Color && app.session.view2d.channel == "rgba" {
         let cell = 8.0;
         let vis = full.intersect(rect);
         let mut y = vis.top();
@@ -181,15 +182,16 @@ pub fn show(app: &mut MaterialCraftApp, ui: &mut Ui) {
     // Info line: size, format, zoom and the pixel under the pointer.
     let info = Rect::from_min_size(pos2(rect.left(), rect.bottom()), vec2(rect.width(), 20.0));
     let bits = app.session.cooked.nodes.get(&id).map_or("16", |result| result.base.format.bits());
-    let mut text = format!("{} x {} ({}, {}bpc)   {:.0}%", img.w, img.h, if img.is_gray() { "L" } else { "RGBA" }, bits, cam.zoom * 100.0);
+    let mut text = format!("{} x {} ({}, {}bpc)   {:.0}%", img.width(), img.height(), if img.is_gray() { "L" } else { "RGBA" }, bits, cam.zoom * 100.0);
     if let Some(ptr) = resp.hover_pos() {
         let local = (ptr - (center - size * 0.5)) / cam.zoom;
         let (x, y) = (local.x.floor() as i64, local.y.floor() as i64);
         let v = img.get(x, y, true);
         if img.is_gray() {
-            text += &format!("   ({}, {})  {:.3}", x.rem_euclid(img.w as i64), y.rem_euclid(img.h as i64), v[0]);
+            text += &format!("   ({}, {})  {:.3}", x.rem_euclid(img.width() as i64), y.rem_euclid(img.height() as i64), v[0]);
         } else {
-            text += &format!("   ({}, {})  {:.3} {:.3} {:.3} {:.3}", x.rem_euclid(img.w as i64), y.rem_euclid(img.h as i64), v[0], v[1], v[2], v[3]);
+            text +=
+                &format!("   ({}, {})  {:.3} {:.3} {:.3} {:.3}", x.rem_euclid(img.width() as i64), y.rem_euclid(img.height() as i64), v[0], v[1], v[2], v[3]);
         }
     }
     ui.painter().rect_filled(info, 0.0, tk.panel);

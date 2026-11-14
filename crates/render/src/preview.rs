@@ -8,9 +8,9 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use crate::{Displacement, Relief};
+use craft_texture::{Image, linear_to_srgb};
 use materialcraft_geom::glam::{Vec2, Vec3};
 use materialcraft_geom::{Bvh, Mesh, OrbitCamera};
-use materialcraft_image::{Image, linear_to_srgb};
 use rayon::prelude::*;
 
 use crate::ibl::{self, EnvImage};
@@ -94,7 +94,7 @@ impl Scene {
         }
 
         // Pre-filtered so detail finer than the mesh (left to the normal map) does not spike the silhouette
-        let height = height.resize(height.w.min(512), height.h.min(512), true);
+        let height = height.resize(height.width().min(512), height.height().min(512), true);
         let level = if displacement.level.is_finite() { displacement.level.clamp(0.0, 1.0) } else { 0.0 };
         let depth = if displacement.depth.is_finite() { displacement.depth } else { 0.0 };
         let tiling = if displacement.tiling.is_finite() { displacement.tiling.max(0.01) } else { 1.0 };
@@ -538,7 +538,7 @@ pub fn render_cancellable(scene: &Scene, maps: &Maps, light: &Lighting, s: &Sett
 #[cfg(test)]
 mod tests {
     use super::*;
-    use materialcraft_image::Kind;
+    use craft_texture::Kind;
 
     #[test]
     fn renders_a_material_on_every_scene() {

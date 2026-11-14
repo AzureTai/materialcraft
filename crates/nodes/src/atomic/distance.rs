@@ -1,7 +1,7 @@
 use super::ATOMIC;
 use crate::ops;
 use crate::{CookContext, CookResult, NodeDefinition, node};
-use materialcraft_image::Image;
+use craft_texture::Image;
 
 pub(super) fn definition() -> NodeDefinition {
     node("distance", "Distance", ATOMIC)
@@ -18,16 +18,16 @@ pub(super) fn definition() -> NodeDefinition {
 fn distance(context: &CookContext) -> CookResult {
     let mask = context.gray_or(0, 0.0);
     let maxd = (context.f("distance").max(0.0) * context.w as f32 / 256.0).max(1e-3);
-    let data = mask.data.clone();
+    let data = mask.shared_data().clone();
     let inside = |i| data.get(i).copied().unwrap_or(0.0) > 0.5;
     let Some(src) = context.sized(1) else {
         let d2 = ops::distance_sq(context.w, context.h, inside, context.tile);
-        return Ok(vec![ops::gray_from(context.w, context.h, d2.iter().map(|d| (1.0 - d.sqrt() / maxd).clamp(0.0, 1.0)).collect())]);
+        return Ok(vec![ops::gray_from(context.w, context.h, d2.iter().map(|d| (1.0 - d.sqrt() / maxd).clamp(0.0, 1.0)).collect())?]);
     };
     // Propagate the exact nearest site without gaps from gradient-walk stalls
     let (d2, sites) = ops::distance_sq_with_sites(context.w, context.h, inside, context.tile);
     let combine = context.b("combine");
-    Ok(vec![Image::generate(context.w, context.h, src.kind, |x, y| {
+    Ok(vec![Image::generate(context.w, context.h, src.kind(), |x, y| {
         let i = y as usize * context.w as usize + x as usize;
         let site = sites.get(i).copied().unwrap_or(usize::MAX);
         let mut c = if site == usize::MAX {

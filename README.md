@@ -185,7 +185,7 @@ operations and three pattern node kinds. Start with **File → New → Atomic sa
 See [the primitive workflow](docs/atomic-workflow.md) for usage, validation scope and limitations.
 Reference-app rendering parity and full SBS library loading are still pending.
 
-**Workspace:** `crates/{core, image, geom, nodes, eval, formats, engine, render, automation, ui-egui}`
+**Workspace:** `crates/{core, geom, nodes, eval, formats, engine, render, automation, ui-egui}`
 and `apps/{materialcraft, materialcraft-cli, materialcraft-web}`. The egui frontend is its own
 crate, so the UI can be swapped without touching the engine; [`docs/architecture.md`](docs/architecture.md)
 explains how it fits together.

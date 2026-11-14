@@ -3,14 +3,14 @@ use std::collections::BTreeMap;
 
 use serde_json::{Value as J, json};
 
+#[cfg(test)]
+use craft_texture::Image;
 use materialcraft_core::ComponentUsage;
 use materialcraft_core::Graph;
 #[cfg(any(test, not(target_arch = "wasm32")))]
 use materialcraft_core::Value;
 use materialcraft_formats::material::{FORMAT, ImageInput, Manifest, MapEntry, Parameter, PresetEntry, VERSION, portable, srgb_usage};
 use materialcraft_formats::{Depth, encode};
-#[cfg(test)]
-use materialcraft_image::Image;
 
 #[cfg(not(target_arch = "wasm32"))]
 use crate::commands::u64p;
@@ -81,7 +81,7 @@ pub fn material_bytes(s: &Session, gi: usize, o: &MaterialOptions) -> Result<Vec
         let file = format!("maps/{usage}.png");
         maps.push((file.clone(), encode(img, "png", if srgb { Depth::U8 } else { Depth::U16 }, srgb)?));
         entries.push(MapEntry { usage: usage.into(), file, color_space: if srgb { "srgb" } else { "linear" }.into() });
-        size = [img.w, img.h];
+        size = [img.width(), img.height()];
     }
     if entries.is_empty() {
         return Err(bad(
@@ -289,7 +289,7 @@ mod tests {
     fn binds_preview_images_to_input_nodes() {
         let mut s = crate::sample_session();
         crate::execute(&mut s, "graph.node.add", &json!({"def": "input_grayscale", "params": {"identifier": "curvature"}})).unwrap();
-        let png = encode(&Image::filled(4, 4, materialcraft_image::Kind::Gray, [0.7; 4]), "png", Depth::U16, false).unwrap();
+        let png = encode(&Image::filled(4, 4, craft_texture::Kind::Gray, [0.7; 4]), "png", Depth::U16, false).unwrap();
         let res = crate::file_cmds::add_resource(&mut s, "curv.png", png, None).unwrap();
         assert!(crate::execute(&mut s, "graph.input.bind", &json!({"identifier": "nope", "resource": res})).is_err());
         crate::execute(&mut s, "graph.input.bind", &json!({"identifier": "curvature", "resource": res, "linear": true})).unwrap();
@@ -329,7 +329,7 @@ mod tests {
                     .unwrap();
             crate::execute(&mut s, "graph.connect", &json!({"from": input, "to": output})).unwrap();
 
-            let png = encode(&Image::filled(16, 16, materialcraft_image::Kind::Color, [128.0 / 255.0; 4]), "png", Depth::U16, false).unwrap();
+            let png = encode(&Image::filled(16, 16, craft_texture::Kind::Color, [128.0 / 255.0; 4]), "png", Depth::U16, false).unwrap();
             let dir = std::env::temp_dir().join(format!("materialcraft-linear-input-{}", std::process::id()));
             std::fs::create_dir_all(&dir).unwrap();
             let file = dir.join("normal.png");

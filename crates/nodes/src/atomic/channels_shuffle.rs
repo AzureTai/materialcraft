@@ -1,6 +1,6 @@
 use super::ATOMIC;
 use crate::{CookContext, CookResult, NodeDefinition, node};
-use materialcraft_image::{Image, Kind};
+use craft_texture::{Image, Kind};
 
 pub(super) fn definition() -> NodeDefinition {
     node("channels_shuffle", "Channels shuffle", ATOMIC)

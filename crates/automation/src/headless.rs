@@ -270,7 +270,7 @@ impl Headless {
             None => self.session.view2d_image().map(|(_, i)| i).ok_or_else(|| bad("nothing to show: the graph has no outputs; pass `node`"))?,
         };
 
-        let (w, h) = (o.width.unwrap_or(img.w).clamp(16, max), o.height.unwrap_or(img.h).clamp(16, max));
+        let (w, h) = (o.width.unwrap_or(img.width()).clamp(16, max), o.height.unwrap_or(img.height()).clamp(16, max));
         let img = img.resize(w, h, true);
         Ok((w, h, img.to_rgba8_display()))
     }

@@ -1,7 +1,7 @@
 use super::ATOMIC;
 use crate::{CookContext, CookResult, NodeDefinition, node};
+use craft_texture::{Kind, luminance};
 use materialcraft_core::Gradient;
-use materialcraft_image::{Kind, luminance};
 
 pub(super) fn definition() -> NodeDefinition {
     node("gradient_map", "Gradient map", ATOMIC)

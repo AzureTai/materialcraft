@@ -16,10 +16,10 @@ const MIN_SPAN: f32 = 0.004;
 
 /// Histograms of an image's values in 0..1, clamped: one for a gray image, else R, G and B
 pub fn histogram(img: &Image) -> Vec<[u32; BINS]> {
-    let channels = if img.kind == Kind::Gray { 1 } else { 3 };
-    let stride = img.kind.channels();
+    let channels = if img.kind() == Kind::Gray { 1 } else { 3 };
+    let stride = img.channels();
     let mut h = vec![[0u32; BINS]; channels];
-    for px in img.data.chunks(stride) {
+    for px in img.data().chunks(stride) {
         for (c, bins) in h.iter_mut().enumerate() {
             let v = px.get(c).copied().unwrap_or(0.0);
             let v = if v.is_finite() { v.clamp(0.0, 1.0) } else { 0.0 };

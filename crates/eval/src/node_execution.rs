@@ -6,8 +6,8 @@ use crate::{
     prepared_graph::PreparedGraph,
     value_execution::evaluate_value,
 };
+use craft_texture::{Image, Kind};
 use materialcraft_core::{Node, Package, Value};
-use materialcraft_image::{Image, Kind};
 use materialcraft_nodes::{CookContext, find};
 use std::{
     collections::BTreeMap,

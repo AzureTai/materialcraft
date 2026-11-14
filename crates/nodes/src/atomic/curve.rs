@@ -1,6 +1,6 @@
 use super::ATOMIC;
 use crate::{CookContext, CookResult, NodeDefinition, node};
-use materialcraft_image::Kind;
+use craft_texture::Kind;
 
 pub(super) fn definition() -> NodeDefinition {
     node("curve", "Curve", ATOMIC).desc("Remaps values through a tone curve.").atomic().any_in("input", "Input").curve("curve", "Curve").any_out().cook(curve)
@@ -18,5 +18,5 @@ fn curve(context: &CookContext) -> CookResult {
         let b = lut.get(i + 1).copied().unwrap_or(a);
         a + (b - a) * (t - i as f32)
     };
-    Ok(vec![img.map(img.kind, |p| [f(p[0]), f(p[1]), f(p[2]), p[3]])])
+    Ok(vec![img.map(img.kind(), |p| [f(p[0]), f(p[1]), f(p[2]), p[3]])])
 }

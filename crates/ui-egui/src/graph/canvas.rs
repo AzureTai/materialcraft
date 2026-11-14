@@ -241,15 +241,15 @@ fn canvas(app: &mut MaterialCraftApp, ui: &mut Ui) {
                     let [width, height] = graph.size_px();
                     resp.clone().on_hover_text(format!(
                         "{} x {} ({bits}bpc)\n{}: {width} x {height}\n{}: {limit} px\n{}",
-                        img.w,
-                        img.h,
+                        img.width(),
+                        img.height(),
                         tr("Parent size"),
                         tr("Preview limit"),
                         tr("Change Preview size while editing in Edit > Preferences. Exports use each node's configured output size.")
                     ));
-                    format!("{}x{} {}", img.w, img.h, tr("Preview"))
+                    format!("{}x{} {}", img.width(), img.height(), tr("Preview"))
                 } else {
-                    format!("{}x{} - {format}", img.w, img.h)
+                    format!("{}x{} - {format}", img.width(), img.height())
                 };
                 painter.text(footer.center(), Align2::CENTER_CENTER, txt, small.clone(), theme.text_dim);
             }

@@ -208,7 +208,7 @@ mod tests {
         let vars = BTreeMap::new();
         let context = CookContext { w: 256, h: 256, seed: 0, tile: true, inputs: &[], params: &p, resource: &no_res, vars: &vars };
         let img = &text(&context).unwrap()[0];
-        let lit = img.data.iter().filter(|value| **value > 0.5).count();
+        let lit = img.data().iter().filter(|value| **value > 0.5).count();
         assert!(lit > 300, "{lit} pixels");
         // Centered: nothing in the top and bottom quarters
         assert!((0..256).all(|x| img.get(x, 20, false)[0] == 0.0 && img.get(x, 236, false)[0] == 0.0));

@@ -168,7 +168,7 @@ fn cook(s: &mut Session, p: &J) -> Result<J> {
         "nodes": cooked.nodes.iter().map(|(id, r)| {
             let n = g.node(*id).ok();
             json!({"id": id.0, "def": n.map(|n| n.def.clone()), "ms": r.ms, "cached": r.cached, "error": r.error,
-                   "size": r.outputs.first().and_then(materialcraft_eval::NodeOutput::as_image).map(|i| [i.w, i.h])})
+                   "size": r.outputs.first().and_then(materialcraft_eval::NodeOutput::as_image).map(|i| [i.width(), i.height()])})
         }).collect::<Vec<_>>(),
     }))
 }

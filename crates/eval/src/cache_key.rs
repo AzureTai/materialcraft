@@ -1,25 +1,25 @@
 use crate::{Cache, identifier};
+use craft_texture::Image;
 use materialcraft_core::{Node, Package, Value};
-use materialcraft_image::Image;
 use std::collections::{BTreeMap, HashSet};
 use std::hash::{DefaultHasher, Hash, Hasher};
 use std::sync::{Arc, Mutex};
 
 pub(crate) fn image_key(i: &Image, cache: &Mutex<Cache>) -> u64 {
-    let ptr = Arc::as_ptr(&i.data) as usize;
-    let shape = (i.w, i.h, i.kind.channels());
+    let ptr = Arc::as_ptr(i.shared_data()) as usize;
+    let shape = (i.width(), i.height(), i.channels());
     if let Some(key) = cache
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner)
         .input_hashes
         .get(&ptr)
-        .and_then(|saved| saved.buffer.upgrade().filter(|data| Arc::ptr_eq(data, &i.data) && saved.shape == shape).map(|_| saved.key))
+        .and_then(|saved| saved.buffer.upgrade().filter(|data| Arc::ptr_eq(data, i.shared_data()) && saved.shape == shape).map(|_| saved.key))
     {
         return key;
     }
     let mut h = DefaultHasher::new();
-    (shape, i.data.len()).hash(&mut h);
-    for value in i.data.iter() {
+    (shape, i.data().len()).hash(&mut h);
+    for value in i.data() {
         value.to_bits().hash(&mut h);
     }
     let key = h.finish();
@@ -30,7 +30,7 @@ pub(crate) fn image_key(i: &Image, cache: &Mutex<Cache>) -> u64 {
             cache.input_hashes.clear();
         }
     }
-    cache.input_hashes.insert(ptr, crate::input_fingerprint::InputFingerprint { buffer: Arc::downgrade(&i.data), shape, key });
+    cache.input_hashes.insert(ptr, crate::input_fingerprint::InputFingerprint { buffer: Arc::downgrade(i.shared_data()), shape, key });
     key
 }
 

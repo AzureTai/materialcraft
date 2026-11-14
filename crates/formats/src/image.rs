@@ -1,7 +1,6 @@
 use crate::{Depth, FormatError, Result, guard};
-use materialcraft_image::{Image, Kind, MAX_SIDE, linear_to_srgb, srgb_to_linear};
+use craft_texture::{Image, Kind, Limits, MAX_SIDE, linear_to_srgb, srgb_to_linear};
 use std::io::Cursor;
-use std::sync::Arc;
 
 /// Decode image file bytes into a linear float image (8-bit color is sRGB-decoded; grayscale files stay grayscale)
 pub fn decode(bytes: &[u8], linear: bool) -> Result<Image> {
@@ -41,7 +40,7 @@ pub fn decode(bytes: &[u8], linear: bool) -> Result<Image> {
     if gray {
         let l = img.into_luma16();
         let data: Vec<f32> = l.pixels().map(|p| p.0[0] as f32 / 65535.0).collect();
-        return Ok(Image { w, h, kind: Kind::Gray, data: Arc::new(data) });
+        return Image::from_data(w, h, Kind::Gray, data, &Limits::default()).map_err(|e| FormatError::Image(e.to_string()));
     }
 
     let mut data = img.into_rgba32f().into_raw();
@@ -52,21 +51,21 @@ pub fn decode(bytes: &[u8], linear: bool) -> Result<Image> {
             }
         }
     }
-    Ok(Image { w, h, kind: Kind::Color, data: Arc::new(data) })
+    Image::from_data(w, h, Kind::Color, data, &Limits::default()).map_err(|e| FormatError::Image(e.to_string()))
 }
 
 /// Encode `img` as `ext` (see [`EXPORT_FORMATS`]). `srgb`: color values are written through the sRGB curve (base color); data maps (normal, roughness…) are written linear
 pub fn encode(img: &Image, ext: &str, depth: Depth, srgb: bool) -> Result<Vec<u8>> {
     let ext = ext.trim_start_matches('.').to_ascii_lowercase();
-    let enc = |v: f32| if srgb && img.kind == Kind::Color { linear_to_srgb(v) } else { v };
-    let (w, h) = (img.w, img.h);
-    let color = img.kind == Kind::Color;
+    let enc = |v: f32| if srgb && img.kind() == Kind::Color { linear_to_srgb(v) } else { v };
+    let (w, h) = (img.width(), img.height());
+    let color = img.kind() == Kind::Color;
     let px = |i: usize| -> [f32; 4] {
         if color {
-            let s = img.data.get(i * 4..i * 4 + 4).unwrap_or(&[0.0, 0.0, 0.0, 1.0]);
+            let s = img.data().get(i * 4..i * 4 + 4).unwrap_or(&[0.0, 0.0, 0.0, 1.0]);
             [enc(s[0]), enc(s[1]), enc(s[2]), s[3]]
         } else {
-            let v = img.data.get(i).copied().unwrap_or(0.0);
+            let v = img.data().get(i).copied().unwrap_or(0.0);
             [v, v, v, 1.0]
         }
     };

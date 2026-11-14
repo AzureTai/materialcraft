@@ -1,4 +1,4 @@
-use materialcraft_image::{Image, Kind};
+use craft_texture::{Image, Kind, Limits};
 use std::sync::Arc;
 
 use super::{pattern_stamp::PatternStamp, shape};
@@ -7,14 +7,16 @@ use crate::CookContext;
 const MAX_SAMPLES: u64 = 256_000_000;
 
 pub(super) fn render(context: &CookContext, stamps: &[PatternStamp]) -> Result<Image, String> {
-    let (width, height) = materialcraft_image::clamp_size(context.w, context.h);
+    let (width, height) = craft_texture::clamp_size(context.w, context.h);
     let kind = if context.b("color_mode") { Kind::Color } else { Kind::Gray };
-    let mut image =
+    let background =
         context.input(0).map(|image| image.resize(width, height, context.tile)).unwrap_or_else(|| Image::filled(width, height, kind, context.v4("background")));
-    image = if kind == Kind::Gray { image.to_gray() } else { image.to_color() };
+    let background = if kind == Kind::Gray { background.to_gray() } else { background.to_color() };
     let channels = kind.channels();
     let opacity = context.f("opacity").max(0.0);
-    let pixels = Arc::make_mut(&mut image.data);
+    let data = Arc::clone(background.shared_data());
+    drop(background);
+    let mut pixels = Arc::unwrap_or_clone(data);
     let mut budget = MAX_SAMPLES;
 
     for stamp in stamps {
@@ -63,7 +65,7 @@ pub(super) fn render(context: &CookContext, stamps: &[PatternStamp]) -> Result<I
                         Some(input) => {
                             let uv = local.map(|coordinate| coordinate * 0.5 + 0.5);
                             if stamp.filtering == 0 {
-                                input.get((uv[0] * input.w as f32) as i64, (uv[1] * input.h as f32) as i64, false)
+                                input.get((uv[0] * input.width() as f32) as i64, (uv[1] * input.height() as f32) as i64, false)
                             } else {
                                 input.sample(uv[0], uv[1], false)
                             }
@@ -92,5 +94,5 @@ pub(super) fn render(context: &CookContext, stamps: &[PatternStamp]) -> Result<I
             }
         }
     }
-    Ok(image)
+    Image::from_data(width, height, kind, pixels, &Limits::default()).map_err(|e| e.to_string())
 }

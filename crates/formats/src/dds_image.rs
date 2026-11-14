@@ -1,5 +1,5 @@
 use crate::{FormatError, Result};
-use materialcraft_image::{Image, Kind, MAX_SIDE, srgb_to_linear};
+use craft_texture::{Image, Kind, Limits, MAX_SIDE, srgb_to_linear};
 
 pub(crate) fn decode(bytes: &[u8], linear: bool) -> Result<Image> {
     let error = |message: String| FormatError::Image(message);
@@ -20,5 +20,5 @@ pub(crate) fn decode(bytes: &[u8], linear: bool) -> Result<Image> {
             }
         }
     }
-    Ok(Image { w: size.width, h: size.height, kind: Kind::Color, data: std::sync::Arc::new(data) })
+    Image::from_data(size.width, size.height, Kind::Color, data, &Limits::default()).map_err(|e| error(e.to_string()))
 }

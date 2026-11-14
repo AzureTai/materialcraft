@@ -1,5 +1,5 @@
 use crate::{FormatError, Result};
-use materialcraft_image::{Image, Kind, MAX_SIDE, srgb_to_linear};
+use craft_texture::{Image, Kind, MAX_SIDE, srgb_to_linear};
 use resvg::{tiny_skia, usvg};
 
 pub(crate) fn decode(bytes: &[u8]) -> Result<Image> {

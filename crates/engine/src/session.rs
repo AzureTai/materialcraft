@@ -4,9 +4,9 @@
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex, PoisonError};
 
+use craft_texture::Image;
 use materialcraft_core::{Graph, NodeId, Package, ResourceBytes};
 use materialcraft_eval::{Cache, Cooked, Options};
-use materialcraft_image::Image;
 use serde::{Deserialize, Serialize};
 
 use crate::snapshot::Snapshot;
@@ -426,7 +426,7 @@ impl Session {
         // Release decoded images of deleted or replaced resources
         memo.lock().unwrap_or_else(PoisonError::into_inner).retain(|(k, _), _| res.iter().any(|(_, b)| b.content_hash() == *k));
         move |requested: &str| {
-            let (name, linear) = materialcraft_image::split_resource_key(requested);
+            let (name, linear) = craft_texture::split_resource_key(requested);
             let (_, bytes) = res.iter().find(|(n, _)| n == name)?;
             let key = (bytes.content_hash(), linear);
             if let Some(i) = memo.lock().unwrap_or_else(PoisonError::into_inner).get(&key) {
