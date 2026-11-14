@@ -5,8 +5,8 @@ use super::{catalog, pattern_stamp::PatternStamp, pattern_visit::PatternVisit, r
 use crate::function::{EvaluationContext, EvaluationState, compile};
 use crate::{CookContext, CookResult};
 
-// A 512-by-512 quadtree needs 349,525 visits including its internal quadrants.
-// Keep a hard ceiling for deeper or repeated trees; the rasterizer separately bounds pixel work.
+// A 512-by-512 quadtree needs 349,525 visits including internal quadrants
+// Cap deeper trees; the rasterizer separately bounds pixel work
 const MAX_VISITS: usize = 1_048_576;
 
 pub(crate) fn cook(context: &CookContext) -> CookResult {
@@ -31,8 +31,8 @@ pub(crate) fn cook(context: &CookContext) -> CookResult {
     }
 
     let mut stamps = Vec::new();
-    // Set variables belong to this FX-Map cook. In particular, iterations must see
-    // preceding iterations' assignments rather than resetting to the iterator's initial state.
+
+    // Keep Set assignments across iterations within this FX-Map cook
     let mut variables = context.vars.clone();
     let mut max_depth = 0;
     let mut state = EvaluationState::default();
@@ -149,6 +149,7 @@ pub(crate) fn cook(context: &CookContext) -> CookResult {
                 if count > remaining || count > 10_000 {
                     return Err("pattern iteration count exceeds the execution budget".into());
                 }
+
                 if let Some(Some(child)) = node.children.first() {
                     let mut first = visit.clone();
                     first.node = *child;
@@ -171,6 +172,7 @@ pub(crate) fn cook(context: &CookContext) -> CookResult {
         if children.len().saturating_add(pending.len()) > remaining {
             return Err("pattern graph exceeded its execution budget".into());
         }
+
         pending.extend(children.into_iter().rev());
     }
 

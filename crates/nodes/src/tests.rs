@@ -20,6 +20,7 @@ fn cook(def: &NodeDefinition, inputs: &[Option<Image>], size: u32) -> CookResult
         resource: &no_res,
         vars: &vars,
     };
+
     (def.cook)(&ctx)
 }
 
@@ -94,6 +95,7 @@ fn every_node_survives_hostile_params() {
         if matches!(def.id, "graph_instance" | "value_processor" | "input_value") {
             continue;
         }
+
         for p in &def.params {
             for h in [1e30_f32, -1e30, f32::NAN] {
                 let v = match p.default {
@@ -120,13 +122,17 @@ fn every_node_survives_hostile_params() {
                     resource: &no_res,
                     vars: &vars,
                 };
+
                 let t = Instant::now();
                 let out = (def.cook)(&ctx).unwrap_or_else(|e| panic!("{}.{}={h}: {e}", def.id, p.id));
                 let dt = t.elapsed();
+
                 assert!(dt < Duration::from_secs(2), "{}.{}={h} took {dt:?}", def.id, p.id);
+
                 if dt > Duration::from_millis(250) {
                     slow.push((format!("{}.{}={h}", def.id, p.id), dt));
                 }
+
                 for img in &out {
                     assert_eq!((img.w, img.h), (16, 16), "{}.{}={h}", def.id, p.id);
                     assert!(img.data.iter().all(|x| x.is_finite()), "{}.{}={h} produced a non-finite value", def.id, p.id);
@@ -134,6 +140,7 @@ fn every_node_survives_hostile_params() {
             }
         }
     }
+
     eprintln!("hostile params: total {:?}; cooks over 250 ms: {slow:?}", total.elapsed());
 }
 
@@ -158,7 +165,9 @@ fn blend_and_levels_math() {
         resource: &no_res,
         vars: &vars,
     };
+
     let out = (def.cook)(&ctx).unwrap();
+
     assert!((out[0].data[0] - 0.125).abs() < 1e-6);
     assert!((atomic::levels_fn(0.5, 0.0, 0.5, 1.0, 0.0, 1.0) - 0.5).abs() < 1e-5);
     assert_eq!(atomic::levels_fn(0.2, 0.4, 0.5, 0.8, 0.0, 1.0), 0.0);

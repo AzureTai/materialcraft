@@ -13,8 +13,7 @@ pub(super) fn definition() -> NodeDefinition {
 }
 
 fn output(context: &CookContext) -> CookResult {
-    // Unconnected outputs cook as transparent RGBA, even when their saved
-    // graph interface declares grayscale. Preserve that declaration separately.
+    // Keep saved grayscale declarations even when an unconnected output cooks as RGBA
     Ok(vec![context.sized(0).unwrap_or_else(|| Image::filled(context.w, context.h, Kind::Color, [0.0; 4]))])
 }
 

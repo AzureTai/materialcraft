@@ -79,6 +79,7 @@ pub fn show(app: &mut MaterialCraftApp, ctx: &egui::Context) {
     if let Some(error) = app.thumbs.tick(ctx, &app.session.library, app.cooker.busy() || app.session.dirty) {
         app.toast(error, true);
     }
+
     if app.ui.windows.new_graph {
         new_graph(app, ctx);
     }
@@ -97,6 +98,7 @@ pub fn show(app: &mut MaterialCraftApp, ctx: &egui::Context) {
     if app.ui.windows.home {
         home(app, ctx);
     }
+
     crate::unsaved::show(app, ctx);
     crate::explorer::dialogs(app, ctx);
     crate::properties::ExposeParameterDialog::show(app, ctx);
@@ -235,6 +237,7 @@ fn preferences(app: &mut MaterialCraftApp, ctx: &egui::Context) {
         app.run("library.cache.clear", serde_json::json!({}));
         app.apply_prefs();
     }
+
     if !open {
         app.ui.windows.preferences = false;
     }

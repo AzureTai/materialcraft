@@ -18,12 +18,15 @@ fn native_graph_attributes_load_and_survive_sbs_save() {
             "tags": "math utility", "hideInLibrary": true, "group": "Utilities", "userData": "pipeline=example"});
 
         assert_eq!(serde_json::to_value(&imported.graphs[0].attributes).unwrap(), expected, "{kind} import");
+
         let bytes = write_sbs(&imported).unwrap();
         let saved = read_sbs(&bytes, "saved.sbs", &|_| None).unwrap().pkg;
 
         assert_eq!(saved.graphs[0].name, "Stable_identifier");
         assert_eq!(serde_json::to_value(&saved.graphs[0].attributes).unwrap(), expected, "{kind} save");
+
         let xml = String::from_utf8(bytes).unwrap();
+
         assert!(xml.contains("<authorURL v="));
         assert!(xml.contains("<userdata v="));
         assert!(xml.contains("<hideInLibrary v=\"1\"/>"));

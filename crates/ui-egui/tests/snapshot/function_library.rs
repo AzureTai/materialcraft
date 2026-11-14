@@ -41,11 +41,15 @@ fn bottom_library_drags_functions_into_function_and_processor_canvases() {
         drag(&mut harness, "Pi", vec2(-140.0, 0.0));
 
         let function = target.current(&harness.state().session).unwrap();
+
         assert_eq!(function.nodes.len(), previous + 1, "{kind}");
+
         let node = function.nodes.iter().find(|node| node.instance.is_some()).unwrap();
+
         assert_eq!(node.instance.as_ref().unwrap().package, "sbs://functions.sbs");
         assert_eq!(node.instance.as_ref().unwrap().graph, "Functions/Math/Pi");
         assert!(matches!(node.source, Some(Ok(_))));
+
         save(&mut harness, &directory, &format!("library-drag-{kind}"));
 
         harness.state_mut().ui.library_search = "function:div".into();
@@ -54,8 +58,10 @@ fn bottom_library_drags_functions_into_function_and_processor_canvases() {
 
         let function = target.current(&harness.state().session).unwrap();
         let division = function.nodes.iter().find(|node| node.op == "div").unwrap();
+
         assert!(division.instance.is_none(), "native operations must not become SBS instances");
         assert_eq!(division.inputs.len(), 2);
+
         harness.get(By::new().role(egui::accesskit::Role::Button).label("Division"));
         save(&mut harness, &directory, &format!("library-native-{kind}"));
 
@@ -70,7 +76,9 @@ fn bottom_library_drags_functions_into_function_and_processor_canvases() {
             .iter()
             .find(|node| node.instance.as_ref().is_some_and(|instance| instance.graph.ends_with("GlobalRandom")))
             .unwrap();
+
         assert!(matches!(random.source, Some(Ok(_))));
+
         save(&mut harness, &directory, &format!("library-random-{kind}"));
 
         let mut missing = harness.state().session.pkg.dependencies["sbs://functions.sbs"].graph_by_name("Functions/Random/GlobalRandom").unwrap().1.clone();
@@ -95,7 +103,9 @@ fn bottom_library_drags_functions_into_function_and_processor_canvases() {
             .iter()
             .find(|node| node.instance.as_ref().is_some_and(|instance| instance.graph.ends_with("MissingFunction")))
             .unwrap();
+
         assert!(matches!(missing.source, Some(Err(_))));
+
         let bounds = harness.get(By::new().role(egui::accesskit::Role::Button).label("MissingFunction")).rect();
         let image = harness.render().unwrap();
         let magenta = (2..12).any(|y| {
@@ -104,7 +114,9 @@ fn bottom_library_drags_functions_into_function_and_processor_canvases() {
                 pixel[0] > 150 && pixel[1] < 80 && pixel[2] > 80
             })
         });
+
         assert!(magenta, "missing header must be magenta");
+
         save(&mut harness, &directory, &format!("library-missing-{kind}"));
     }
 }

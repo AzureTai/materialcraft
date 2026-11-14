@@ -32,14 +32,16 @@ pub(super) fn read(node: &mut Node, implementation: XmlNode<'_, '_>) {
                         None => [0.0; 4],
                     };
                     let midpoint = parameters.get("midpoint").and_then(Value::as_f32).unwrap_or(0.5);
-                    // Legacy gradient arrays use zero for their default linear segments.
-                    // Treating it as a near-zero interpolation fraction clips successive ramps to white.
+
+                    // Legacy gradient arrays use zero for their default linear segments
+                    // Treating it as a near-zero interpolation fraction clips successive ramps to white
                     let midpoint = if midpoint == 0.0 { 0.5 } else { midpoint };
                     gradient.keys.push(GradientKey { pos: position, color, midpoint });
                 }
                 _ => {}
             }
         }
+
         if !curve.points.is_empty() {
             curve.points.sort_by(|left, right| left.x.total_cmp(&right.x));
             node.params.insert("curve".into(), Value::Curve(curve));

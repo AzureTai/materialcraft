@@ -103,6 +103,7 @@ pub fn execute(s: &mut Session, id: &str, params: &J) -> Result<J> {
     if let Some(result) = crate::selection_commands::execute(s, id, params) {
         return result;
     }
+
     (spec.enabled)(s).map_err(|why| EngineError::Disabled { cmd: id.to_string(), why })?;
     let result = (spec.run)(s, params)?;
     if !s.selection.is_empty() || s.annotation_selection.is_some_and(|selection| !s.annotation_target.items(s).is_ok_and(|items| selection.exists(&items))) {
@@ -179,6 +180,7 @@ pub(crate) fn ids_param(s: &Session, cmd: &str, p: &J) -> Result<Vec<NodeId>> {
     for id in &ids {
         g.node(*id).map_err(|_| bad(cmd, format!("no node {}", id.0)))?;
     }
+
     Ok(ids)
 }
 

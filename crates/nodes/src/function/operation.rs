@@ -35,8 +35,7 @@ pub(crate) fn evaluate(
         let missing = || format!("undefined variable `{name}` in this context");
         let value = match context.variable(name, variables)? {
             Some(value) => value,
-            // User counters can be read before their first Set. They start at
-            // typed zero; unavailable system variables must still report errors.
+            // User counters start at typed zero; unavailable system variables still error
             None if !name.starts_with('$') => materialcraft_core::ValueType::from_code(instruction.type_code)
                 .filter(|kind| *kind != materialcraft_core::ValueType::String)
                 .map(materialcraft_core::ValueType::default_value)
@@ -44,8 +43,8 @@ pub(crate) fn evaluate(
             None => return Err(missing()),
         };
 
-        // Older authored graphs read an exposed integer option as a Boolean.
-        // Keep system-variable type checks strict; user options use zero/nonzero.
+        // Older authored graphs read an exposed integer option as a Boolean
+        // Keep system-variable type checks strict; user options use zero/nonzero
         if op == "get_bool"
             && !name.starts_with('$')
             && matches!(value, Value::Int(_) | Value::Enum(_))
@@ -89,6 +88,7 @@ pub(crate) fn evaluate(
             if value_type::type_code(left) != value_type::type_code(right) {
                 return Err("comparison inputs must have the same type".into());
             }
+
             Value::Bool((left == right) == (op == "eq"))
         }
         "gt" | "gteq" | "lr" | "lreq" => {
@@ -96,14 +96,16 @@ pub(crate) fn evaluate(
             if dimensions(left) != 1 || value_type::type_code(left) != value_type::type_code(right) {
                 return Err("comparison requires matching scalars".into());
             }
+
             let ordering = match (left, right) {
                 (Value::Int(a), Value::Int(b)) => a.partial_cmp(b),
                 (Value::Float(a), Value::Float(b)) => a.partial_cmp(b),
                 (Value::Bool(a), Value::Bool(b)) => a.partial_cmp(b),
                 _ => return Err("comparison requires numeric inputs".into()),
             };
-            // Ordered IEEE comparisons are false for NaN, including <= and >=.
-            // Undefined intermediates can therefore select a finite fallback.
+
+            // Ordered IEEE comparisons are false for NaN, including <= and >=
+            // Undefined intermediates can therefore select a finite fallback
             Value::Bool(ordering.is_some_and(|ordering| match op {
                 "gt" => ordering.is_gt(),
                 "gteq" => ordering.is_ge(),
@@ -116,6 +118,7 @@ pub(crate) fn evaluate(
             if dimensions(first()?) != 2 {
                 return Err("sample position must be float2".into());
             }
+
             let setting = instruction.value.as_ref().map(integers).transpose()?.unwrap_or([0, 0, 0, 0]);
             let index = usize::try_from(setting[0]).map_err(|_| "negative image index")?;
             let pixel = match context.images.get(index).and_then(Option::as_ref) {

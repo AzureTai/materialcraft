@@ -1,15 +1,13 @@
-use super::{
-    Result,
-    xml::{self, Edit},
-};
+use super::{Result, xml, xml_edit::XmlEdit};
 use roxmltree::Node;
 use std::collections::{BTreeMap, BTreeSet};
 
-pub fn reposition(list: Node<'_, '_>, edits: &mut Vec<Edit>) -> Result<usize> {
+pub fn reposition(list: Node<'_, '_>, edits: &mut Vec<XmlEdit>) -> Result<usize> {
     let nodes: Vec<_> = list.children().filter(Node::is_element).collect();
     if nodes.len() > 100_000 {
         return Err("canvas exceeds the node limit".into());
     }
+
     let mut ids = BTreeMap::new();
     for node in &nodes {
         let id = xml::value(*node, "uid").ok_or("canvas node has no uid")?;
@@ -17,6 +15,7 @@ pub fn reposition(list: Node<'_, '_>, edits: &mut Vec<Edit>) -> Result<usize> {
             return Err("duplicate canvas node uid".into());
         }
     }
+
     let mut pending = BTreeMap::new();
     let mut successors = BTreeMap::<&str, Vec<&str>>::new();
     let mut columns = BTreeMap::<&str, usize>::new();
@@ -31,6 +30,7 @@ pub fn reposition(list: Node<'_, '_>, edits: &mut Vec<Edit>) -> Result<usize> {
         if sources.iter().any(|source| !ids.contains_key(source)) {
             return Err("canvas connection references an absent node".into());
         }
+
         pending.insert(*id, sources.len());
         if sources.is_empty() {
             ready.insert(*id);
@@ -39,6 +39,7 @@ pub fn reposition(list: Node<'_, '_>, edits: &mut Vec<Edit>) -> Result<usize> {
             successors.entry(source).or_default().push(id);
         }
     }
+
     let mut visited = 0;
     while let Some(id) = ready.pop_first() {
         visited += 1;
@@ -53,9 +54,11 @@ pub fn reposition(list: Node<'_, '_>, edits: &mut Vec<Edit>) -> Result<usize> {
             }
         }
     }
+
     if visited != nodes.len() {
         return Err("canvas contains a connection cycle".into());
     }
+
     let mut rows = BTreeMap::<usize, usize>::new();
     for (id, node) in ids {
         let column = columns.get(id).copied().unwrap_or(0);
@@ -69,7 +72,8 @@ pub fn reposition(list: Node<'_, '_>, edits: &mut Vec<Edit>) -> Result<usize> {
             let end = node.range().end.checked_sub(node.tag_name().name().len() + 3).ok_or("invalid node end")?;
             end..end
         };
-        edits.push(Edit { range, replacement });
+        edits.push(XmlEdit { range, replacement });
     }
+
     Ok(nodes.len())
 }

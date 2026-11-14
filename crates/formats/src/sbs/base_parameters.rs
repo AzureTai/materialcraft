@@ -13,7 +13,8 @@ pub(super) fn read_base_params(params: Option<XmlNode>, warnings: &mut Warnings)
     let mut base = BaseParameters::default();
     for element in params.into_iter().flat_map(|parameters| children_named(parameters, "parameter")) {
         let Some(parameter) = child_value(element, "name").and_then(BaseParameter::named) else { continue };
-        // SBS stores parent as 1 and input as 2, independently of our enum order.
+
+        // SBS stores parent as 1 and input as 2, independently of our enum order
         let inheritance = match child_value(element, "relativeTo").unwrap_or("2") {
             "0" => ParameterInheritance::Absolute,
             "1" => ParameterInheritance::RelativeToParent,

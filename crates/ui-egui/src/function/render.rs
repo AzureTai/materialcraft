@@ -48,6 +48,7 @@ pub(super) fn paint(app: &mut MaterialCraftApp, editor: &mut FunctionEditor, ui:
                 destination = destination.union(Rect::from_min_size(pos2(frame.rect[0], frame.rect[1] - 32.0), vec2(frame.rect[2], frame.rect[3] + 32.0)));
             }
         }
+
         let camera = crate::graph::GraphCamera::fit(canvas_bounds, destination);
         editor.pan = camera.pan;
         editor.zoom = camera.zoom;

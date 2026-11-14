@@ -20,6 +20,7 @@ fn cook_with_variables(graph: PatternGraph, variables: &BTreeMap<String, Value>)
         resource: &|_| None,
         vars: variables,
     };
+
     (definition.cook)(&context)
 }
 
@@ -85,6 +86,7 @@ fn iterate_preserves_assignments_from_previous_iterations() {
     graph.nodes[1].parameters.insert("patterntype".into(), Value::Int(2));
     graph.nodes[1].parameters.insert("opacity".into(), Value::Function(Box::new(increment)));
     let image = cook(graph).unwrap().remove(0);
+
     assert!(image.data.iter().all(|value| *value == 6.0), "expected 1 + 2 + 3, got {:?}", image.mean());
 }
 
@@ -160,6 +162,7 @@ fn roughness_sample(roughness: f32, depth: usize, blend: i32, color: bool, repea
         resource: &|_| None,
         vars: &BTreeMap::new(),
     };
+
     (definition.cook)(&context)
 }
 
@@ -178,6 +181,7 @@ fn roughness_attenuates_quadrants_by_depth_and_keeps_background() {
                         2 => value.max(0.1),
                         _ => value + 0.1,
                     };
+
                     assert!((pixel[channel] - expected).abs() < 1e-6, "roughness={roughness}, depth={depth}, blend={blend}, channel={channel}: {pixel:?}");
                 }
                 if depth > 0 {
@@ -191,6 +195,7 @@ fn roughness_attenuates_quadrants_by_depth_and_keeps_background() {
 #[test]
 fn repetition_switches_and_dots_do_not_add_roughness_depth() {
     let image = roughness_sample(1.0, 2, 0, false, true).unwrap().remove(0);
+
     assert!((image.get(0, 0, false)[0] - (0.1 + 0.8 / 3.0)).abs() < 1e-6);
     assert!((image.get(15, 15, false)[0] - 0.1).abs() < 1e-6);
 }
@@ -221,7 +226,9 @@ fn a_full_nine_level_quadtree_renders_one_pattern_per_pixel() {
         resource: &|_| None,
         vars: &BTreeMap::new(),
     };
+
     let images = (definition.cook)(&context).unwrap();
+
     assert!(images[0].data.iter().all(|value| (*value - 1.0).abs() < 1e-6));
 }
 
@@ -298,6 +305,7 @@ fn every_visit_draws_its_own_random_numbers() {
     let image = cook(graph).unwrap().remove(0);
 
     let quarters = [image.get(4, 4, false)[0], image.get(12, 4, false)[0], image.get(4, 12, false)[0], image.get(12, 12, false)[0]];
+
     assert!(quarters.windows(2).all(|pair| (pair[0] - pair[1]).abs() > 1e-4), "{quarters:?}");
 }
 
@@ -316,6 +324,7 @@ fn a_pixel_on_the_seam_of_two_patterns_is_drawn_once() {
     let definition = find("fx_map").unwrap();
     let parameters = resolve_params(definition, &BTreeMap::from([("pattern".into(), Value::PatternGraph(Box::new(graph)))]));
     let variables = BTreeMap::new();
+
     // Two pixels a side put every pixel center on the corner of four of the sixteen squares
     let context = CookContext {
         format: materialcraft_core::OutputFormat::F32,

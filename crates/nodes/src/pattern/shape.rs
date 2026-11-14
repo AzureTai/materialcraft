@@ -42,5 +42,6 @@ pub(super) fn coverage(pattern: i32, x: f32, y: f32, variation: f32) -> Result<f
         17 => ((x + 1.0) * 0.5 + variation).fract(),
         _ => return Err(format!("unknown built-in pattern {pattern}")),
     };
+
     Ok(value)
 }

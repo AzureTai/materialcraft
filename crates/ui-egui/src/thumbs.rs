@@ -10,13 +10,15 @@ pub type Previews = Vec<(String, Vec<u8>)>;
 /// Side of node thumbnails and library previews, in pixels
 pub const THUMB: u32 = 96;
 const LIBRARY_PREVIEW_SIZE: u32 = 72;
+const NODE_TEXTURE_TRIM_THRESHOLD: usize = 256;
+const NODE_TEXTURE_IDLE_FRAMES: u64 = 120;
 
 #[derive(Default)]
 pub struct Thumbs {
     /// (cook key, port) → texture and the frame it was last used
     nodes: HashMap<(u64, usize), (TextureHandle, u64)>,
     #[cfg(not(target_arch = "wasm32"))]
-    persistence: Option<preview_cache_settings::Maintenance>,
+    persistence: Option<preview_cache_settings::PreviewCacheMaintenance>,
     clear_epoch: u64,
     graphs: GraphPreviews,
     frame: u64,
@@ -42,7 +44,7 @@ impl Thumbs {
     /// Opt in only for a native app window; offscreen harnesses never use the user's cache.
     #[cfg(not(target_arch = "wasm32"))]
     pub fn enable_persistence(&mut self, prefs: materialcraft_engine::LibraryCachePrefs) {
-        let persistence = preview_cache_settings::Maintenance::new(prefs);
+        let persistence = preview_cache_settings::PreviewCacheMaintenance::new(prefs);
         self.graphs.persistence = Some(persistence.settings.clone());
         self.persistence = Some(persistence);
     }
@@ -54,6 +56,7 @@ impl Thumbs {
         if let Some(persistence) = &self.persistence {
             persistence.settings.update(_prefs.into(), clear);
         }
+
         if clear {
             self.graphs.clear();
         }
@@ -66,23 +69,25 @@ impl Thumbs {
     /// The thumbnail of a node output, uploaded on first use
     pub fn node(&mut self, ctx: &egui::Context, key: u64, port: usize, img: &Image) -> egui::TextureId {
         let frame = self.frame;
-        if let Some((t, f)) = self.nodes.get_mut(&(key, port)) {
-            *f = frame;
-            return t.id();
+        if let Some((texture, last_used_frame)) = self.nodes.get_mut(&(key, port)) {
+            *last_used_frame = frame;
+            return texture.id();
         }
-        let tex = ctx.load_texture(format!("node-{key}-{port}"), color_image(img, THUMB), TextureOptions::LINEAR);
-        let id = tex.id();
-        self.nodes.insert((key, port), (tex, frame));
+
+        let texture = ctx.load_texture(format!("node-{key}-{port}"), color_image(img, THUMB), TextureOptions::LINEAR);
+        let id = texture.id();
+        self.nodes.insert((key, port), (texture, frame));
         id
     }
 
     /// Once per frame: forget thumbnails unused for a few seconds; collect library previews
     pub fn tick(&mut self, ctx: &egui::Context, library: &std::sync::Arc<materialcraft_engine::NodeLibrary>, foreground_busy: bool) -> Option<String> {
         self.frame += 1;
-        let f = self.frame;
-        if self.nodes.len() > 256 {
-            self.nodes.retain(|_, (_, used)| f - *used < 120);
+        let frame = self.frame;
+        if self.nodes.len() > NODE_TEXTURE_TRIM_THRESHOLD {
+            self.nodes.retain(|_, (_, used)| frame - *used < NODE_TEXTURE_IDLE_FRAMES);
         }
+
         #[cfg(not(target_arch = "wasm32"))]
         let error = self.persistence.as_mut().and_then(|persistence| persistence.tick(ctx));
         #[cfg(target_arch = "wasm32")]
@@ -109,41 +114,47 @@ impl Thumbs {
     }
 }
 
-/// Sample inputs for previews: a wave height, a colored version and its normal map
-fn sample_inputs() -> (Image, Image, Image) {
-    let gray = Image::generate_uv(LIBRARY_PREVIEW_SIZE, LIBRARY_PREVIEW_SIZE, Kind::Gray, |u, v| {
+/// Wave height used by native node previews
+fn sample_height() -> Image {
+    Image::generate_uv(LIBRARY_PREVIEW_SIZE, LIBRARY_PREVIEW_SIZE, Kind::Gray, |u, v| {
         [0.5 + 0.25 * (u * std::f32::consts::TAU).sin() + 0.25 * (v * std::f32::consts::TAU).cos(), 0.0, 0.0, 0.0]
-    });
-    let color = gray.map(Kind::Color, |p| [0.15 + 0.7 * p[0], 0.35 + 0.3 * p[0], 0.8 - 0.5 * p[0], 1.0]);
-    let normal = materialcraft_engine::nodes::atomic::height_to_normal(&gray, 4.0, false, true, false);
-    (gray, color, normal)
+    })
 }
 
 fn render_native(id: &str) -> Option<Vec<u8>> {
+    // Strong relief keeps normal inputs legible in small previews
+    const NORMAL_INTENSITY: f32 = 4.0;
+
     let def = catalog().iter().find(|def| def.id == id && def.id != "graph_instance")?;
-    let (gray, color, normal) = sample_inputs();
-    let no_res = |_: &str| None;
-    let vars = BTreeMap::new();
+    let gray = (!def.inputs.is_empty()).then(sample_height);
+    let mut color = None;
+    let mut normal = None;
+    let no_resource = |_: &str| None;
+    let variables = BTreeMap::new();
     let inputs: Vec<Option<Image>> = def
         .inputs
         .iter()
         .enumerate()
-        .map(|(i, p)| {
-            // Masks and secondary inputs stay empty so the main effect shows.
-            if i > 0 && !matches!(def.id, "blend" | "height_blend" | "normal_blend" | "rgba_merge") {
+        .map(|(index, port)| {
+            // Masks and secondary inputs stay empty so the main effect shows
+            if index > 0 && !matches!(def.id, "blend" | "height_blend" | "normal_blend" | "rgba_merge") {
                 return None;
             }
-            Some(if p.id.contains("normal") || def.category.contains("Normal") && p.kind == materialcraft_engine::nodes::PortKind::Color {
-                normal.clone()
-            } else if p.kind == materialcraft_engine::nodes::PortKind::Color {
-                color.clone()
-            } else if i == 1 {
+
+            let gray = gray.as_ref()?;
+            Some(if port.id.contains("normal") || def.category.contains("Normal") && port.kind == materialcraft_engine::nodes::PortKind::Color {
+                normal.get_or_insert_with(|| materialcraft_engine::nodes::atomic::height_to_normal(gray, NORMAL_INTENSITY, false, true, false)).clone()
+            } else if port.kind == materialcraft_engine::nodes::PortKind::Color {
+                // A blue-to-sand palette distinguishes color inputs from the grayscale height
+                color.get_or_insert_with(|| gray.map(Kind::Color, |pixel| [0.15 + 0.7 * pixel[0], 0.35 + 0.3 * pixel[0], 0.8 - 0.5 * pixel[0], 1.0])).clone()
+            } else if index == 1 {
                 gray.map(Kind::Gray, |v| [1.0 - v[0], 0.0, 0.0, 0.0])
             } else {
                 gray.clone()
             })
         })
         .collect();
+
     let params = resolve_params(def, &BTreeMap::new());
     let ctx = CookContext {
         format: materialcraft_engine::core::OutputFormat::U16,
@@ -153,9 +164,10 @@ fn render_native(id: &str) -> Option<Vec<u8>> {
         tile: true,
         inputs: &inputs,
         params: &params,
-        resource: &no_res,
-        vars: &vars,
+        resource: &no_resource,
+        vars: &variables,
     };
-    let imgs = (def.cook)(&ctx).ok()?;
-    Some(imgs.first()?.resize(LIBRARY_PREVIEW_SIZE, LIBRARY_PREVIEW_SIZE, true).to_rgba8_display())
+
+    let images = (def.cook)(&ctx).ok()?;
+    Some(images.first()?.resize(LIBRARY_PREVIEW_SIZE, LIBRARY_PREVIEW_SIZE, true).to_rgba8_display())
 }

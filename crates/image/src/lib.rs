@@ -76,6 +76,7 @@ impl Image {
             Kind::Gray => vec![v[0]; n],
             Kind::Color => v.iter().copied().cycle().take(n * 4).collect(),
         };
+
         Image { w, h, kind, integer_sampling: false, data: Arc::new(data) }
     }
 
@@ -163,15 +164,17 @@ impl Image {
         if !fx.is_finite() || !fy.is_finite() {
             return [0.0, 0.0, 0.0, 1.0];
         }
-        // Huge but finite coordinates would saturate the i64 cast and overflow at `+ 1`.
+
+        // Huge but finite coordinates would saturate the i64 cast and overflow at `+ 1`
         let (fx, fy) = (fx.clamp(-1.0e9, 1.0e9), fy.clamp(-1.0e9, 1.0e9));
         let (x0, y0) = (fx.floor(), fy.floor());
         let (mut tx, mut ty) = (fx - x0, fy - y0);
         if fixed_weights {
-            // Function texture reads use eight fractional bits for filter weights.
+            // Function texture reads use eight fractional bits for filter weights
             tx = (tx * 256.0).round() / 256.0;
             ty = (ty * 256.0).round() / 256.0;
         }
+
         let (x0, y0) = (x0 as i64, y0 as i64);
         let a = self.get_axes(x0, y0, tiling);
         let b = self.get_axes(x0 + 1, y0, tiling);
@@ -183,6 +186,7 @@ impl Image {
             let bot = c[k] + (d[k] - c[k]) * tx;
             o[k] = top + (bot - top) * ty;
         }
+
         o
     }
 
@@ -200,7 +204,7 @@ impl Image {
     pub fn sample_stored(&self, u: f32, v: f32, tile: bool) -> [f32; 4] {
         let pixel = self.sample_filtered(u, v, [tile; 2], true);
         if self.integer_sampling {
-            // Eight-bit sources also retain sixteen bits after interpolation.
+            // Eight-bit sources also retain sixteen bits after interpolation
             pixel.map(|value| (value.clamp(0.0, 1.0) * 65535.0).round() / 65535.0)
         } else {
             pixel
@@ -221,6 +225,7 @@ impl Image {
         if !x.is_finite() || !y.is_finite() {
             return [0.0, 0.0, 0.0, 1.0];
         }
+
         self.get_axes(x as i64, y as i64, tiling)
     }
 
@@ -258,6 +263,7 @@ impl Image {
         if w == self.w && h == self.h {
             return self.clone();
         }
+
         if w <= self.w && h <= self.h && self.w.is_multiple_of(w) && self.h.is_multiple_of(h) {
             let (fx, fy) = ((self.w / w) as i64, (self.h / h) as i64);
             let inv = 1.0 / (fx * fy) as f32;
@@ -271,9 +277,11 @@ impl Image {
                         }
                     }
                 }
+
                 s.map(|v| v * inv)
             });
         }
+
         Image::generate_uv(w, h, self.kind, |u, v| self.sample(u, v, tile))
     }
 
@@ -310,10 +318,12 @@ impl Image {
                 s[k] += *v as f64;
             }
         }
+
         if c == 1 {
             let m = (s[0] / n) as f32;
             return [m, m, m, 1.0];
         }
+
         s.map(|v| (v / n) as f32)
     }
 
@@ -398,9 +408,11 @@ mod tests {
     #[test]
     fn sample_wraps_and_clamps() {
         let img = Image::gray(4, 1, |x, _| x as f32);
+
         assert_eq!(img.get(-1, 0, true)[0], 3.0);
         assert_eq!(img.get(-1, 0, false)[0], 0.0);
-        // Halfway between the last and the (wrapped) first pixel.
+
+        // Halfway between the last and the (wrapped) first pixel
         assert!((img.sample(1.0, 0.5, true)[0] - 1.5).abs() < 1e-5);
     }
 

@@ -32,7 +32,9 @@ fn divider(harness: &Harness<'static, MaterialCraftApp>) -> Pos2 {
 #[test]
 fn the_library_divider_drags_the_tree_narrower_and_a_double_click_resets_it() {
     let mut harness = harness(MaterialCraftApp::headless(materialcraft_engine::new_session(), UiState::default()));
+
     assert_eq!(harness.state().ui.library_tree_width, 0.0, "the tree starts at its automatic width");
+
     let start = divider(&harness);
 
     harness.event(Event::PointerMoved(start));
@@ -46,8 +48,11 @@ fn the_library_divider_drags_the_tree_narrower_and_a_double_click_resets_it() {
     harness.run_steps(3);
 
     let dragged = harness.state().ui.library_tree_width;
+
     assert!(dragged > 0.0, "a drag chooses a width");
+
     let moved = start.x - divider(&harness).x;
+
     assert!((40.0..=62.0).contains(&moved), "the divider follows the pointer, moved {moved}");
 
     let at = divider(&harness);
@@ -57,6 +62,7 @@ fn the_library_divider_drags_the_tree_narrower_and_a_double_click_resets_it() {
         press(&mut harness, at, pressed);
     }
     harness.run_steps(3);
+
     assert_eq!(harness.state().ui.library_tree_width, 0.0, "a double click returns to the automatic width");
     assert!((divider(&harness).x - start.x).abs() < 1.0);
 }
@@ -72,10 +78,12 @@ fn a_constant_node_fits_a_field_for_each_component() {
     let card = harness.get(By::new().role(Role::Button).label("Float4")).rect();
     for component in ["X", "Y", "Z", "W"] {
         let field = harness.get(By::new().role(Role::SpinButton).label(component)).rect();
+
         assert!(card.contains_rect(field), "{component} lies inside its node: {field:?} in {card:?}");
     }
 
     let operator = harness.get(By::new().role(Role::Button).label("Add")).rect();
+
     assert!(operator.height() < card.height(), "an operator is a compact node");
     assert!(operator.height() < operator.width(), "an operator has no empty preview square");
 }

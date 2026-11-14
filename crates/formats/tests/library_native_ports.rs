@@ -13,12 +13,17 @@ fn fx_map_render_and_tiling_regions_keep_native_names_and_functions() {
     let mut read = read_sbs(xml, "regions.sbs", &|_| None).unwrap();
     for _ in 0..2 {
         assert!(read.warnings.is_empty(), "{:?}", read.warnings);
+
         let node = &read.pkg.graphs[0].nodes[0];
+
         assert_eq!(node.params["tiling_region"], Value::Float4([0.0, 2.0, 0.0, 1.0]));
         assert_eq!(node.functions["render_region"].nodes[0].value, Some(Value::Float4([0.0, 0.5, 0.0, 1.0])));
+
         let bytes = write_sbs(&read.pkg).unwrap();
         let saved = std::str::from_utf8(&bytes).unwrap();
+
         assert!(saved.contains("<name v=\"renderroi\"/>") && saved.contains("<name v=\"tilingroi\"/>"));
+
         read = read_sbs(&bytes, "saved.sbs", &|_| None).unwrap();
     }
 }
@@ -35,15 +40,22 @@ fn native_dynamic_gradient_coordinates_and_orientation_survive_saving() {
     let mut read = read_sbs(xml, "gradient.sbs", &|_| None).unwrap();
     for _ in 0..2 {
         assert!(read.warnings.is_empty(), "{:?}", read.warnings);
+
         let node = &read.pkg.graphs[0].nodes[0];
+
         assert_eq!(node.params["orientation"], materialcraft_core::Value::Enum(1));
         assert_eq!(node.functions["position"].nodes[0].value, Some(materialcraft_core::Value::Float(0.25)));
+
         let bytes = write_sbs(&read.pkg).unwrap();
         let saved = std::str::from_utf8(&bytes).unwrap();
+
         assert!(saved.contains("<name v=\"coordinate\"/>") && saved.contains("<name v=\"uvselector\"/>"));
+
         read = read_sbs(&bytes, "saved.sbs", &|_| None).unwrap();
     }
+
     let legacy = std::str::from_utf8(xml).unwrap().replace("coordinate", "position").replace("uvselector", "orientation");
+
     assert!(read_sbs(legacy.as_bytes(), "legacy.sbs", &|_| None).unwrap().warnings.is_empty());
 }
 
@@ -53,13 +65,18 @@ fn linked_resources_retain_the_successful_path_but_embedded_resources_do_not_lin
         <filepath v="resources/example.ttf"/><source><externalcopy><filename v="absent.ttf"/></externalcopy></source>
         </resource></content></package>"#;
     let read = read_sbs(xml, "example.sbs", &|path| (path == "resources/example.ttf").then(|| vec![1, 2, 3])).unwrap();
+
     assert!(read.warnings.is_empty(), "{:?}", read.warnings);
     assert_eq!(read.pkg.resources[0].source, "resources/example.ttf");
+
     let saved = write_sbs(&read.pkg).unwrap();
     let saved = String::from_utf8(saved).unwrap();
+
     assert!(saved.contains("<type v=\"font\"/>"));
+
     let saved = saved.replace("<filepath v=\"\"/>", "<filepath v=\"fonts/cour.ttf\"/>");
     let embedded = read_sbs(saved.as_bytes(), "saved.sbs", &|_| None).unwrap();
+
     assert!(embedded.warnings.is_empty(), "{:?}", embedded.warnings);
     assert!(embedded.pkg.resources[0].source.is_empty());
     assert_eq!(embedded.pkg.resources[0].bytes.as_slice(), &[1, 2, 3]);
@@ -78,20 +95,29 @@ fn native_pattern_inputs_and_hsl_luminosity_round_trip() {
         </parameters></compFilter></compImplementation></compNode>
         </compNodes></graph></content></package>"#;
     let read = read_sbs(xml.as_bytes(), "example.sbs", &|_| None).unwrap();
+
     assert!(read.warnings.is_empty(), "{:?}", read.warnings);
+
     let graph = &read.pkg.graphs[0];
+
     assert_eq!(graph.connections.len(), 1);
     assert_eq!(graph.connections[0].to_port, "pattern2");
     assert_eq!(graph.nodes.iter().find(|node| node.def == "hsl").unwrap().params["lightness"], materialcraft_core::Value::Float(0.75));
+
     let saved = write_sbs(&read.pkg).unwrap();
+
     assert!(std::str::from_utf8(&saved).unwrap().contains("inputpattern:2"));
     assert!(std::str::from_utf8(&saved).unwrap().contains("<name v=\"luminosity\"/>"));
     assert!(!std::str::from_utf8(&saved).unwrap().contains("<name v=\"luminance\"/>"));
+
     let reopened = read_sbs(&saved, "saved.sbs", &|_| None).unwrap();
+
     assert!(reopened.warnings.is_empty(), "{:?}", reopened.warnings);
     assert_eq!(reopened.pkg.graphs[0].connections.len(), 1);
+
     let legacy = xml.replace("luminosity", "luminance").replace("inputpattern:2", "input:2");
     let legacy = read_sbs(legacy.as_bytes(), "legacy.sbs", &|_| None).unwrap();
+
     assert!(legacy.warnings.is_empty(), "{:?}", legacy.warnings);
     assert_eq!(legacy.pkg.graphs[0].connections.len(), 1);
     assert_eq!(legacy.pkg.graphs[0].nodes.iter().find(|node| node.def == "hsl").unwrap().params["lightness"], materialcraft_core::Value::Float(0.75));

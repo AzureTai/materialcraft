@@ -38,9 +38,11 @@ pub fn node_label(n: &Node) -> String {
     if !n.label.is_empty() {
         return n.label.clone();
     }
+
     if let Some(instance) = &n.instance {
         return if instance.label.is_empty() { instance.graph.clone() } else { instance.label.clone() };
     }
+
     let label = match n.def.as_str() {
         "graph_instance" => match n.params.get("graph") {
             Some(Value::Text(g)) => g.clone(),
@@ -55,6 +57,7 @@ pub fn node_label(n: &Node) -> String {
             d.to_string()
         }
     };
+
     label.split(['_', ' ']).filter(|word| !word.is_empty()).fold(String::with_capacity(label.len()), |mut display, word| {
         if !display.is_empty() {
             display.push(' ');
@@ -64,6 +67,7 @@ pub fn node_label(n: &Node) -> String {
             display.extend(first.to_uppercase());
             display.extend(letters);
         }
+
         display
     })
 }

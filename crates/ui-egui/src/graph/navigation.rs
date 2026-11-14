@@ -49,6 +49,7 @@ pub(super) fn frame(app: &mut MaterialCraftApp, view: Rect, only_selection: bool
             r = r.union(Rect::from_min_size(pos2(f.rect[0], f.rect[1] - 32.0), vec2(f.rect[2], f.rect[3] + 32.0)));
         }
     }
+
     app.ui.graph_camera = super::GraphCamera::fit(view, r).state();
 }
 

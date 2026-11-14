@@ -2,6 +2,9 @@ use std::collections::{HashMap, HashSet};
 
 use materialcraft_image::Image;
 
+const DEFAULT_LIMIT_BYTES: usize = 128 << 20;
+const MAX_ENTRIES: usize = 128;
+
 /// Decoded bitmaps are expendable: resources and active cooks own their source and output data.
 pub(crate) struct DecodedImages {
     images: HashMap<(u64, bool), (Image, u64)>,
@@ -12,7 +15,7 @@ pub(crate) struct DecodedImages {
 
 impl Default for DecodedImages {
     fn default() -> Self {
-        Self::new(128 << 20)
+        Self::new(DEFAULT_LIMIT_BYTES)
     }
 }
 
@@ -33,17 +36,21 @@ impl DecodedImages {
         if let Some((old, _)) = self.images.remove(&key) {
             self.bytes = self.bytes.saturating_sub(bytes(&old));
         }
+
         let size = bytes(&image);
-        // A large decode can serve its current cook without occupying the persistent cache.
+
+        // A large decode can serve its current cook without occupying the persistent cache
         if size == 0 || size > self.limit {
             return;
         }
-        while self.bytes > self.limit - size || self.images.len() >= 128 {
+
+        while self.bytes > self.limit - size || self.images.len() >= MAX_ENTRIES {
             let Some(key) = self.images.iter().min_by_key(|(_, (_, used))| *used).map(|(key, _)| *key) else { break };
             if let Some((old, _)) = self.images.remove(&key) {
                 self.bytes = self.bytes.saturating_sub(bytes(&old));
             }
         }
+
         self.tick = self.tick.saturating_add(1);
         self.images.insert(key, (image, self.tick));
         self.bytes += size;
@@ -78,12 +85,16 @@ mod tests {
         cache.insert((0, false), image);
         for key in 1..1_000 {
             cache.insert((key, key % 2 == 0), Image::filled(4, 4, Kind::Gray, [0.5; 4]));
+
             assert!(cache.bytes <= 128);
             assert!(cache.images.len() <= 2);
         }
+
         assert!(weak.upgrade().is_none());
         assert!(cache.get(&(999, false)).is_some());
+
         cache.retain_resources(&HashSet::new());
+
         assert_eq!(cache.bytes, 0);
         assert!(cache.images.is_empty());
     }
@@ -94,15 +105,22 @@ mod tests {
         for key in 0..2 {
             cache.insert((key, false), Image::filled(4, 4, Kind::Gray, [0.5; 4]));
         }
+
         assert!(cache.get(&(0, false)).is_some());
+
         cache.insert((2, false), Image::filled(4, 4, Kind::Gray, [0.5; 4]));
+
         assert!(cache.get(&(1, false)).is_none());
+
         let large = Image::filled(16, 16, Kind::Gray, [0.5; 4]);
         let weak = Arc::downgrade(&large.data);
         cache.insert((3, false), large);
+
         assert!(weak.upgrade().is_none());
         assert!(cache.get(&(0, false)).is_some());
+
         cache.clear();
+
         assert_eq!(cache.bytes, 0);
     }
 }

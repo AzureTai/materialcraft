@@ -63,9 +63,13 @@ fn dynamic_roughness_survives_native_saving_and_invalidates_the_cook_cache() {
 
     for _ in 0..2 {
         let saved = write_sbs(&package).unwrap();
+
         assert!(std::str::from_utf8(&saved).unwrap().contains("<name v=\"hurst\"/>"));
+
         let loaded = read_sbs(&saved, "roughness.sbs", &|_| None).unwrap();
+
         assert!(loaded.warnings.is_empty(), "{:?}", loaded.warnings);
+
         package = loaded.pkg;
         let owner = package.graphs[0].nodes[0].id;
         let cache = std::sync::Mutex::new(materialcraft_engine::eval::Cache::default());
@@ -73,10 +77,13 @@ fn dynamic_roughness_survives_native_saving_and_invalidates_the_cook_cache() {
         for (time, expected) in [(0.0, 1.0), (0.5, 1.0 / 3.0), (1.0, 0.5), (2.0, 2.0 / 3.0)] {
             options.environment.time_seconds = time;
             let result = materialcraft_engine::eval::cook(&package, 0, &options, &cache);
+
             assert_eq!(result.nodes[&owner].error, None);
             assert!(!result.nodes[&owner].cached);
             assert!((result.image(owner, 0).unwrap().get(0, 0, false)[0] - expected).abs() < 1e-6);
+
             let cached = materialcraft_engine::eval::cook(&package, 0, &options, &cache);
+
             assert!(cached.nodes[&owner].cached);
             assert_eq!(cached.image(owner, 0).unwrap().data, result.image(owner, 0).unwrap().data);
         }

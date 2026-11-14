@@ -31,21 +31,31 @@ fn key(library: &NodeLibrary) -> Option<[u8; 32]> {
 #[test]
 fn keys_survive_reloading_and_track_nested_content_not_unrelated_packages() {
     let original = library();
+
     assert_eq!(key(&original), key(&library()));
+
     let mut changed = library();
     changed.packages.insert("unrelated".into(), Arc::new(Package::new("unused")));
+
     assert_eq!(key(&original), key(&changed));
+
     Arc::make_mut(changed.packages.get_mut("child").unwrap()).graphs[0].seed += 1;
+
     assert_ne!(key(&original), key(&changed));
+
     let mut changed = library();
     Arc::make_mut(changed.packages.get_mut("child").unwrap()).resources[0].bytes = ResourceBytes::new(vec![1, 2, 4]);
+
     assert_ne!(key(&original), key(&changed), "same-size replacement must invalidate the preview");
 }
 
 #[test]
 fn incomplete_and_cancelled_keys_are_not_persisted() {
     let mut library = library();
+
     assert!(library.preview_fingerprint("root", "main", &AtomicBool::new(true)).is_none());
+
     library.packages.remove("child");
+
     assert!(key(&library).is_none());
 }

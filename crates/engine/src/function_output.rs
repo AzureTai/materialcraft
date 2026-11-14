@@ -39,6 +39,7 @@ pub fn validate(document: &Graph, target: &FunctionGraphTarget, function: &Funct
     if !materialcraft_nodes::function::can_be_output(&node.op) {
         return Err("Dot nodes cannot be function outputs".into());
     }
+
     let Some(expected) = expected_type(document, target) else { return Ok(()) };
 
     let types = materialcraft_nodes::function::node_types(function)?;
@@ -47,12 +48,15 @@ pub fn validate(document: &Graph, target: &FunctionGraphTarget, function: &Funct
         FunctionGraphTarget::Dynamic { node, parameter } => {
             document.node(*node).is_ok_and(|node| materialcraft_nodes::accepts_scalar_function(&node.def, parameter))
         }
-        // Quadrant luminosity functions may return one channel or an RGBA value.
+
+        // Quadrant luminosity functions may return one channel or an RGBA value
         FunctionGraphTarget::Pattern { parameter, .. } => parameter == "opacity",
         _ => false,
     };
+
     if actual != expected && !(scalar_channel && expected == ValueType::Float4 && actual == ValueType::Float) {
         return Err(format!("Output node returns {}; expected {}", actual.label(), expected.label()));
     }
+
     Ok(())
 }

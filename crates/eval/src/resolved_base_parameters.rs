@@ -27,12 +27,12 @@ impl ResolvedBaseParameters {
 
     pub(crate) fn resolve(base: &BaseParameters, input: Option<Self>, parent: Self) -> Self {
         let size_base = BaseParameter::OutputSize.inheritance(base).resolve([1; 2], input.map(|base| base.size), parent.size);
-        // Internal reductions and lookup images can reach one texel. Applying
-        // the graph editor's 16-pixel minimum here breaks their size functions.
+
+        // Internal images may be one texel; the editor minimum would break size functions
         let size = std::array::from_fn(|axis| (f64::from(size_base[axis]) * 2f64.powi(base.size[axis].clamp(-12, 13))).round().clamp(1.0, 8192.0) as u32);
-        // Images carry size and format, but do not carry a random stream.
-        // Both relative seed modes use the containing graph's seed; chaining
-        // image filters must not accumulate the seeds of upstream nodes.
+
+        // Images carry size and format, but do not carry a random stream
+        // Relative seed modes use the graph seed without accumulating upstream seeds
         let inherited_seed = base.seed_mode.resolve(0, None, parent.seed);
         let inherited_pixel_size = base.pixel_size_mode.resolve([1.0; 2], input.map(|base| base.pixel_size), parent.pixel_size);
         Self {
@@ -96,6 +96,7 @@ pub(crate) fn evaluate(
             } else {
                 resolved.size
             };
+
             let value = crate::parameter_function::evaluate(function, parameter.value_type(), variables.to_mut(), resolved.seed, size, false)
                 .map_err(|error| format!("function of `{}`: {error}", parameter.identifier()))?;
             parameter.set_value(&mut evaluated, &value)?;

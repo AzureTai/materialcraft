@@ -11,6 +11,7 @@ impl Region {
         if value.iter().any(|value| !value.is_finite()) || span.iter().any(|value| !value.is_finite() || value.abs() < f32::EPSILON) {
             return Err("pattern regions must be finite with nonzero width and height".into());
         }
+
         Ok(Self { start, span })
     }
 
@@ -39,12 +40,15 @@ impl Region {
             let end = self.start[axis] + self.span[axis];
             let first = ((self.start[axis].min(end) - center[axis] - radius[axis]) / period[axis]).ceil();
             let last = ((self.start[axis].max(end) - center[axis] + radius[axis]) / period[axis]).floor();
-            // A tiny period or huge pattern cannot create unbounded work, even outside the image.
+
+            // A tiny period or huge pattern cannot create unbounded work, even outside the image
             if !first.is_finite() || !last.is_finite() || first < i32::MIN as f32 || last >= i32::MAX as f32 {
                 return Err("pattern repetition exceeds its coordinate budget".into());
             }
+
             result[axis] = [first as i32, last as i32];
         }
+
         Ok(result)
     }
 }

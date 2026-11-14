@@ -140,6 +140,7 @@ impl NodeLibrary {
             if !seen.insert(uri) {
                 continue;
             }
+
             let bytes = match library::read(uri) {
                 Ok(bytes) => bytes,
                 Err(error) => {
@@ -148,8 +149,16 @@ impl NodeLibrary {
                 }
             };
 
-            // A layout's frames name library categories; anything else is a package of graphs
-            let placements = match materialcraft_formats::sbs::read_layout(&bytes, uri) {
+            let document = match materialcraft_formats::sbs::SbsDocument::parse(&bytes) {
+                Ok(document) => document,
+                Err(error) => {
+                    out.warnings.push(format!("Library package {uri}: {error}"));
+                    continue;
+                }
+            };
+
+            // Reuse the XML document when the frames do not classify this package as a layout
+            let placements = match document.layout(uri) {
                 Ok(frames) => placements(&frames),
                 Err(error) => {
                     out.warnings.push(format!("Library package {uri}: {error}"));
@@ -162,7 +171,7 @@ impl NodeLibrary {
                 continue;
             }
 
-            match materialcraft_formats::sbs::read_sbs(&bytes, uri, &crate::file_cmds::linked_files(uri)) {
+            match document.read(uri, &crate::file_cmds::linked_files(uri)) {
                 Ok(mut read) => {
                     crate::linked_files::normalize_references(&mut read.pkg, uri);
                     out.warnings.extend(read.warnings);
@@ -171,11 +180,26 @@ impl NodeLibrary {
                 Err(error) => out.warnings.push(format!("Library package {uri}: {error}")),
             }
         }
+
         let mut registry = Package::new("Library");
         registry.dependencies = std::mem::take(&mut out.packages);
         let pending = registry.dependencies.keys().cloned().collect();
         out.warnings.extend(crate::linked_files::load_references(&mut registry, pending));
         out.packages = registry.dependencies;
+
+        // Package identities stay distinct while equal immutable resource payloads share storage
+        let mut buffers = BTreeMap::<u64, materialcraft_core::ResourceBytes>::new();
+        for package in out.packages.values_mut().filter_map(Arc::get_mut) {
+            for resource in &mut package.resources {
+                match buffers.get(&resource.bytes.content_hash()) {
+                    Some(bytes) if bytes == &resource.bytes => resource.bytes = bytes.clone(),
+                    _ => {
+                        buffers.insert(resource.bytes.content_hash(), resource.bytes.clone());
+                    }
+                }
+            }
+        }
+
         out
     }
 
@@ -194,6 +218,7 @@ impl NodeLibrary {
             {
                 return;
             }
+
             // The same node may sit in two categories; the id keeps each placement apart
             if !ids.insert(entry.id.clone()) {
                 entry.id = format!("{}@{}", entry.id, entry.category);
@@ -208,6 +233,7 @@ impl NodeLibrary {
             let id = format!("item:{}", category.to_ascii_lowercase());
             push(&mut out, entry(id, category, "Graph items", "", item, None));
         }
+
         push(&mut out, entry("node:dot".into(), "Dot node", "Graph items", "A reroute point for wires.", LibraryItem::Node { def: "dot".into() }, None));
 
         for placement in &self.placements {
@@ -233,6 +259,7 @@ impl NodeLibrary {
                 if matches!(definition.id, "input_color" | "input_grayscale" | "input_value" | "output") { "Atomic nodes" } else { definition.category };
             push(&mut out, entry(id, definition.label, category, definition.description, item, None));
         }
+
         for operation in materialcraft_nodes::function::FUNCTIONS {
             let id = format!("function:{}", operation.id);
             if operation.id == "passthrough" || listed.contains(&id) {
@@ -242,6 +269,7 @@ impl NodeLibrary {
             let category = category_path("Function nodes", Some(operation.category));
             push(&mut out, entry(id, operation.label, &category, "", LibraryItem::Operation { operation: operation.id.into() }, None));
         }
+
         for kind in PatternNodeKind::ALL.into_iter().filter(|kind| *kind != PatternNodeKind::Dot) {
             let id = format!("pattern:{}", kind.native_id());
             push(&mut out, entry(id, kind.label(), "FxMap nodes", "", LibraryItem::Pattern { kind }, None));
@@ -278,6 +306,7 @@ impl NodeLibrary {
                 }
             }
         }
+
         out
     }
 }
@@ -401,6 +430,7 @@ fn library_category(graph: &materialcraft_core::Graph) -> Option<String> {
     if let Some(category) = named(GRAPH_CATEGORIES, graph.sbs_path().rsplit('/').next().unwrap_or_default()) {
         return Some(category);
     }
+
     if let Some(category) = tags().find_map(|tag| named(TAG_CATEGORIES, tag)) {
         return Some(category);
     }
@@ -433,6 +463,7 @@ fn function_categories(graph: &materialcraft_core::Graph, helpers_hidden: bool) 
             }
         }
     }
+
     if categories.is_empty() {
         let path = graph.sbs_path();
         match library_category(graph) {
@@ -441,6 +472,7 @@ fn function_categories(graph: &materialcraft_core::Graph, helpers_hidden: bool) 
             None => categories.push(function_category(&path)),
         }
     }
+
     categories
 }
 

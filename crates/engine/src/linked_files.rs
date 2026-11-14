@@ -22,17 +22,21 @@ impl crate::Session {
         for document in self.documents.values_mut() {
             document.pkg.dependencies.remove(path);
         }
+
         #[cfg(not(target_arch = "wasm32"))]
         {
             let mut package = self.pkg.clone();
+
             // Include inactive dependents so closing a source also refreshes their references
             package.graphs.extend(self.documents.values().flat_map(|document| document.pkg.graphs.iter().cloned()));
             package.dependencies = self.linked_sources.clone();
             for warning in load(&mut package) {
                 self.warn(warning);
             }
+
             self.linked_sources.extend(package.dependencies);
         }
+
         self.refresh_links_from(std::collections::BTreeSet::from([path.to_string()]));
     }
 }
@@ -68,6 +72,7 @@ pub(crate) fn load_references(package: &mut Package, mut pending: Vec<String>) -
                 warnings.extend(read.warnings);
                 return Ok(read.pkg);
             }
+
             #[cfg(target_arch = "wasm32")]
             return Err("external file is unavailable in the browser".into());
             #[cfg(not(target_arch = "wasm32"))]
@@ -87,5 +92,6 @@ pub(crate) fn load_references(package: &mut Package, mut pending: Vec<String>) -
             Err(error) => warnings.push(format!("Could not resolve {path}: {error}")),
         }
     }
+
     warnings
 }

@@ -57,18 +57,22 @@ mod tests {
     fn preferences_persist_and_default_when_missing() {
         // Missing preferences use their defaults
         let old: Prefs = serde_json::from_value(serde_json::json!({"uiScale": 1.25})).unwrap();
+
         assert_eq!(old.camera, CameraPrefs::default());
         assert_eq!(old.ui_scale, 1.25);
         assert!(old.snap_to_grid);
         assert_eq!(old.history, HistoryPrefs::default());
         assert_eq!(old.library_cache, LibraryCachePrefs::default());
+
         let p = Prefs {
             camera: CameraPrefs { pan_limit: 8.0, pan_speed: 0.5 },
             history: HistoryPrefs { undo_limit: 500 },
             library_cache: LibraryCachePrefs { disk_mib: 512, max_previews: 12000 },
             ..Prefs::default()
         };
+
         let v = serde_json::to_value(&p).unwrap();
+
         assert_eq!(v["camera"], serde_json::json!({"panLimit": 8.0, "panSpeed": 0.5}));
         assert_eq!(v["history"]["undoLimit"], 500);
         assert_eq!(v["libraryCache"], serde_json::json!({"diskMib": 512, "maxPreviews": 12000}));

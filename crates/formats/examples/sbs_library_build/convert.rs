@@ -1,15 +1,6 @@
-use super::{
-    Result, layout, resources,
-    xml::{self, Edit},
-};
+use super::{Result, converted_package::ConvertedPackage, layout, resources, xml, xml_edit::XmlEdit};
 use roxmltree::Node;
 use std::collections::{BTreeMap, BTreeSet};
-
-pub struct Converted {
-    pub xml: String,
-    pub resources: Vec<&'static str>,
-    pub report: serde_json::Value,
-}
 
 fn presentation(node: Node<'_, '_>) -> bool {
     matches!(node.tag_name().name(), "GUILayout" | "GUIObjects" | "GUIName" | "desc")
@@ -29,12 +20,14 @@ pub fn semantics(document: &roxmltree::Document<'_>) -> String {
         if node.ancestors().any(|n| presentation(n) || replaced_resource_field(n)) {
             continue;
         }
+
         if node.has_tag_name("fileUID")
             || (matches!(node.tag_name().name(), "formatVersion" | "updaterVersion") && node.parent().is_some_and(|p| p.has_tag_name("package")))
             || (node.has_tag_name("filename") && node.parent().is_some_and(|p| p.has_tag_name("dependency")))
         {
             continue;
         }
+
         if node.is_element() && !node.has_tag_name("attributes") {
             {
                 result.push_str(&node.ancestors().filter(|n| !n.has_tag_name("attributes")).count().to_string());
@@ -53,6 +46,7 @@ pub fn semantics(document: &roxmltree::Document<'_>) -> String {
             result.push_str(node.text().unwrap_or(""));
         }
     }
+
     result
 }
 
@@ -95,20 +89,22 @@ fn attributes(owner: Node<'_, '_>, text: &str, description: &str) -> Result<Stri
     Ok(output)
 }
 
-pub fn package(text: &str, name: &str, identities: &BTreeMap<String, String>) -> Result<Converted> {
+pub fn package(text: &str, name: &str, identities: &BTreeMap<String, String>) -> Result<ConvertedPackage> {
     let document = xml::parse(text)?;
     let root = document.root_element();
     if !root.has_tag_name("package") {
         return Err("expected a native SBS package".into());
     }
+
     let before = semantics(&document);
     let mut edits = Vec::new();
     for tag in ["formatVersion", "updaterVersion"] {
         if xml::child(root, tag).is_none() {
             let offset = root.first_element_child().ok_or("package has no content")?.range().start;
-            edits.push(Edit { range: offset..offset, replacement: xml::leaf(tag, env!("CARGO_PKG_VERSION")) });
+            edits.push(XmlEdit { range: offset..offset, replacement: xml::leaf(tag, env!("CARGO_PKG_VERSION")) });
         }
     }
+
     let mut resource_keys = Vec::new();
     let mut graphs = 0;
     let mut functions = 0;
@@ -119,6 +115,7 @@ pub fn package(text: &str, name: &str, identities: &BTreeMap<String, String>) ->
         if node.ancestors().skip(1).any(|n| n.has_tag_name("GUIObjects") || n.has_tag_name("resource") || n.has_tag_name("attributes")) {
             continue;
         }
+
         match node.tag_name().name() {
             "graph" => graphs += 1,
             "function" if node.parent().is_some_and(|p| p.has_tag_name("content")) => functions += 1,
@@ -128,9 +125,9 @@ pub fn package(text: &str, name: &str, identities: &BTreeMap<String, String>) ->
             }
             "attributes" => {
                 let owner = node.parent().ok_or("attribute owner is missing")?;
-                edits.push(Edit { range: node.range(), replacement: attributes(owner, text, &description(owner))? });
+                edits.push(XmlEdit { range: node.range(), replacement: attributes(owner, text, &description(owner))? });
             }
-            "GUIObjects" => edits.push(Edit { range: node.range(), replacement: String::new() }),
+            "GUIObjects" => edits.push(XmlEdit { range: node.range(), replacement: String::new() }),
             "GUIName" => xml::set(&mut edits, node, ""),
             "desc" => {
                 let owner = node.parent().ok_or("description owner is missing")?;
@@ -169,13 +166,15 @@ pub fn package(text: &str, name: &str, identities: &BTreeMap<String, String>) ->
                     if !font_replacement && std::path::Path::new(original).file_stem() != output.file_stem() {
                         return Err(format!("{name}: resource `{key}` would change its filename stem").into());
                     }
+
                     let extension = std::path::Path::new(original).extension();
-                    // Surface inputs are replaced with a standard image container;
-                    // the requested font substitute is the only filename-stem exception.
+
+                    // Only the requested font substitute may change the filename stem
                     if !font_replacement && extension != Some(std::ffi::OsStr::new("surface")) && extension != output.extension() {
                         return Err(format!("{name}: resource `{key}` would change its extension").into());
                     }
                 }
+
                 let mut replacement = String::from("<resource>");
                 for child in node.children().filter(Node::is_element) {
                     if !matches!(child.tag_name().name(), "source" | "filepath" | "format" | "attributes") {
@@ -186,21 +185,24 @@ pub fn package(text: &str, name: &str, identities: &BTreeMap<String, String>) ->
                 replacement.push_str(&xml::leaf("filepath", &xml::relative(name, recipe.path)?));
                 replacement.push_str(&attributes(node, text, recipe.description)?);
                 replacement.push_str("</resource>");
-                edits.push(Edit { range: node.range(), replacement });
+                edits.push(XmlEdit { range: node.range(), replacement });
                 resource_keys.push(recipe.key);
             }
             _ => {}
         }
     }
+
     let output = xml::apply(text, edits)?;
     let after = xml::parse(&output)?;
     if semantics(&after) != before {
         return Err(format!("{name}: conversion changed native computational data").into());
     }
+
     if after.descendants().any(|n| n.has_tag_name("binembedded") || n.has_tag_name("icon")) {
         return Err(format!("{name}: source asset payload survived conversion").into());
     }
-    Ok(Converted {
+
+    Ok(ConvertedPackage {
         xml: output,
         resources: resource_keys,
         report: serde_json::json!({
@@ -218,21 +220,26 @@ pub fn verify_references(text: &str, owner: &str, available: &BTreeSet<String>) 
         if !is_dependency && !is_resource {
             continue;
         }
+
         let reference = node.attribute("v").ok_or("missing reference value")?;
         if reference == "?himself" {
             continue;
         }
+
         if reference.contains("://") {
             return Err("converted references must be package-relative".into());
         }
+
         let resolved = materialcraft_formats::sbs::library::resolve(&format!("sbs://{owner}"), reference)?;
         let relative = materialcraft_formats::sbs::library::relative_path(&resolved)?;
         if !available.contains(relative) {
             return Err(format!("{owner}: reference does not resolve: {reference}").into());
         }
+
         if is_resource && !relative.starts_with("resources/") {
             return Err("resource is outside the shared resources folder".into());
         }
     }
+
     Ok(())
 }

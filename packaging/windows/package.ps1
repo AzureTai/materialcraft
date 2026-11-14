@@ -90,16 +90,17 @@ Copy-Item (Join-Path $Bin 'materialcraft.exe'), (Join-Path $Bin 'materialcraft-c
 
 & (Join-Path $PSScriptRoot 'sign.ps1') (Join-Path $Stage 'materialcraft.exe') (Join-Path $Stage 'materialcraft-cli.exe')
 
-# Stage documentation once so the MSI and portable ZIP carry the same notices and licences.
-$Docs = Join-Path $Stage 'docs'
-New-Item -ItemType Directory -Force -Path $Docs | Out-Null
-foreach ($f in 'README.md', 'LICENSE-MIT', 'LICENSE-APACHE', 'NOTICE', 'ATTRIBUTION.md') {
-  Copy-Item -LiteralPath (Join-Path $Root $f) -Destination $Docs
+# Stage documentation once so the MSI and portable ZIP carry the same notices and licences
+$DocumentationDirectory = Join-Path $Stage 'docs'
+New-Item -ItemType Directory -Force -Path $DocumentationDirectory | Out-Null
+foreach ($DocumentationFile in 'README.md', 'LICENSE-MIT', 'LICENSE-APACHE', 'NOTICE', 'ATTRIBUTION.md') {
+  Copy-Item -LiteralPath (Join-Path $Root $DocumentationFile) -Destination $DocumentationDirectory
 }
-# Include craft-fonts notices for both the UI faces and the SBS fallback font.
+
+# Include craft-fonts notices for both the UI faces and the SBS fallback font
 if ($env:CRAFT_FONTS_DIR) {
-  foreach ($ofl in Get-ChildItem -Path (Join-Path $env:CRAFT_FONTS_DIR 'fonts\*\OFL.txt') -File -ErrorAction SilentlyContinue) {
-    Copy-Item -LiteralPath $ofl.FullName -Destination (Join-Path $Docs "OFL-$($ofl.Directory.Name).txt")
+  foreach ($FontNotice in Get-ChildItem -Path (Join-Path $env:CRAFT_FONTS_DIR 'fonts\*\OFL.txt') -File -ErrorAction SilentlyContinue) {
+    Copy-Item -LiteralPath $FontNotice.FullName -Destination (Join-Path $DocumentationDirectory "OFL-$($FontNotice.Directory.Name).txt")
   }
 }
 
@@ -108,7 +109,7 @@ $Msi = Join-Path $Dist "materialcraft-$Version-windows-$Arch.msi"
 Invoke-Native 'wix build' {
   wix build (Join-Path $PSScriptRoot 'materialcraft.wxs') -arch $Arch `
     -d "Version=$MsiVersion" -d "BinDir=$Stage" -d "IconPath=$(Join-Path $Root 'assets\app-icon\materialcraft.ico')" `
-    -d "DocsDir=$Docs" -o $Msi
+    -d "DocsDir=$DocumentationDirectory" -o $Msi
 }
 Invoke-Native 'MSI shortcut icon validation (ICE50)' {
   wix msi validate $Msi -ice ICE50 -intermediateFolder (Join-Path $Stage 'msi-validation')
@@ -122,7 +123,7 @@ $Portable = Join-Path $TargetDir "windows-package\materialcraft-$Version-windows
 Remove-Item -Recurse -Force $Portable -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path $Portable | Out-Null
 Copy-Item (Join-Path $Stage '*.exe') $Portable
-Copy-Item -Recurse (Join-Path $Docs '*') $Portable
+Copy-Item -Recurse (Join-Path $DocumentationDirectory '*') $Portable
 $Zip = Join-Path $Dist "materialcraft-$Version-windows-$Arch-portable.zip"
 Remove-Item -Force $Zip -ErrorAction SilentlyContinue
 Compress-Archive -Path $Portable -DestinationPath $Zip

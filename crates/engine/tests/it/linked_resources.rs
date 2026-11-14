@@ -13,17 +13,23 @@ fn bundled_voronoi_bitmaps_load_the_shared_resource_and_survive_portable_saving(
     let path = "sbs://noise_voronoi.sbs";
     let bytes = sbs::library::read(path).unwrap();
     let read = sbs::read_sbs(&bytes, path, &file_cmds::linked_files(path)).unwrap();
+
     assert!(!read.warnings.iter().any(|warning| warning.contains("resource")), "{:?}", read.warnings);
+
     let bitmaps: Vec<_> = read.pkg.graphs.iter().flat_map(|graph| &graph.nodes).filter(|node| node.def == "bitmap").cloned().collect();
+
     assert_eq!(bitmaps.len(), 4);
+
     let expected = sbs::library::read("sbs://resources/perm.png").unwrap();
     for bitmap in &bitmaps {
         let Value::Text(name) = &bitmap.params["resource"] else { panic!("missing resource") };
         let resource = read.pkg.resource(name).unwrap();
+
         assert_eq!(resource.bytes.as_slice(), expected);
         assert_eq!(resource.source, "resources/perm.png");
     }
-    // Exercise the repaired bitmaps independently of remaining Voronoi function limitations.
+
+    // Exercise the repaired bitmaps independently of remaining Voronoi function limitations
     let mut package = Package::new("Resource regression");
     package.resources = read.pkg.resources;
     let mut graph = Graph::new("Bitmaps");
@@ -37,13 +43,17 @@ fn bundled_voronoi_bitmaps_load_the_shared_resource_and_survive_portable_saving(
     let cooked = session.cook().clone();
     for node in &session.pkg.graphs[0].nodes {
         assert!(cooked.nodes[&node.id].error.is_none());
+
         let image = cooked.image(node.id, 0).unwrap();
         let low = image.data.iter().copied().fold(f32::INFINITY, f32::min);
         let high = image.data.iter().copied().fold(f32::NEG_INFINITY, f32::max);
+
         assert!(low.is_finite() && high.is_finite() && high > low);
     }
+
     let saved = file_cmds::save_bytes(&session).unwrap();
     let reopened = sbs::read_sbs(&saved, "relocated.sbs", &|_| None).unwrap();
+
     assert!(reopened.warnings.is_empty(), "{:?}", reopened.warnings);
     assert_eq!(reopened.pkg.resources[0].bytes.as_slice(), expected);
 }
@@ -121,7 +131,7 @@ fn verify_library_resources(root: &std::path::Path) {
     assert!(read("../../private.svg").is_none());
     assert!(read("resources/absent.svg").is_none());
 
-    // Native filesystem opens use the same shared root as alias opens, including nested packages.
+    // Native filesystem opens use the same shared root as alias opens, including nested packages
     let native = root.join("assets/sbs/nested/source.sbs");
     let native_read = file_cmds::linked_files(native.to_str().unwrap());
     assert_eq!(native_read("../resources/tile.svg").unwrap(), TILE);

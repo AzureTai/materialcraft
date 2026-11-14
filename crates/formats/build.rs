@@ -8,13 +8,18 @@ use std::{
 };
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
+const MAX_DIRECTORY_DEPTH: usize = 6;
+const MAX_BUNDLED_FILES: usize = 4096;
+const MAX_ASSET_BYTES: usize = 256 << 20;
+
 #[path = "build/sbs_font.rs"]
 mod sbs_font;
 
 fn scan(root: &Path, folder: &Path, files: &mut Vec<PathBuf>) -> Result<()> {
-    if folder.components().count() > 6 || files.len() > 4096 {
+    if folder.components().count() > MAX_DIRECTORY_DEPTH || files.len() > MAX_BUNDLED_FILES {
         return Err("bundled library exceeds its scan limits".into());
     }
+
     let path = root.join(folder);
     println!("cargo:rerun-if-changed={}", path.display());
     for entry in std::fs::read_dir(path)? {
@@ -24,19 +29,22 @@ fn scan(root: &Path, folder: &Path, files: &mut Vec<PathBuf>) -> Result<()> {
         if name.starts_with('.') {
             continue;
         }
+
         let kind = entry.file_type()?;
         let relative = folder.join(name);
         if kind.is_dir() {
             scan(root, &relative, files)?;
         } else if kind.is_file() && (name.ends_with(".sbs") || relative.starts_with("resources")) {
-            if files.len() >= 4096 {
+            if files.len() >= MAX_BUNDLED_FILES {
                 return Err("bundled library exceeds its file limit".into());
             }
+
             files.push(relative);
         } else if kind.is_symlink() {
             return Err("symlinks are not bundled library assets".into());
         }
     }
+
     Ok(())
 }
 
@@ -54,10 +62,11 @@ fn main() -> Result<()> {
     let mut packages = String::from("pub const BUNDLED: &[&str] = &[\n");
     for (index, (relative, file)) in files.iter().enumerate() {
         let mut bytes = Vec::new();
-        std::fs::File::open(file)?.take((256 << 20) + 1).read_to_end(&mut bytes)?;
-        if bytes.len() > 256 << 20 {
+        std::fs::File::open(file)?.take(MAX_ASSET_BYTES as u64 + 1).read_to_end(&mut bytes)?;
+        if bytes.len() > MAX_ASSET_BYTES {
             return Err("bundled asset exceeds 256 MiB".into());
         }
+
         let mut encoder = flate2::write::DeflateEncoder::new(Vec::new(), flate2::Compression::best());
         encoder.write_all(&bytes)?;
         std::fs::write(compressed.join(format!("{index}.deflate")), encoder.finish()?)?;

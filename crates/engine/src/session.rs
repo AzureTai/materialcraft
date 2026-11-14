@@ -184,6 +184,7 @@ impl Session {
                 library_sources.insert(path.clone(), package.clone());
             }
         }
+
         let mut session = Session {
             environment: Default::default(),
             document_id: 0,
@@ -224,13 +225,16 @@ impl Session {
             group: None,
             decoded: Arc::new(Mutex::new(crate::decoded_images::DecodedImages::default())),
         };
+
         session.refresh_links();
         for warning in &library.warnings {
             session.warn(warning.clone());
         }
+
         if !library.packages.contains_key(crate::function_library::STANDARD_PACKAGE) {
             session.warn(format!("Missing function library: {} did not load", crate::function_library::STANDARD_PACKAGE));
         }
+
         session.library = library;
         session
     }
@@ -308,6 +312,7 @@ impl Session {
             }
             return result;
         }
+
         self.begin_group(label);
         let r = f(self);
         match r {
@@ -318,6 +323,7 @@ impl Session {
                 }
             }
         }
+
         r
     }
 
@@ -362,6 +368,7 @@ impl Session {
     pub fn changed(&mut self) {
         self.modified = true;
         self.dirty = true;
+
         // Publish a grouped edit only after it succeeds, so rollback cannot dirty other packages
         if self.group.is_none() {
             self.refresh_links();
@@ -427,6 +434,7 @@ impl Session {
                 .flat_map(|(file, package)| package.resources.iter().map(move |resource| (format!("{file}\0{}", resource.name), resource.bytes.clone()))),
         );
         let memo = self.decoded.clone();
+
         // Release decoded images of deleted or replaced resources
         let hashes = res.iter().map(|(_, bytes)| bytes.content_hash()).collect();
         memo.lock().unwrap_or_else(PoisonError::into_inner).retain_resources(&hashes);
@@ -437,6 +445,7 @@ impl Session {
             if let Some(i) = memo.lock().unwrap_or_else(PoisonError::into_inner).get(&key) {
                 return Some(i);
             }
+
             let img = materialcraft_formats::decode(bytes.as_slice(), linear).ok()?;
             memo.lock().unwrap_or_else(PoisonError::into_inner).insert(key, img.clone());
             Some(img)
@@ -472,6 +481,7 @@ impl Session {
         if result.graph != self.graph || result.cancelled() {
             return;
         }
+
         self.cooked_graph = Some(result.graph);
         self.cooked = result.cooked;
         self.material_cooked = result.materials;

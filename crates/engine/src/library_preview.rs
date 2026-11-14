@@ -27,6 +27,7 @@ impl NodeLibrary {
         if cancel.load(Ordering::Relaxed) {
             return None;
         }
+
         let source = library.packages.get(package)?;
         let index = source.graphs.iter().position(|candidate| candidate.function.is_none() && candidate.sbs_path() == graph)?;
         let size = size.clamp(1, COOKED_SIZE);
@@ -37,16 +38,20 @@ impl NodeLibrary {
         if cancel.load(Ordering::Relaxed) {
             return None;
         }
+
         let graph = session.pkg.graphs.get(index)?;
         let decode = session.resource_decoder();
         let mut options = materialcraft_eval::Options::new(&decode);
+
         // Thin lines and fine grain vanish when cooked at thumbnail size, so the graph cooks larger and is scaled down
         let cooked_size = size.max(COOKED_SIZE);
         options.max_size = Some(cooked_size);
         options.cancel = Some(cancel);
-        // Unconnected experiments and intermediate previews do not contribute to a library tile.
+
+        // Unconnected experiments and intermediate previews do not contribute to a library tile
         options.only = Some(graph.nodes.iter().filter(|node| node.def == "output").map(|node| node.id).collect());
         options.inputs = sample_inputs(graph, cooked_size);
+
         let cooked = materialcraft_eval::cook(&session.pkg, index, &options, &session.cache);
         if cooked.cancelled || cancel.load(Ordering::Relaxed) {
             return None;
@@ -59,27 +64,34 @@ impl NodeLibrary {
     }
 }
 
-/// An image for every input node of `graph`, by identifier: normals for normal inputs, colors for color inputs, the height for the rest
+/// An image for every image input of `graph`, by identifier: normals for normal inputs, colors for color inputs, the height for the rest
 fn sample_inputs(graph: &materialcraft_core::Graph, size: u32) -> BTreeMap<String, Image> {
+    // Strong relief keeps normal inputs legible in small previews
+    const NORMAL_INTENSITY: f32 = 4.0;
+
+    let mut input_nodes = graph.nodes.iter().filter(|node| matches!(node.def.as_str(), "input_color" | "input_grayscale")).peekable();
+    if input_nodes.peek().is_none() {
+        return BTreeMap::new();
+    }
+
     let height = Image::generate_uv(size, size, Kind::Gray, |u, v| {
         [0.5 + 0.25 * (u * std::f32::consts::TAU).sin() + 0.25 * (v * std::f32::consts::TAU).cos(), 0.0, 0.0, 0.0]
     });
-    let color = height.map(Kind::Color, |pixel| [0.15 + 0.7 * pixel[0], 0.35 + 0.3 * pixel[0], 0.8 - 0.5 * pixel[0], 1.0]);
-    let normal = materialcraft_nodes::atomic::height_to_normal(&height, 4.0, false, true, false);
+    let mut color = None;
+    let mut normal = None;
 
-    graph
-        .nodes
-        .iter()
-        .filter(|node| matches!(node.def.as_str(), "input_color" | "input_grayscale"))
+    input_nodes
         .map(|node| {
             let identifier = materialcraft_eval::identifier(node);
-            let image = if identifier.to_ascii_lowercase().contains("normal") {
-                &normal
+            let image: &Image = if identifier.to_ascii_lowercase().contains("normal") {
+                normal.get_or_insert_with(|| materialcraft_nodes::atomic::height_to_normal(&height, NORMAL_INTENSITY, false, true, false))
             } else if node.def == "input_color" {
-                &color
+                // A blue-to-sand palette distinguishes color inputs from the grayscale height
+                color.get_or_insert_with(|| height.map(Kind::Color, |pixel| [0.15 + 0.7 * pixel[0], 0.35 + 0.3 * pixel[0], 0.8 - 0.5 * pixel[0], 1.0]))
             } else {
                 &height
             };
+
             (identifier, image.clone())
         })
         .collect()
@@ -98,5 +110,6 @@ fn is_flat(image: &Image) -> bool {
             }
         }
     }
+
     (0..3).all(|channel| high[channel] - low[channel] < FLAT_SPREAD)
 }

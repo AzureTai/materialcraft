@@ -17,6 +17,7 @@ fn cook(def: &str, values: BTreeMap<String, Value>, inputs: &[Option<Image>]) ->
         resource: &|_| None,
         vars: &BTreeMap::new(),
     };
+
     (definition.cook)(&context).unwrap().remove(0)
 }
 
@@ -30,7 +31,9 @@ fn hsl_hue_endpoints_complete_a_full_turn() {
             assert!((actual - expected).abs() < 1e-5, "hue {hue}: {actual} != {expected}");
         }
     }
+
     let image = cook("hsl", BTreeMap::from([("hue".into(), Value::Float(0.75))]), &inputs);
+
     assert!((image.get(0, 0, false)[2] - 0.7).abs() < 1e-5);
 }
 
@@ -47,6 +50,7 @@ fn repeated_quadrants_have_distinct_reproducible_random_values() {
     let values = BTreeMap::from([("pattern".into(), Value::PatternGraph(Box::new(graph)))]);
     let image = cook("fx_map", values.clone(), &[]);
     let samples: Vec<_> = [(16, 16), (48, 16), (16, 48), (48, 48)].map(|(x, y)| image.get_gray(x, y, false)).into_iter().collect();
+
     assert!(samples.windows(2).all(|pair| pair[0] != pair[1]), "{samples:?}");
     assert_eq!(image.data, cook("fx_map", values, &[]).data);
 }
@@ -60,6 +64,7 @@ fn brick_variation_bevels_both_axes_without_narrowing_the_plateau_to_a_strip() {
     let center = image.get_gray(32, 32, false);
     let horizontal_edge = image.get_gray(3, 32, false);
     let vertical_edge = image.get_gray(32, 3, false);
+
     assert_eq!(center, 1.0);
     assert!(horizontal_edge > 0.0 && horizontal_edge < center);
     assert!((horizontal_edge - vertical_edge).abs() < 1e-5);
@@ -76,6 +81,7 @@ fn subpixel_quadrants_do_not_accumulate_at_shared_edges() {
     leaf.parameters.insert("patterntype".into(), Value::Int(2));
     leaf.parameters.insert("opacity".into(), Value::Float(0.25));
     let image = cook("fx_map", BTreeMap::from([("pattern".into(), Value::PatternGraph(Box::new(graph)))]), &[]);
+
     assert!(image.data.iter().all(|value| (*value - 0.25).abs() < 1e-6), "mean {}", image.mean()[0]);
 }
 
@@ -91,5 +97,6 @@ fn grayscale_max_patterns_do_not_accumulate_opacity() {
     let single = cook("fx_map", values(graph.clone()), &[]);
     graph.nodes[0].parameters.insert("numberadded".into(), Value::Int(2));
     let repeated = cook("fx_map", values(graph), &[]);
+
     assert!(single.data == repeated.data, "repeating a maximum blend must not brighten the image");
 }

@@ -13,6 +13,7 @@ fn relative_to(owner: &str, file: &str) -> String {
     if file.contains(':') || file.starts_with('/') {
         return file;
     }
+
     let owner = owner.replace('\\', "/");
     owner.rsplit_once('/').map_or_else(|| file.clone(), |(folder, _)| format!("{folder}/{file}"))
 }
@@ -25,6 +26,10 @@ fn resource_path(resource: Node<'_, '_>) -> String {
 }
 
 pub(super) fn read(reader: &mut SbsReader<'_, '_>, content: Node<'_, '_>, pkg: &mut Package, linked: &dyn Fn(&str) -> Option<Vec<u8>>) {
+    const MAX_SOURCE_BYTES: usize = 64 * 1024 * 1024;
+    const MAX_SOURCE_PACKAGES: usize = 64;
+    const MAX_IMPORTED_RESOURCES: usize = 1024;
+
     let mut needed: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
     for parameter in content
         .descendants()
@@ -36,13 +41,15 @@ pub(super) fn read(reader: &mut SbsReader<'_, '_>, content: Node<'_, '_>, pkg: &
             needed.entry(file).or_default().insert(path);
         }
     }
-    // Dependency resources cannot trigger recursive graph loads or unbounded XML work.
-    let mut remaining = 64 * 1024 * 1024_usize;
+
+    // Dependency resources cannot trigger recursive graph loads or unbounded XML work
+    let mut remaining = MAX_SOURCE_BYTES;
     let mut remaining_data = crate::MAX_RESOURCE as usize;
-    if needed.len() > 64 {
+    if needed.len() > MAX_SOURCE_PACKAGES {
         reader.warnings.add("Only the first 64 resource dependencies were read");
     }
-    for (file, paths) in needed.into_iter().take(64) {
+
+    for (file, paths) in needed.into_iter().take(MAX_SOURCE_PACKAGES) {
         let result = (|| -> Result<(), String> {
             let bytes = linked(&file).ok_or("source package is unavailable")?;
             remaining = remaining.checked_sub(bytes.len()).ok_or("linked resource XML exceeds 64 MiB")?;
@@ -52,14 +59,17 @@ pub(super) fn read(reader: &mut SbsReader<'_, '_>, content: Node<'_, '_>, pkg: &
             if !document.root_element().has_tag_name("package") {
                 return Err("source is not an SBS package".into());
             }
+
             for resource in document.descendants().filter(|node| node.has_tag_name("resource")) {
                 let path = resource_path(resource);
                 if !paths.contains(&path) || reader.external_resource_names.contains_key(&(file.clone(), path.clone())) {
                     continue;
                 }
-                if reader.external_resource_names.len() >= 1024 {
+
+                if reader.external_resource_names.len() >= MAX_IMPORTED_RESOURCES {
                     return Err("linked resources exceed the 1024-resource limit".into());
                 }
+
                 let identifier = child_value(resource, "identifier").unwrap_or("resource");
                 let name = reader.read_resource(resource, identifier, &path, pkg, &|reference| {
                     linked(&relative_to(&file, reference)).filter(|bytes| bytes.len() <= remaining_data)
@@ -68,6 +78,7 @@ pub(super) fn read(reader: &mut SbsReader<'_, '_>, content: Node<'_, '_>, pkg: &
                     if !imported.source.is_empty() {
                         imported.source = relative_to(&file, &imported.source);
                     }
+
                     if let Some(left) = remaining_data.checked_sub(imported.bytes.len()) {
                         remaining_data = left;
                     } else {
@@ -77,6 +88,7 @@ pub(super) fn read(reader: &mut SbsReader<'_, '_>, content: Node<'_, '_>, pkg: &
                 }
                 reader.external_resource_names.insert((file.clone(), path), name);
             }
+
             Ok(())
         })();
         if let Err(error) = result {

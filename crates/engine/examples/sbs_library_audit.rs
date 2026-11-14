@@ -19,6 +19,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 missing_resources.push(format!("{path}#{}", resource.sbs_path()));
             }
         }
+
         for graph in &package.graphs {
             graphs += 1;
             if let Some(function) = &graph.function {
@@ -31,6 +32,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
     }
+
     let result = serde_json::json!({
         "files": files.len(), "loaded_packages": library.packages.len(), "graphs": graphs,
         "standalone_functions": functions, "resources": resources, "resource_declarations_without_bytes": missing_resources,

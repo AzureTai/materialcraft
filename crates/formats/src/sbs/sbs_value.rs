@@ -20,6 +20,7 @@ impl SbsValue {
             SbsValue::Text(_) => 0.0,
         }
     }
+
     pub(super) fn int(&self, i: usize) -> i32 {
         match self {
             SbsValue::Ints(v) => v.get(i).or(v.first()).copied().unwrap_or(0),
@@ -45,6 +46,7 @@ impl SbsValue {
         }
     }
 }
+
 pub(super) fn sbs_constant(holder: XmlNode) -> Option<SbsValue> {
     sbs_constant_element(holder.children().find(|child| child.is_element())?)
 }
@@ -65,6 +67,7 @@ pub(super) fn sbs_constant_element(element: XmlNode) -> Option<SbsValue> {
         None
     }
 }
+
 pub(super) fn to_param_value(like: &Value, value: &SbsValue, options: usize) -> Option<Value> {
     let f = |i| value.float(i);
 
@@ -73,8 +76,8 @@ pub(super) fn to_param_value(like: &Value, value: &SbsValue, options: usize) -> 
         Value::Float2(_) => Value::Float2([f(0), f(1)]),
         Value::Float3(_) => Value::Float3([f(0), f(1), f(2)]),
         Value::Float4(_) => Value::Float4([f(0), f(1), f(2), f(3)]),
-        // These are graph components, including grayscale data and function inputs.
-        // Applying a display transfer here changes the arithmetic performed by nodes.
+        // These are graph components, including grayscale data and function inputs
+        // Applying a display transfer here changes the arithmetic performed by nodes
         Value::Color(_) if value.component_count() >= 3 => {
             let alpha = if value.component_count() >= 4 { f(3) } else { 1.0 };
 
@@ -100,6 +103,7 @@ pub(super) fn to_param_value(like: &Value, value: &SbsValue, options: usize) -> 
         Value::Curve(_) | Value::Gradient(_) | Value::Function(_) | Value::PatternGraph(_) => return None,
     })
 }
+
 pub(super) fn to_natural_value(value: &SbsValue) -> Value {
     let f = |i| value.float(i);
 
@@ -118,6 +122,7 @@ pub(super) fn to_natural_value(value: &SbsValue) -> Value {
         },
     }
 }
+
 pub(super) fn exposed_default(code: i64, value: Option<&SbsValue>) -> Value {
     use type_code::*;
 

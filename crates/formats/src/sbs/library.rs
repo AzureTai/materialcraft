@@ -79,16 +79,19 @@ pub fn contains_file(path: &std::path::Path) -> bool {
     if let Ok(file) = path.canonicalize() {
         return file.starts_with(root);
     }
+
     path.parent().and_then(|parent| parent.canonicalize().ok()).is_some_and(|parent| parent.starts_with(root))
 }
 
 /// Read a validated library alias from the configured directory or the embedded fallback.
 pub fn read(uri: &str) -> Result<Vec<u8>, String> {
     let relative = relative_path(uri)?;
-    // These assets live in craft-fonts, so a source checkout's SBS directory cannot supply them.
+
+    // These assets live in craft-fonts, so a source checkout's SBS directory cannot supply them
     if is_shared_font_asset(relative) {
         return read_embedded(relative).map_err(|error| format!("{error}; build with CRAFT_FONTS_DIR containing Liberation Mono Regular"));
     }
+
     #[cfg(not(target_arch = "wasm32"))]
     {
         let root = root();
@@ -114,11 +117,13 @@ fn read_embedded(relative: &str) -> Result<Vec<u8>, String> {
     if *size > 256 << 20 {
         return Err("bundled asset exceeds 256 MiB".into());
     }
+
     let mut bytes = Vec::new();
     flate2::read::DeflateDecoder::new(*compressed).take(*size as u64 + 1).read_to_end(&mut bytes).map_err(|error| error.to_string())?;
     if bytes.len() != *size {
         return Err("bundled asset has an invalid decompressed length".into());
     }
+
     Ok(bytes)
 }
 
@@ -180,8 +185,10 @@ mod tests {
         for (relative, _, _) in EMBEDDED_ASSETS {
             if is_shared_font_asset(relative) {
                 assert_eq!(read(&format!("sbs://{relative}")).unwrap(), read_embedded(relative).unwrap());
+
                 continue;
             }
+
             assert_eq!(read_embedded(relative).unwrap(), std::fs::read(root.join(relative)).unwrap(), "{relative}");
         }
     }

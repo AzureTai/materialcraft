@@ -18,6 +18,7 @@ pub(crate) fn resolve_parameters(
             parameters
         }
     };
+
     for parameter in node.bindings.keys().chain(node.functions.keys()) {
         if !parameters.contains_key(parameter)
             && let Some(descriptor) = ParameterDescriptor::for_node(package, node, parameter)

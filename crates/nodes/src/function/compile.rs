@@ -11,9 +11,11 @@ fn compile_nested(graph: &FunctionGraph, seed: u32, depth: usize, remaining: &mu
     if graph.nodes.len() > 4096 {
         return Err("function exceeds the 4096-node graph limit".into());
     }
+
     if depth > super::MAX_CALL_DEPTH || graph.nodes.len() > *remaining {
         return Err(format!("function exceeds the {}-level or {}-node expanded execution limit", super::MAX_CALL_DEPTH, super::MAX_EXPANDED_NODES));
     }
+
     *remaining -= graph.nodes.len();
     let output = super::output_node(graph).ok_or("function has no result node")?.id;
     let mut nodes = BTreeMap::new();
@@ -36,12 +38,14 @@ fn compile_nested(graph: &FunctionGraph, seed: u32, depth: usize, remaining: &mu
         if node.missing.is_some() {
             return Err(format!("Missing function operation `{}`", node.op));
         }
+
         let definition = if node.instance.is_some() {
             &super::function_call::DEFINITION
         } else {
             catalog::definition(&node.op).ok_or_else(|| format!("unknown function `{}`", node.op))?
         };
         let names: Vec<_> = super::input_identifiers(node).collect();
+
         // An operation computes with zero on an input nothing is connected to; a call needs a source default instead
         let missing_input = node
             .instance
@@ -70,7 +74,7 @@ fn compile_nested(graph: &FunctionGraph, seed: u32, depth: usize, remaining: &mu
 
         active.remove(&id);
         let connected: Vec<usize> =
-            sources.iter().map(|input| indices.get(input).copied().ok_or("unresolved function input".to_string())).collect::<Result<_, _>>()?;
+            sources.iter().map(|input| indices.get(input).copied().ok_or_else(|| "unresolved function input".to_string())).collect::<Result<_, _>>()?;
         let inputs = if node.instance.is_some() || ports.iter().all(|(_, input)| input.is_some()) {
             connected
         } else {
@@ -97,8 +101,10 @@ fn compile_nested(graph: &FunctionGraph, seed: u32, depth: usize, remaining: &mu
                 };
                 inputs.push(index);
             }
+
             inputs
         };
+
         let call = if let Some(instance) = &node.instance {
             let source = node.source.as_ref().ok_or_else(|| format!("unresolved Function Graph `{}`", instance.graph))?.as_ref().map_err(Clone::clone)?;
             let program = compile_nested(source, seed, depth + 1, remaining)?;
@@ -121,6 +127,7 @@ fn compile_nested(graph: &FunctionGraph, seed: u32, depth: usize, remaining: &mu
         } else {
             None
         };
+
         let value = node.value.clone().or_else(|| catalog::default_value(&node.op));
         let input_type = |index: usize| inputs.get(index).and_then(|index| instructions.get(*index)).map_or(256, |instruction| instruction.type_code);
         let inferred = super::inferred_type::inferred_type(&node.op, value.as_ref(), input_type);

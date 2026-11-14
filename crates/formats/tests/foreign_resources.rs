@@ -38,9 +38,11 @@ fn foreign_resource_uses_its_owner_without_shadowing_local_names_and_round_trips
         }
     })
     .unwrap();
+
     assert!(read.warnings.is_empty(), "{:?}", read.warnings);
     assert_eq!(reads.borrow().iter().filter(|path| *path == "nested/source.sbs").count(), 1);
     assert_eq!(read.pkg.resources.len(), 2);
+
     let names: Vec<_> = read.pkg.graphs[0]
         .nodes
         .iter()
@@ -49,14 +51,19 @@ fn foreign_resource_uses_its_owner_without_shadowing_local_names_and_round_trips
             _ => panic!("resource should be text"),
         })
         .collect();
+
     assert_ne!(names[0], names[1]);
     assert_eq!(names[1], names[2]);
     assert_eq!(read.pkg.resource(names[0]).unwrap().bytes.as_slice(), &[1, 2, 3]);
+
     let foreign = read.pkg.resource(names[1]).unwrap();
+
     assert_eq!(foreign.bytes.as_slice(), &[4, 5, 6]);
     assert_eq!(foreign.source, "nested/../resources/tile.png");
+
     let saved = write_sbs(&read.pkg).unwrap();
     let reopened = read_sbs(&saved, "relocated.sbs", &|_| None).unwrap();
+
     assert!(reopened.warnings.is_empty(), "{:?}", reopened.warnings);
     assert_eq!(reopened.pkg.resource(names[1]).unwrap().bytes.as_slice(), &[4, 5, 6]);
     assert_eq!(reopened.pkg.graphs[0].nodes[1].params["resource"], Value::Text(names[1].into()));
@@ -75,12 +82,15 @@ fn missing_or_invalid_foreign_resource_never_falls_back_to_a_local_name() {
             }
         })
         .unwrap();
+
         assert!(!read.warnings.is_empty());
         assert!(!read.pkg.graphs[0].nodes[1].params.contains_key("resource"));
         assert_eq!(read.pkg.resources.len(), 1);
     }
+
     let unknown = package().replace("?dependency=2", "?dependency=99");
     let read = read_sbs(unknown.as_bytes(), "caller.sbs", &|path| (path == "resources/local.png").then(|| vec![1])).unwrap();
+
     assert!(read.warnings.iter().any(|warning| warning.contains("unknown dependency")));
     assert!(!read.pkg.graphs[0].nodes[1].params.contains_key("resource"));
 }

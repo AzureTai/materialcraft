@@ -13,6 +13,7 @@ pub(super) fn decode_embedded(strdata: &str) -> std::result::Result<Vec<u8>, Str
     if length as u64 > crate::MAX_RESOURCE {
         return Err("embedded resource exceeds the 256 MiB limit".into());
     }
+
     let mut out = Vec::new();
 
     // Reading one extra byte detects data that contradicts the declared format length
@@ -49,7 +50,9 @@ mod tests {
 
             assert!(decode_embedded(&base64_engine().encode(&raw)).unwrap_err().contains("declared"));
         }
+
         raw[..4].copy_from_slice(&u32::MAX.to_be_bytes());
+
         assert!(decode_embedded(&base64_engine().encode(&raw)).unwrap_err().contains("256 MiB limit"));
     }
 }

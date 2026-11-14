@@ -4,6 +4,21 @@ use materialcraft_core::Graph;
 #[path = "../tests/support/node_library.rs"]
 mod fixture;
 
+#[test]
+fn loaded_packages_share_equal_resource_buffers_without_merging_resources() {
+    let files = ["sbs://rt_ao.sbs".to_string(), "sbs://rt_ao_v2.sbs".to_string()];
+
+    let library = NodeLibrary::load(&files);
+    let resources: Vec<_> =
+        files.iter().map(|file| library.packages[file].resources.iter().find(|resource| resource.source.ends_with("bluenoise_256.png")).unwrap()).collect();
+
+    assert!(!resources[0].bytes.is_empty());
+    assert_eq!(resources[0].bytes, resources[1].bytes);
+    assert!(resources[0].bytes.ptr_eq(&resources[1].bytes), "equal resource bytes should use one immutable buffer");
+    assert!(library.packages[&files[0]].graph_by_name("rt_ao").is_some());
+    assert!(library.packages[&files[1]].graph_by_name("rt_ao").is_some());
+}
+
 /// Installing a library must not compile and clone graphs that no open document references.
 #[test]
 fn unused_library_packages_remain_shared_without_interface_refresh() {
@@ -17,6 +32,7 @@ fn unused_library_packages_remain_shared_without_interface_refresh() {
     let mut library = NodeLibrary::default();
     library.packages.insert("sbs://unused.sbs".into(), source.clone());
     let session = crate::Session::with_library(Package::new("Empty"), Arc::new(library));
+
     assert!(Arc::ptr_eq(&source, &session.pkg.dependencies["sbs://unused.sbs"]));
 }
 
@@ -92,6 +108,7 @@ fn hidden_graphs_and_helper_functions_are_not_listed() {
         graph.function = Some(materialcraft_core::FunctionGraph::default());
         graph
     };
+
     let mut package = Package::new("Tools");
     let mut shown = attributed("shown", "Filter", "Blur");
     shown.add_node("output", [0.0; 2]);
@@ -113,6 +130,7 @@ fn hidden_graphs_and_helper_functions_are_not_listed() {
         ("sbs://tools.sbs#shown", "Filters/Blurs"),
         ("sbs://user.sbs#loose", "Functions"),
     ];
+
     assert_eq!(listed, BTreeMap::from(expected), "a package of functions alone lists its loose ones");
 }
 
@@ -129,7 +147,9 @@ fn the_whole_bundled_library_is_categorized() {
     };
 
     let unknown: Vec<_> = packaged.iter().filter(|entry| !known(&entry.category)).map(|entry| (&entry.id, &entry.category)).collect();
+
     assert!(unknown.is_empty(), "{unknown:?}");
+
     let category = |id: &str| packaged.iter().find(|entry| entry.id == id).map(|entry| entry.category.as_str());
     for (id, expected) in [
         ("sbs://noise_perlin_noise_v2.sbs#perlin_noise", "Texture generators/Noises"),
@@ -324,6 +344,7 @@ fn library_graphs_cook_previews_from_sample_inputs() {
     let preview = |package: &str, graph: &str| NodeLibrary::preview(&library, package, graph, 32);
 
     let filter = preview("sbs://blur_hq.sbs", "blur_hq").unwrap();
+
     assert_eq!((filter.w, filter.h), (32, 32));
     assert!(preview("sbs://materials/pbr/bricks_001.sbs", "bricks_001").is_some());
     assert!(preview("sbs://noise_bnw_spots_1.sbs", "bnw_spots_1").is_some(), "an FX-Map noise reads the variables its size function sets");
@@ -343,10 +364,12 @@ fn repeated_library_previews_release_images_and_source_references() {
             let image = NodeLibrary::preview(&library, package, graph, 72).unwrap_or_else(|| panic!("missing preview {package}#{graph}"));
             let buffer = Arc::downgrade(&image.data);
             drop(image);
+
             assert!(buffer.upgrade().is_none(), "a completed thumbnail must release its image after upload");
             assert_eq!(Arc::strong_count(&library), 1);
             assert_eq!(library.packages.values().map(Arc::strong_count).collect::<Vec<_>>(), references);
         }
+
         println!("completed preview cycle {cycle}");
         #[cfg(target_os = "linux")]
         if let Ok(status) = std::fs::read_to_string("/proc/self/status") {
@@ -360,6 +383,7 @@ fn repeated_library_previews_release_images_and_source_references() {
 fn cancelled_library_previews_stop_before_preparing_the_package() {
     let library = Arc::new(NodeLibrary::default());
     let cancelled = std::sync::atomic::AtomicBool::new(true);
+
     assert!(NodeLibrary::preview_cancellable(&library, "unused", "unused", 72, &cancelled).is_none());
     assert_eq!(Arc::strong_count(&library), 1);
 }

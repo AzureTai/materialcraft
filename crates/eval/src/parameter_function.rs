@@ -12,7 +12,8 @@ pub(crate) fn evaluate(
 ) -> Result<Value, String> {
     let program = compile(function, seed)?;
     let scalar_channel = allow_scalar && expected == ValueType::Float4 && program.output_type() == ValueType::Float as u32;
-    // A color parameter also takes a gray level or an opaque RGB triple.
+
+    // A color parameter also takes a gray level or an opaque RGB triple
     let widened = expected == ValueType::Float4 && [ValueType::Float as u32, ValueType::Float3 as u32].contains(&program.output_type());
     if program.output_type() != expected as u32 && !scalar_channel && !widened {
         return Err(format!("output must be {}", expected.label()));
@@ -28,6 +29,7 @@ pub(crate) fn evaluate(
         Value::Float4(values) | Value::Color(values) => values.iter().all(|value| value.is_finite()),
         _ => true,
     };
+
     if !finite {
         return Err("function returned a non-finite value".into());
     }

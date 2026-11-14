@@ -7,6 +7,7 @@ pub(crate) fn evaluate(op: &str, args: &[Value], setting: Option<&Value>) -> Res
     if !(1..=4).contains(&count) {
         return Err("invalid vector size".into());
     }
+
     let integer = op.starts_with('i') || op.starts_with("toint");
     let mut result_float = [0.0; 4];
     let mut result_int = [0; 4];
@@ -18,8 +19,7 @@ pub(crate) fn evaluate(op: &str, args: &[Value], setting: Option<&Value>) -> Res
             let index = usize::try_from(*index).ok().filter(|index| *index < 4).ok_or("swizzle component is outside its input")?;
             if integer {
                 if let Some(result) = result_int.get_mut(lane) {
-                    // Swizzles read zero in undeclared lanes, including scalar
-                    // inputs. Arithmetic's scalar broadcast does not apply here.
+                    // Swizzles read zero in undeclared lanes without scalar broadcast
                     *result = if index < dimensions(first) { *integers.get(index).ok_or("invalid swizzle")? } else { 0 };
                 }
             } else if let Some(result) = result_float.get_mut(lane) {
@@ -49,14 +49,15 @@ pub(crate) fn evaluate(op: &str, args: &[Value], setting: Option<&Value>) -> Res
         if dimensions(first) != count {
             return Err("casts preserve the number of components".into());
         }
+
         if integer {
             let values = floats(first)?;
             for (result, value) in result_int.iter_mut().zip(values).take(count) {
                 if !value.is_finite() || !(-2147483648.0..2147483648.0).contains(&value) {
                     return Err("float is outside the integer range".into());
                 }
-                // Integer conversion rounds down; truncating toward zero shifts
-                // negative texture coordinates and lattice indices by one cell.
+
+                // Round down because truncation shifts negative texture and lattice indices
                 *result = value.floor() as i32;
             }
         } else {

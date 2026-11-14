@@ -141,11 +141,13 @@ mod tests {
     #[test]
     fn a_body_grows_with_the_components_of_its_value() {
         let single = height(&node("const_float1"));
+
         assert_eq!(height(&node("const_float4")), single + 3.0 * (ROW_HEIGHT + ROW_GAP));
         assert_eq!(height(&node("add")), SYMBOL_HEIGHT);
 
         let mut unavailable = node("const_float4");
         unavailable.missing = Some(Vec::new());
+
         assert_eq!(height(&unavailable), SYMBOL_HEIGHT);
     }
 }

@@ -12,10 +12,12 @@ use materialcraft_engine::{LibraryCanvas, LibraryEntry, LibraryItem};
 
 use crate::MaterialCraftApp;
 use crate::function::library::FunctionLibraryDrag;
+mod library_divider_action;
 mod library_target;
 use crate::graph::{LibraryDrag, header_color};
 use crate::i18n::tr;
 use crate::theme::Tokens;
+use library_divider_action::LibraryDividerAction;
 pub(crate) use library_target::LibraryTarget;
 
 /// The category key of the Favorites row
@@ -139,10 +141,11 @@ pub fn show(app: &mut MaterialCraftApp, ui: &mut Ui) {
             egui::ScrollArea::vertical().id_salt("lib-tree").auto_shrink([false, false]).show(ui, |ui| category_tree(app, ui, &all));
         });
         match divider(ui, tree_width, available_size.y) {
-            Some(Divider::Dragged(width)) => app.ui.library_tree_width = self::tree_width(width, available_size.x),
-            Some(Divider::Reset) => app.ui.library_tree_width = 0.0,
+            Some(LibraryDividerAction::Dragged(width)) => app.ui.library_tree_width = self::tree_width(width, available_size.x),
+            Some(LibraryDividerAction::Reset) => app.ui.library_tree_width = 0.0,
             None => {}
         }
+
         ui.allocate_ui_with_layout(vec2(ui.available_width(), available_size.y), top_down, |ui| {
             egui::ScrollArea::vertical().id_salt("lib-items").auto_shrink([false, false]).show(ui, |ui| items(app, ui, &all, &target));
         });
@@ -157,16 +160,8 @@ fn tree_width(chosen: f32, available: f32) -> f32 {
     chosen.min(available - NARROWEST_TILES).max(NARROWEST_TREE)
 }
 
-/// What the pointer did to the Library's divider
-enum Divider {
-    /// Dragged to this tree width
-    Dragged(f32),
-    /// Double-clicked: back to the automatic width
-    Reset,
-}
-
 /// The draggable bar between the tree and the tiles
-fn divider(ui: &mut Ui, tree_width: f32, height: f32) -> Option<Divider> {
+fn divider(ui: &mut Ui, tree_width: f32, height: f32) -> Option<LibraryDividerAction> {
     let tokens = Tokens::get(ui.ctx());
     let (rect, response) = ui.allocate_exact_size(vec2(9.0, height), Sense::click_and_drag());
     crate::widgets::name(&response, egui::Role::Splitter, "Library divider");
@@ -180,9 +175,10 @@ fn divider(ui: &mut Ui, tree_width: f32, height: f32) -> Option<Divider> {
     ui.painter().rect_filled(line, 0.0, if active { tokens.accent } else { tokens.text_dim.gamma_multiply(0.35) });
 
     if response.double_clicked() {
-        return Some(Divider::Reset);
+        return Some(LibraryDividerAction::Reset);
     }
-    response.dragged().then(|| Divider::Dragged(tree_width + response.drag_delta().x))
+
+    response.dragged().then(|| LibraryDividerAction::Dragged(tree_width + response.drag_delta().x))
 }
 
 /// Expose availability and canvas filters without changing the selected category.
@@ -420,6 +416,7 @@ fn preview(app: &mut MaterialCraftApp, ui: &Ui, ctx: &egui::Context, entry: &Lib
         }
         _ => (None, category_color(&entry.category)),
     };
+
     match texture {
         Some(texture) => {
             painter.image(texture, rect, Rect::from_min_max(egui::Pos2::ZERO, egui::pos2(1.0, 1.0)), Color32::WHITE.gamma_multiply(fade));
@@ -442,6 +439,7 @@ fn preview(app: &mut MaterialCraftApp, ui: &Ui, ctx: &egui::Context, entry: &Lib
             );
         }
     }
+
     let strip = Rect::from_min_size(rect.left_bottom() - vec2(0.0, 3.0), vec2(rect.width(), 3.0));
     painter.rect_filled(strip, 0.0, color.gamma_multiply(fade));
     if entry.missing.is_some() && rect.height() > 30.0 {
@@ -500,6 +498,7 @@ pub(crate) fn add_entry(app: &mut MaterialCraftApp, entry: &LibraryEntry) {
         }
         return;
     }
+
     match &entry.item {
         LibraryItem::Operation { operation } => crate::function::library::add(app, &FunctionLibraryDrag::Operation(operation.clone())),
         LibraryItem::FunctionInstance { package, graph } => {

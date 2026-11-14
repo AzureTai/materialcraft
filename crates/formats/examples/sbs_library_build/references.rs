@@ -40,10 +40,12 @@ pub fn qualify(text: &str, standard: &BTreeSet<String>) -> Result<(String, usize
             if local.contains(path) || !standard.contains(path) {
                 continue;
             }
+
             let [uid] = dependencies.as_slice() else { return Err("bare standard function requires one declared functions.sbs dependency".into()) };
             xml::set(&mut edits, value, &format!("pkg:///{path}?dependency={uid}"));
         }
     }
+
     let count = edits.len();
     Ok((xml::apply(text, edits)?, count))
 }
@@ -59,19 +61,28 @@ mod tests {
             <function><identifier v="Sample_[A,B["/></function></content></group></content></group>"#;
         let library = format!("<package><content>{body}</content></package>");
         let standard = function_paths(&xml::parse(&library).unwrap());
+
         assert_eq!(standard, BTreeSet::from(["Functions/Random/Sample_[A,B[".into()]));
+
         let source = r#"<package><dependencies><dependency><filename v="sbs://functions.sbs"/><uid v="9"/></dependency></dependencies>
             <content><graph><identifier v="Example"/><parameters><parameter><paramValue><dynamicValue><paramNodes><paramNode>
             <function v="instance"/><funcDatas><funcData><name v="instance"/><constantValue><constantValueString v="pkg:///Functions/Random/Sample_[A,B["/>
             </constantValue></funcData></funcDatas></paramNode></paramNodes></dynamicValue></paramValue></parameter></parameters></graph></content></package>"#;
         let (qualified, count) = qualify(source, &standard).unwrap();
+
         assert_eq!(count, 1);
         assert_eq!(qualified, source.replace("pkg:///Functions/Random/Sample_[A,B[", "pkg:///Functions/Random/Sample_[A,B[?dependency=9"));
+
         let explicit = source.replace("Sample_[A,B[", "Sample_[A,B[?dependency=7");
+
         assert_eq!(qualify(&explicit, &standard).unwrap(), (explicit, 0));
+
         let unknown = source.replace("Sample_[A,B[", "Unknown");
+
         assert_eq!(qualify(&unknown, &standard).unwrap(), (unknown, 0));
+
         let local = source.replacen("<content>", &format!("<content>{body}"), 1);
+
         assert_eq!(qualify(&local, &standard).unwrap(), (local, 0));
         assert!(qualify(&source.replace("sbs://functions.sbs", "sbs://other.sbs"), &standard).is_err());
     }

@@ -192,12 +192,17 @@ fn multiple_graph_channels_and_multi_output_instances_use_the_correct_ports() {
     execute(&mut session, "graph.open", &json!({"graph": 1})).unwrap();
     let instance = instance(&mut session, "Colors");
     execute(&mut session, "view.3d.assign", &json!({"node": instance, "port": "blue", "channel": "baseColor"})).unwrap();
+
     assert_eq!(color(&mut session, "baseColor"), [0.1, 0.1, 0.8, 1.0]);
+
     let key = session.material_key();
     execute(&mut session, "view.3d.assign", &json!({"node": instance, "port": 0, "channel": "baseColor"})).unwrap();
+
     assert_eq!(color(&mut session, "baseColor"), [0.8, 0.1, 0.1, 1.0]);
     assert_ne!(session.material_key(), key);
+
     execute(&mut session, "view.3d.assign", &json!({"graph": "Colors", "node": 1, "channel": "emissive"})).unwrap();
+
     assert_eq!(color(&mut session, "emissive"), [0.8, 0.1, 0.1, 1.0]);
     assert_eq!(session.graph, 1);
 }

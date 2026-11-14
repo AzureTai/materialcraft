@@ -34,6 +34,7 @@ fn function_nodes_show_their_values_and_symbols() {
     for (operation, at) in operations {
         app.run("graph.function.edit", json!({"edit": {"action": "add", "operation": operation, "at": at}})).unwrap();
     }
+
     let mut harness = harness(app, 1600.0, 960.0);
     settle(&mut harness, 8);
 
@@ -58,7 +59,9 @@ fn library_nodes_and_tiles_show_previews() {
     for (entry, at) in entries {
         app.run("library.add", json!({"entry": entry, "at": at})).unwrap();
     }
+
     let mut harness = harness(app, 1600.0, 960.0);
+
     // The graph cooks on a worker
     for _ in 0..480 {
         std::thread::sleep(std::time::Duration::from_millis(250));
@@ -68,6 +71,7 @@ fn library_nodes_and_tiles_show_previews() {
             break;
         }
     }
+
     save(&mut harness, &directory(), "look-library-nodes");
 
     for (top, sub, name) in
@@ -76,11 +80,13 @@ fn library_nodes_and_tiles_show_previews() {
         harness.get(By::new().role(Role::TreeItem).label(top)).click();
         settle(&mut harness, 3);
         harness.get_all(By::new().role(Role::TreeItem).label(sub)).next().unwrap().click();
+
         // Previews cook on a worker
         for _ in 0..40 {
             std::thread::sleep(std::time::Duration::from_millis(250));
             settle(&mut harness, 2);
         }
+
         save(&mut harness, &directory(), name);
         harness.get(By::new().role(Role::TreeItem).label(top)).click();
         settle(&mut harness, 2);

@@ -74,6 +74,7 @@ fn floats(ui: &mut Ui, values: &mut [f32], labels: &[&str], stacked: bool) -> bo
     for (value, label) in values.iter_mut().zip(labels) {
         changed |= float(ui, value, label, stacked);
     }
+
     changed
 }
 
@@ -86,5 +87,6 @@ fn integers(ui: &mut Ui, values: &mut [i32], stacked: bool) -> bool {
     for (value, label) in values.iter_mut().zip(["X", "Y", "Z", "W"]) {
         changed |= integer(ui, value, label, stacked);
     }
+
     changed
 }

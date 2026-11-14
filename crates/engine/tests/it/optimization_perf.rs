@@ -53,6 +53,7 @@ fn optimization_baseline() {
                 resource: &|_| None,
                 vars: &variables,
             };
+
             let ms = median_ms(|| {
                 black_box((definition.cook)(&context).unwrap());
             });
@@ -81,11 +82,15 @@ fn optimization_baseline() {
             let options = Options::new(&|_| None);
             let cache = Mutex::new(Cache::default());
             let initial = cook(&package, 0, &options, &cache);
+
             assert_eq!(initial.nodes.len(), count);
             assert!(initial.nodes.values().all(|result| result.error.is_none()));
+
             let ms = median_ms(|| {
                 let cooked = cook(&package, 0, &options, &cache);
+
                 assert!(cooked.nodes.values().all(|result| result.cached));
+
                 black_box(cooked);
             });
             println!("warm_cook,{count},{branching},{ms:.3}");

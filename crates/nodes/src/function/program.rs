@@ -40,18 +40,19 @@ impl Program {
         let result = self.run(context, state, &mut remaining);
         *random = state.random;
         let value = result?;
-        // Nested calls can return undefined intermediates to a caller that clamps
-        // them, but a completed parameter/value function must publish finite data.
+
+        // Callers may clamp undefined intermediates; completed functions must be finite
         if value.as_vec4().is_some_and(|components| components.iter().any(|value| !value.is_finite())) {
             return Err("function produced a non-finite output".into());
         }
+
         Ok(value)
     }
 
     fn random_seed(&self, context: &EvaluationContext<'_>) -> u32 {
         let seed = context.variables.get("$randomseed").and_then(Value::as_i32).map_or(self.seed, |seed| seed as u32);
         if context.scope == super::FunctionScope::PixelProcessor {
-            // Each pixel owns a deterministic stream, independent of worker scheduling.
+            // Each pixel owns a deterministic stream, independent of worker scheduling
             let x = (context.position[0] * context.size[0]).floor() as u32;
             let y = (context.position[1] * context.size[1]).floor() as u32;
             crate::random::hash(seed ^ crate::random::hash(x.wrapping_add(0x9e37_79b9)) ^ crate::random::hash(y.wrapping_add(0x85eb_ca6b)))
@@ -119,15 +120,17 @@ impl Program {
                         for (name, value) in call.inputs.iter().zip(arguments) {
                             storage.variables.insert(name.clone(), value.clone());
                         }
-                        // A function call consumes its caller's stream instead of restarting it.
+
+                        // A function call consumes its caller's stream instead of restarting it
                         storage.random = state.random;
                         let result = call.program.run(context, storage, remaining_steps);
                         state.random = storage.random;
                         if call.exports && result.is_ok() {
-                            // Set publishes into the caller's scope; arguments and defaults stay local.
+                            // Set publishes into the caller's scope; arguments and defaults stay local
                             state.variables.extend(storage.assignments.clone());
                             state.assignments.extend(storage.assignments.clone());
                         }
+
                         result
                     } else {
                         operation::evaluate(instruction, arguments, &mut state.variables, &mut state.random, context)
@@ -194,13 +197,14 @@ impl Program {
     }
 
     fn clear_loop_results(&self, index: usize, state: &mut EvaluationState) -> Result<(), String> {
-        // A node's outgoing wires share its computed value, including reads, branches and side effects.
-        // Only the current loop's condition and body run again; unrelated cached values stay intact.
+        // Outgoing wires share a node value across reads, branches and effects
+        // Only the active loop condition and body run again
         for repeated in &self.instruction(index)?.repeated {
             if let Some(register) = state.registers.get_mut(*repeated) {
                 *register = None;
             }
         }
+
         Ok(())
     }
 }

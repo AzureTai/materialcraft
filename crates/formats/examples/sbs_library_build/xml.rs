@@ -1,9 +1,10 @@
-use super::Result;
+use super::{Result, xml_edit::XmlEdit};
 use roxmltree::{Document, Node};
-use std::ops::Range;
 
 pub fn parse(text: &str) -> Result<Document<'_>> {
-    Ok(Document::parse_with_options(text, roxmltree::ParsingOptions { allow_dtd: false, nodes_limit: 8_000_000 })?)
+    const MAX_XML_NODES: u32 = 8_000_000;
+
+    Ok(Document::parse_with_options(text, roxmltree::ParsingOptions { allow_dtd: false, nodes_limit: MAX_XML_NODES })?)
 }
 
 pub fn child<'a, 'b>(node: Node<'a, 'b>, tag: &str) -> Option<Node<'a, 'b>> {
@@ -34,22 +35,18 @@ pub fn title(identifier: &str) -> String {
 }
 
 pub fn identity(path: &str) -> String {
+    // Two FNV-style streams fill the UUID; masks set its version and variant bits
     let hash = |seed: u64| path.bytes().fold(seed, |hash, byte| (hash ^ u64::from(byte)).wrapping_mul(0x100000001b3));
     let bits = (u128::from(hash(0xcbf29ce484222325)) << 64) | u128::from(hash(0x9e3779b97f4a7c15));
     let id = format!("{:032x}", (bits & !(0xf000_u128 << 64) & !(0xc000_u128 << 48)) | (0x4000_u128 << 64) | (0x8000_u128 << 48));
     format!("{{{}-{}-{}-{}-{}}}", &id[..8], &id[8..12], &id[12..16], &id[16..20], &id[20..])
 }
 
-pub struct Edit {
-    pub range: Range<usize>,
-    pub replacement: String,
+pub fn set(edits: &mut Vec<XmlEdit>, node: Node<'_, '_>, value: &str) {
+    edits.push(XmlEdit { range: node.range(), replacement: leaf(node.tag_name().name(), value) });
 }
 
-pub fn set(edits: &mut Vec<Edit>, node: Node<'_, '_>, value: &str) {
-    edits.push(Edit { range: node.range(), replacement: leaf(node.tag_name().name(), value) });
-}
-
-pub fn apply(text: &str, mut edits: Vec<Edit>) -> Result<String> {
+pub fn apply(text: &str, mut edits: Vec<XmlEdit>) -> Result<String> {
     edits.sort_by_key(|edit| (edit.range.start, edit.range.end));
     let mut output = String::with_capacity(text.len());
     let mut cursor = 0;
@@ -57,6 +54,7 @@ pub fn apply(text: &str, mut edits: Vec<Edit>) -> Result<String> {
         if edit.range.start < cursor || edit.range.end < edit.range.start {
             return Err("overlapping XML edits".into());
         }
+
         output.push_str(text.get(cursor..edit.range.start).ok_or("invalid XML edit boundary")?);
         output.push_str(&edit.replacement);
         cursor = edit.range.end;
@@ -69,6 +67,7 @@ pub fn relative(owner: &str, target: &str) -> Result<String> {
     for path in [owner, target] {
         materialcraft_formats::sbs::library::relative_path(&format!("sbs://{path}"))?;
     }
+
     let mut from: Vec<_> = owner.split('/').collect();
     from.pop();
     let to: Vec<_> = target.split('/').collect();

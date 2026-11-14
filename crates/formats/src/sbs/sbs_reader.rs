@@ -1,7 +1,7 @@
 use super::base_parameters::read_base_params;
 use super::component_usage;
 use super::connection::connect_all;
-use super::constant::MAX_NODES;
+use super::constant::{MAX_NODES, MAX_WIRES};
 use super::constant::{NODE_HALF_SIZE, SELF_DEPENDENCY};
 use super::embedded::decode_embedded;
 use super::filter_map::{BASE_PARAMS, FilterMap, HANDLED_PARAMS, filter_by_sbs_name};
@@ -30,6 +30,7 @@ pub(super) struct SbsReader<'text, 'warnings> {
     pub(super) external_resource_names: HashMap<(String, String), String>,
     pub(super) direct_resource_names: HashMap<String, String>,
     pub(super) node_count: usize,
+    pub(super) wire_count: usize,
 }
 
 impl<'text> SbsReader<'text, '_> {
@@ -67,6 +68,7 @@ impl<'text> SbsReader<'text, '_> {
                         if let Some(description) = child_value(item, "desc").filter(|text| !text.is_empty()) {
                             pkg.folder_descriptions.insert(path.clone(), description.into());
                         }
+
                         if let Some(group_content) = child_element(item, "content") {
                             pending.push((path, group_content));
                         }
@@ -93,6 +95,7 @@ impl<'text> SbsReader<'text, '_> {
         {
             return super::resource_replacement::load(self, pkg, identifier, path, &target, linked);
         }
+
         let external = source
             .and_then(|source| child_element(source, "externalcopy"))
             .and_then(|copy| child_value(copy, "filename"))
@@ -131,11 +134,12 @@ impl<'text> SbsReader<'text, '_> {
             }
         }
 
-        // A supplied font, including cour.ttf or embedded data, always wins. Only absence uses the shared fallback.
+        // A supplied font, including cour.ttf or embedded data, always wins. Only absence uses the shared fallback
         if font && bytes.is_none() {
             if let Some(name) = super::resource_replacement::load_font(pkg, identifier, path, linked) {
                 return name;
             }
+
             let why = if why_missing.is_empty() { "it has no font data" } else { &why_missing };
             why_missing = format!("{why}; fallback `{}` is unavailable", super::library::FALLBACK_FONT);
         }
@@ -147,7 +151,8 @@ impl<'text> SbsReader<'text, '_> {
                 let ext = if kind == "svg" { "svg".to_string() } else { format };
 
                 let mut resource = Resource::new(name.clone(), crate::safe_file_name(&format!("{name}.{ext}")), ResourceBytes::new(data));
-                // Keep the link as well as the loaded bytes so library saves can retain shared assets.
+
+                // Keep the link as well as the loaded bytes so library saves can retain shared assets
                 resource.source = loaded_source.into();
                 resource.folder = path.rsplit_once('/').map_or("", |(folder, _)| folder).into();
                 pkg.resources.push(resource);
@@ -168,6 +173,7 @@ impl<'text> SbsReader<'text, '_> {
                 self.warnings.add(format!("resource `{path}` could not be loaded: {why}"));
             }
         }
+
         name
     }
 
@@ -232,6 +238,7 @@ impl<'text> SbsReader<'text, '_> {
             if let Some(dynamic) = dynamic {
                 super::canvas::read_canvas_items(dynamic, &mut graph, self.warnings);
             }
+
             return graph;
         }
 
@@ -273,6 +280,7 @@ impl<'text> SbsReader<'text, '_> {
         super::canvas::read_canvas_items(element, &mut graph, self.warnings);
         graph
     }
+
     pub(super) fn read_graph_inputs(&mut self, element: XmlNode, graph: &mut Graph) -> HashMap<String, InputBridge> {
         let mut image_inputs = HashMap::new();
         for input in child_element(element, "paraminputs").into_iter().flat_map(|p| children_named(p, "paraminput")) {
@@ -289,6 +297,7 @@ impl<'text> SbsReader<'text, '_> {
                 );
                 continue;
             }
+
             if graph.exposed.iter().any(|e| e.id == id) {
                 continue;
             }
@@ -301,6 +310,7 @@ impl<'text> SbsReader<'text, '_> {
                 );
                 continue;
             }
+
             let label = child_element(input, "attributes").and_then(|a| child_value(a, "label")).filter(|l| !l.is_empty()).unwrap_or(&id).to_string();
             let (mut min, mut max) = (0.0, 1.0);
             let widget_options = child_element(input, "defaultWidget").and_then(|w| child_element(w, "options"));
@@ -331,8 +341,10 @@ impl<'text> SbsReader<'text, '_> {
             super::parameter_widget::read(input, &mut exposed);
             graph.exposed.push(exposed);
         }
+
         image_inputs
     }
+
     pub(super) fn read_wires(&mut self, graph: &mut Graph, comp_nodes: &[XmlNode], read_nodes: &HashMap<String, ReadNode>) -> Vec<Connection> {
         let name = graph.name.clone();
         let mut wires = Vec::new();
@@ -368,6 +380,7 @@ impl<'text> SbsReader<'text, '_> {
                                 add_placeholder_input(node, sbs_input);
                             }
                         }
+
                         sbs_input.to_string()
                     }
                     None => {
@@ -377,9 +390,16 @@ impl<'text> SbsReader<'text, '_> {
                     }
                 };
 
+                if self.wire_count >= MAX_WIRES {
+                    self.warnings.add(format!("graph `{name}`: the {MAX_WIRES} wire limit was reached; later wires were dropped"));
+                    return wires;
+                }
+
+                self.wire_count += 1;
                 wires.push(Connection { from: from.id, from_port, to: to.id, to_port });
             }
         }
+
         wires
     }
 
@@ -405,6 +425,7 @@ impl<'text> SbsReader<'text, '_> {
             if let Some(node) = node {
                 fill_placeholder(node, "other", "empty node", "", None, &output_uids, None);
             }
+
             return ReadNode { id, index, inputs: HashMap::new(), outputs: Vec::new(), open_inputs: true };
         };
 
@@ -428,8 +449,10 @@ impl<'text> SbsReader<'text, '_> {
                     if let Some(input) = input {
                         node.params.insert("default".into(), input.default.clone());
                     }
+
                     node.base = read_base_params(params, self.warnings);
                 }
+
                 ReadNode { id, index, inputs: HashMap::new(), outputs: all_outputs_to("output"), open_inputs: false }
             }
             "compOutputBridge" => {
@@ -443,6 +466,7 @@ impl<'text> SbsReader<'text, '_> {
                         node.params.insert("color_mode".into(), Value::Bool(channels == 1));
                     }
                 }
+
                 let inputs = HashMap::from([("inputNodeOutput".to_string(), "input".to_string())]);
                 ReadNode { id, index, inputs, outputs: Vec::new(), open_inputs: false }
             }
@@ -454,8 +478,8 @@ impl<'text> SbsReader<'text, '_> {
                         let (id, index, node) = push_node(graph, filter.def, pos);
                         if let Some(node) = node {
                             self.read_filter_params(node, filter, params, &graph_name);
-                            // Native files can omit the color switch while declaring a color
-                            // output. Retain that compiled image type instead of the editor preset.
+
+                            // Preserve a declared color output even when the color switch is omitted
                             if let [(_, gray)] = output_uids.as_slice()
                                 && find(filter.def).is_some_and(|definition| {
                                     matches!(definition.param("color_mode").map(|parameter| &parameter.default), Some(Value::Bool(_)))
@@ -474,7 +498,7 @@ impl<'text> SbsReader<'text, '_> {
                                     .flat_map(|parameters| children_named(parameters, "parameter"))
                                     .any(|p| child_value(p, "name") == Some("format"))
                             {
-                                // A processor defaults to its parent format, even with an image input.
+                                // A processor defaults to its parent format, even with an image input
                                 node.base.format = OutputFormat::U8;
                                 node.base.format_mode = ParameterInheritance::RelativeToParent;
                             }
@@ -489,6 +513,7 @@ impl<'text> SbsReader<'text, '_> {
                                 }
                             }
                         }
+
                         let inputs = filter.inputs.iter().map(|(sbs, port)| (sbs.to_string(), port.to_string())).collect();
                         ReadNode { id, index, inputs, outputs: all_outputs_to("output"), open_inputs: false }
                     }
@@ -497,6 +522,7 @@ impl<'text> SbsReader<'text, '_> {
                         if let Some(node) = node {
                             fill_placeholder(node, "filter", filter_name, "", params.map(|p| &text[p.range()]), &output_uids, None);
                         }
+
                         ReadNode { id, index, inputs: HashMap::new(), outputs: placeholder_outputs(&output_uids, None), open_inputs: true }
                     }
                 }
@@ -507,10 +533,12 @@ impl<'text> SbsReader<'text, '_> {
                 if let Some(node) = node {
                     fill_placeholder(node, "other", other, "", None, &output_uids, None);
                 }
+
                 ReadNode { id, index, inputs: HashMap::new(), outputs: placeholder_outputs(&output_uids, None), open_inputs: true }
             }
         }
     }
+
     pub(super) fn read_instance(&mut self, graph: &mut Graph, implementation: XmlNode<'_, 'text>, pos: [f32; 2], output_uids: &[(String, bool)]) -> ReadNode {
         let graph_name = graph.name.clone();
         let (path, dependency) = self.resolve_reference(child_value(implementation, "path").unwrap_or(""));
@@ -577,6 +605,7 @@ impl<'text> SbsReader<'text, '_> {
 
         ReadNode { id, index, inputs: HashMap::new(), outputs: placeholder_outputs(output_uids, Some(&bridgings)), open_inputs: true }
     }
+
     pub(super) fn set_param(&mut self, node: &mut Node, id: &str, like: &Value, options: usize, param: XmlNode, graph_name: &str) {
         let Some(param_value) = child_element(param, "paramValue") else { return };
 
@@ -607,11 +636,11 @@ impl<'text> SbsReader<'text, '_> {
         let Some(def) = find(filter.def) else { return };
 
         if filter.sbs == "uniform" {
-            // An omitted SBS output color is black; the editor's new-node preset is gray.
+            // An omitted SBS output color is black; the editor's new-node preset is gray
             node.params.insert("color".into(), Value::Color([0.0, 0.0, 0.0, 1.0]));
         }
         if filter.sbs == "normal" {
-            // Native files omit these defaults; the editor's new-node preset differs.
+            // Native files omit these defaults; the editor's new-node preset differs
             node.params.insert("opengl".into(), Value::Bool(false));
             node.params.insert("height_alpha".into(), Value::Bool(true));
         }
@@ -620,7 +649,8 @@ impl<'text> SbsReader<'text, '_> {
             params.into_iter().flat_map(|p| children_named(p, "parameter")).filter(|p| !BASE_PARAMS.contains(&child_value(*p, "name").unwrap_or(""))).collect();
         for param in &filter_params {
             let param_name = child_value(*param, "name").unwrap_or("");
-            // Read the earlier writer's alias without emitting it alongside the native parameter.
+
+            // Read the earlier writer's alias without emitting it alongside the native parameter
             let param_name = match (filter.sbs, param_name) {
                 ("hsl", "luminance") => "luminosity",
                 ("dyngradient", "position") => "coordinate",
@@ -667,10 +697,12 @@ impl<'text> SbsReader<'text, '_> {
         if let Some(name) = self.direct_resource_names.get(url) {
             return Some(name);
         }
+
         let dependency_uid = url.split_once('?').and_then(|(_, query)| query.split('&').find_map(|part| part.strip_prefix("dependency=")));
         if dependency_uid.is_some_and(|uid| !self.dependencies.contains_key(uid)) {
             return None;
         }
+
         let (path, dependency) = self.resolve_reference(url);
         match dependency.filter(|file| file != SELF_DEPENDENCY) {
             Some(file) => self.external_resource_names.get(&(file, path)),
@@ -682,6 +714,7 @@ impl<'text> SbsReader<'text, '_> {
         if let Some(name) = self.resource_name(url) {
             return Some(name.clone());
         }
+
         let dependency_uid = url.split_once('?').and_then(|(_, query)| query.split('&').find_map(|part| part.strip_prefix("dependency=")));
         if let Some(uid) = dependency_uid.filter(|uid| !self.dependencies.contains_key(*uid)) {
             self.warnings.add(format!("graph `{graph_name}`: resource reference has unknown dependency `{uid}`"));
@@ -689,21 +722,26 @@ impl<'text> SbsReader<'text, '_> {
             let (path, _) = self.resolve_reference(url);
             self.warnings.add(format!("graph `{graph_name}`: Node uses resource `{path}`, which is not in the package"));
         }
+
         None
     }
 }
+
 pub(super) fn unique_name(taken: &[String], base: &str) -> String {
     let free = |name: &str| !taken.iter().any(|t| t == name);
     if free(base) {
         return base.to_string();
     }
+
     (1..).map(|i| format!("{base}_{i}")).find(|name| free(name)).unwrap_or_else(|| base.to_string())
 }
+
 pub(super) fn push_node<'g>(graph: &'g mut Graph, def: &str, pos: [f32; 2]) -> (NodeId, usize, Option<&'g mut Node>) {
     let id = graph.add_node(def, pos);
     let index = graph.nodes.len() - 1;
     (id, index, graph.nodes.last_mut())
 }
+
 pub(super) fn read_graph_outputs(element: XmlNode) -> HashMap<String, (String, u32, u32)> {
     let mut outputs = HashMap::new();
     for output in child_element(element, "graphOutputs").into_iter().flat_map(|o| children_named(o, "graphoutput")) {
@@ -712,5 +750,6 @@ pub(super) fn read_graph_outputs(element: XmlNode) -> HashMap<String, (String, u
         let channels = child_value(output, "channels").and_then(|value| value.parse().ok()).unwrap_or(1);
         outputs.insert(child_value(output, "uid").unwrap_or("").to_string(), (identifier, usage, channels));
     }
+
     outputs
 }

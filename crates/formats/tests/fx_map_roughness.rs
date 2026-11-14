@@ -19,19 +19,24 @@ fn native_hurst_constants_and_functions_survive_saving() {
         let mut read = read_sbs(xml.as_bytes(), "roughness.sbs", &|_| None).unwrap();
         for _ in 0..2 {
             assert!(read.warnings.is_empty(), "{:?}", read.warnings);
+
             let node = &read.pkg.graphs[0].nodes[0];
             if value.contains("dynamicValue") {
                 let function = &node.functions["roughness"];
+
                 assert_eq!(function.nodes.len(), 1);
                 assert_eq!(function.output, Some(function.nodes[0].id));
                 assert_eq!(function.nodes[0].value, Some(Value::Float(0.75)));
             } else {
                 assert_eq!(node.params["roughness"], Value::Float(0.75));
             }
+
             let bytes = write_sbs(&read.pkg).unwrap();
             let text = std::str::from_utf8(&bytes).unwrap();
+
             assert!(text.contains("<name v=\"hurst\"/>"));
             assert!(!text.contains("<name v=\"roughness\"/>"));
+
             read = read_sbs(&bytes, "resaved.sbs", &|_| None).unwrap();
         }
     }

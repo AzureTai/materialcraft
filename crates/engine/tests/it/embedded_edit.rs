@@ -649,9 +649,11 @@ fn library_samplers_read_image_inputs_in_both_processors() {
 
             if definition == "value_processor" {
                 let expected = if sampler == "samplecol" { Value::Float4(color) } else { Value::Float(color[0]) };
+
                 assert_eq!(session.cooked.value(owner, 0), Some(&expected));
             } else {
                 let expected = if sampler == "samplecol" { color } else { [color[0], color[0], color[0], 1.0] };
+
                 assert_eq!(session.cooked.image(owner, 0).unwrap().get(0, 0, false), expected);
             }
         }

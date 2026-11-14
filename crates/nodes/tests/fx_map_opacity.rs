@@ -34,13 +34,14 @@ fn render(depth: usize, roughness: f32, stack: bool, color: Option<[f32; 4]>) ->
         resource: &|_| None,
         vars: &BTreeMap::new(),
     };
+
     (definition.cook)(&context).unwrap().remove(0)
 }
 
 #[test]
 fn quadrant_opacity_matches_measured_depth_and_stack_values() {
-    // Pixel values measured from an original constant-square SBS diagnostic at 32-bit float precision.
-    // Empty ancestor quadrants still count toward the depth normalization; zero roughness bypasses it.
+    // Pixel values come from an original constant-square 32-bit float diagnostic
+    // Empty ancestors affect depth normalization; zero roughness bypasses it
     for (roughness, depth, expected) in [
         (0.0, 0, 0.125),
         (0.0, 1, 0.125),
@@ -56,14 +57,17 @@ fn quadrant_opacity_matches_measured_depth_and_stack_values() {
         (1.0, 4, 0.025),
     ] {
         let image = render(depth, roughness, false, None);
+
         assert!(
             image.data.iter().all(|value| (*value - expected).abs() < 2e-7),
             "roughness {roughness}, depth {depth}: {:?}, expected {expected}",
             image.mean()
         );
     }
+
     for roughness in [0.42, 1.0] {
         let image = render(4, roughness, true, None);
+
         assert!(image.data.iter().all(|value| (*value - 0.125).abs() < 2e-7), "stack roughness {roughness}: {:?}", image.mean());
     }
 }

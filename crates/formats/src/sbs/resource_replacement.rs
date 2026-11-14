@@ -35,7 +35,7 @@ pub(super) fn load(
     target: &str,
     linked: &dyn Fn(&str) -> Option<Vec<u8>>,
 ) -> String {
-    // A missing replacement must never fall back to the old container or embedded payload.
+    // A missing replacement must never fall back to the old container or embedded payload
     let bytes =
         library::relative_path(target).ok().and_then(|_| linked(target)).filter(|bytes| bytes.len() as u64 <= crate::MAX_RESOURCE).unwrap_or_else(|| {
             reader.warnings.add(format!("resource `{path}` could not be loaded: replacement `{target}` is invalid, missing or exceeds 256 MiB"));
@@ -60,15 +60,18 @@ pub(super) fn read_direct(reader: &mut SbsReader<'_, '_>, content: Node<'_, '_>,
         if reference.trim().is_empty() || reader.direct_resource_names.contains_key(reference) {
             continue;
         }
+
         let font = child_value(parameter, "name") == Some("fontdata");
         let package_reference = reference.starts_with("pkg://");
         if package_reference && (!font || reader.resource_name(reference).is_some()) {
             continue;
         }
+
         if reader.direct_resource_names.len() >= 1024 {
             reader.warnings.add("Only the first 1024 direct resource references were read");
             break;
         }
+
         if font {
             let original = if package_reference { reader.resolve_reference(reference).0 } else { reference.to_string() };
             let filename = original.rsplit(['/', '\\']).next().unwrap_or("font");
@@ -81,11 +84,13 @@ pub(super) fn read_direct(reader: &mut SbsReader<'_, '_>, content: Node<'_, '_>,
                 name
             } else {
                 reader.warnings.add(format!("font `{reference}` and fallback `{}` are unavailable", library::FALLBACK_FONT));
-                // Without a declaration there is no filename to invent: keep the unresolved SBS reference.
+
+                // Without a declaration there is no filename to invent: keep the unresolved SBS reference
                 if package_reference {
                     reader.direct_resource_names.insert(reference.into(), reference.into());
                     continue;
                 }
+
                 store(pkg, identifier, &path, reference, Vec::new())
             };
             if let Some(resource) = pkg.resources.last() {
@@ -94,6 +99,7 @@ pub(super) fn read_direct(reader: &mut SbsReader<'_, '_>, content: Node<'_, '_>,
             reader.direct_resource_names.insert(reference.into(), name);
             continue;
         }
+
         let Some(target) = target(reference) else { continue };
         let name = if let Some(name) = targets.get(&target) {
             name.clone()

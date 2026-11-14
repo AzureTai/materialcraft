@@ -24,6 +24,7 @@ mod parameter_widget;
 mod pattern_graph;
 mod placeholder;
 mod read_node;
+mod sbs_document;
 mod sbs_read;
 mod sbs_reader;
 mod sbs_value;
@@ -38,6 +39,7 @@ pub use layout_frame::LayoutFrame;
 pub use layout_item::LayoutItem;
 pub use library_layout::read_layout;
 pub use read::{is_sbs, read_sbs};
+pub use sbs_document::SbsDocument;
 pub use sbs_read::SbsRead;
 pub use write::write_sbs;
 

@@ -139,17 +139,21 @@ fn pixel_ratio_and_tiling_inherit_and_preserve_native_relative_modes() {
         execute(&mut session, "graph.node.base", &json!({"pixelRatio": 0, "tiling": false, "pixelRatioMode": mode, "tilingMode": mode})).unwrap();
         let bytes = write_sbs(&session.pkg).unwrap();
         let read = read_sbs(&bytes, "inheritance.sbs", &|_| None).unwrap();
+
         assert!(read.warnings.is_empty(), "{:?}", read.warnings);
 
         // SBS represents Inherit as a format value plus a relative mode
         let mut expected_base = session.pkg.graphs[0].node(pixel).unwrap().base.clone();
         expected_base.format = OutputFormat::U16;
         expected_base.format_mode = ParameterInheritance::RelativeToInput;
+
         assert_eq!(read.pkg.graphs[0].node(pixel).unwrap().base, expected_base);
+
         let mut reopened = Session::new(read.pkg);
 
         for session in [&mut session, &mut reopened] {
             let cooked = session.cook();
+
             assert_eq!(cooked.nodes[&pixel].error, None);
             assert!((cooked.image(pixel, 0).unwrap().mean()[0] - expected).abs() < 1e-6, "{mode}");
         }
@@ -180,13 +184,16 @@ fn pixel_processor_default_format_preserves_input_precision_on_sbs_round_trip() 
         package.graphs.push(graph);
         let mut original = Session::new(package);
         let before = original.cook();
+
         assert_eq!(before.nodes[&pixel].error, None);
         assert_eq!(before.nodes[&pixel].base.format, expected_format);
         assert_eq!(before.image(pixel, 0).unwrap().get(0, 0, false)[0], expected_value);
 
         let bytes = write_sbs(&original.pkg).unwrap();
         let read = read_sbs(&bytes, "format-inheritance.sbs", &|_| None).unwrap();
+
         assert!(read.warnings.is_empty(), "{:?}", read.warnings);
+
         let mut reopened = Session::new(read.pkg);
         let after = reopened.cook();
 
@@ -273,7 +280,9 @@ fn nested_function_instances_use_the_processing_callers_variable_scope() {
 
         assert_eq!(cooked.nodes[&pixel].error, None);
         assert!(cooked.nodes[&value].error.as_deref().unwrap().contains("undefined variable `$pos`"));
+
         let image = cooked.image(pixel, 0).unwrap();
+
         assert_eq!(&image.get(0, 0, false)[..2], &[0.03125; 2]);
         assert_eq!(&image.get(15, 15, false)[..2], &[0.96875; 2]);
     }

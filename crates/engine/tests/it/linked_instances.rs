@@ -42,23 +42,34 @@ fn source_edits_update_instances_and_dirty_dependents_before_saving() {
     let instance = NodeId(execute(&mut session, "graph.instance.add", &json!({"document": 0, "graph": "Source"})).unwrap()["id"].as_u64().unwrap());
     session.preview_size = Some(16);
     session.cook();
+
     assert_eq!(session.output_ports(instance), ["color"]);
     assert!(session.cooked.nodes[&instance].error.is_none(), "{:?}", session.cooked.nodes[&instance].error);
     assert_eq!(session.cooked.image(instance, 0).unwrap().get(0, 0, false), [0.25, 0.5, 0.75, 1.0]);
+
     let history = session.history();
     session.modified = false;
     execute(&mut session, "package.activate", &json!({"document": 0})).unwrap();
     execute(&mut session, "graph.select", &json!({"ids": [value.0]})).unwrap();
     execute(&mut session, "graph.node.param", &json!({"id": value.0, "param": "color", "value": [0.8, 0.2, 0.1, 1.0]})).unwrap();
+
     assert!(session.open_packages().iter().find(|entry| entry.0 == target_id).unwrap().3);
+
     execute(&mut session, "package.activate", &json!({"document": target_id})).unwrap();
+
     assert_eq!(session.history(), history);
+
     session.cook();
+
     assert_eq!(session.cooked.image(instance, 0).unwrap().get(0, 0, false), [0.8, 0.2, 0.1, 1.0]);
+
     execute(&mut session, "edit.undo", &json!({})).unwrap();
+
     assert!(session.graph().unwrap().nodes.is_empty());
+
     execute(&mut session, "edit.redo", &json!({})).unwrap();
     session.cook();
+
     assert_eq!(session.cooked.image(instance, 0).unwrap().get(0, 0, false), [0.8, 0.2, 0.1, 1.0]);
 }
 
@@ -93,18 +104,25 @@ fn failed_edit_groups_do_not_publish_source_changes() {
         execute(session, "graph.node.param", &json!({"id": value.0, "param": "color", "value": [1.0, 0.0, 0.0, 1.0]})).unwrap();
         execute(session, "graph.node.param", &json!({"id": 99999, "param": "color", "value": [0.0, 0.0, 0.0, 0.0]}))
     });
+
     assert!(result.is_err());
     assert!(!session.open_packages().iter().find(|entry| entry.0 == target_id).unwrap().3);
+
     execute(&mut session, "package.activate", &json!({"document": target_id})).unwrap();
     session.preview_size = Some(16);
     session.cook();
+
     assert_eq!(session.cooked.image(instance, 0).unwrap().get(0, 0, false), [0.25, 0.5, 0.75, 1.0]);
+
     execute(&mut session, "package.activate", &json!({"document": 0})).unwrap();
     session.begin_group("Complete source edit on package switch");
     execute(&mut session, "graph.node.param", &json!({"id": value.0, "param": "color", "value": [1.0, 0.0, 0.0, 1.0]})).unwrap();
     execute(&mut session, "package.activate", &json!({"document": target_id})).unwrap();
+
     assert!(session.modified);
+
     session.cook();
+
     assert_eq!(session.cooked.image(instance, 0).unwrap().get(0, 0, false), [1.0, 0.0, 0.0, 1.0]);
 }
 
@@ -143,13 +161,20 @@ fn updates_propagate_through_three_packages_and_cycles_are_rejected() {
     session.modified = false;
     session.preview_size = Some(16);
     session.cook();
+
     assert_eq!(session.cooked.image(instance, 0).unwrap().get(0, 0, false), [0.25, 0.5, 0.75, 1.0]);
+
     execute(&mut session, "package.activate", &json!({"document": 0})).unwrap();
+
     assert!(execute(&mut session, "graph.instance.add", &json!({"document": outer, "graph": "Target"})).is_err());
+
     execute(&mut session, "graph.node.param", &json!({"id": value.0, "param": "color", "value": [0.1, 0.2, 0.3, 1.0]})).unwrap();
+
     assert!(session.open_packages().iter().filter(|entry| entry.0 != 0).all(|entry| entry.3));
+
     execute(&mut session, "package.activate", &json!({"document": outer})).unwrap();
     session.cook();
+
     assert_eq!(session.cooked.image(instance, 0).unwrap().get(0, 0, false), [0.1, 0.2, 0.3, 1.0]);
 }
 
@@ -168,13 +193,19 @@ fn closing_a_modified_source_discards_its_unsaved_changes_in_dependents() {
     let instance = NodeId(execute(&mut session, "graph.instance.add", &json!({"document": 0, "graph": "Source"})).unwrap()["id"].as_u64().unwrap());
     execute(&mut session, "package.activate", &json!({"document": 0})).unwrap();
     execute(&mut session, "graph.node.param", &json!({"id": value.0, "param": "color", "value": [1.0, 0.0, 0.0, 1.0]})).unwrap();
+
     assert!(execute(&mut session, "package.close", &json!({})).is_err());
+
     execute(&mut session, "package.close", &json!({"discard": true})).unwrap();
+
     assert_eq!(session.document_id, target_id);
+
     session.preview_size = Some(16);
     session.cook();
     let color = session.cooked.image(instance, 0).unwrap().get(0, 0, false);
+
     assert!(color.into_iter().zip([0.25, 0.5, 0.75, 1.0]).all(|(actual, expected)| (actual - expected).abs() < 1e-6));
+
     std::fs::remove_dir_all(directory).unwrap();
 }
 
@@ -199,10 +230,12 @@ fn named_value_inputs_and_outputs_keep_their_type_across_files() {
     session.preview_size = Some(16);
     session.cook();
     let cooked = &session.cooked.nodes[&instance];
+
     assert!(cooked.error.is_none(), "{:?}", cooked.error);
     assert_eq!(cooked.outputs[0].as_value(), Some(&Value::Float(0.75)));
     assert_eq!(session.output_ports(instance), ["result"]);
     assert!(!materialcraft_engine::MaterialSource { graph: session.graph, node: instance, port: "result".into() }.is_image(&session.pkg));
+
     let mut local = session.open_packages().into_iter().find(|entry| entry.0 == 0).unwrap().1.clone();
     let mut caller = session.graph().unwrap().clone();
     caller.node_mut(instance).unwrap().instance.as_mut().unwrap().package.clear();
@@ -215,6 +248,7 @@ fn named_value_inputs_and_outputs_keep_their_type_across_files() {
     reopened.cook();
     let instance = reopened.graph().unwrap().nodes.iter().find(|node| node.def == "graph_instance").unwrap().id;
     let cooked = &reopened.cooked.nodes[&instance];
+
     assert!(cooked.error.is_none(), "{:?}", cooked.error);
     assert_eq!(cooked.outputs[0].as_value(), Some(&Value::Float(0.75)));
 }
@@ -237,9 +271,12 @@ fn removing_a_source_output_does_not_erase_connected_instance_wires_on_save() {
     execute(&mut session, "package.activate", &json!({"document": target_id})).unwrap();
     let bytes = file_cmds::save_bytes(&session).unwrap();
     let read = formats::sbs::read_sbs(&bytes, "target.sbs", &|_| None).unwrap();
+
     assert_eq!(read.pkg.graphs[0].connections.len(), 1);
+
     session.preview_size = Some(16);
     session.cook();
+
     assert!(session.cooked.nodes[&instance].error.is_some());
 }
 
@@ -285,28 +322,38 @@ fn saved_dependencies_reopen_without_source_files_in_explorer_and_missing_source
     execute(&mut session, "graph.connect", &json!({"from": instance, "fromPort": "color", "to": output})).unwrap();
     execute(&mut session, "file.save", &json!({"path": target_path})).unwrap();
     let saved = std::fs::read_to_string(&target_path).unwrap();
+
     assert!(saved.contains("filename v=\"source.sbs\""));
     assert!(!saved.contains(&directory.to_string_lossy().to_string()));
+
     let mut reopened = Session::new(Package::new("Initial"));
     file_cmds::open_file(&mut reopened, target_path.to_str().unwrap()).unwrap();
+
     assert!(reopened.load_warnings.is_empty(), "{:?}", reopened.load_warnings);
     assert_eq!(reopened.open_packages().len(), 2);
+
     execute(&mut reopened, "graph.open", &json!({"graph": "Target"})).unwrap();
     reopened.preview_size = Some(16);
     reopened.cook();
     let graph = reopened.graph().unwrap();
     let output = graph.nodes.iter().find(|node| node.def == "output").unwrap().id;
     let color = reopened.cooked.image(output, 0).unwrap().get(0, 0, false);
+
     assert!(color.into_iter().zip([0.25, 0.5, 0.75, 1.0]).all(|(actual, expected)| (actual - expected).abs() < 1e-6));
+
     std::fs::remove_file(&source_path).unwrap();
     let mut missing = Session::new(Package::new("Initial"));
     file_cmds::open_file(&mut missing, target_path.to_str().unwrap()).unwrap();
     execute(&mut missing, "graph.open", &json!({"graph": "Target"})).unwrap();
+
     assert_eq!(missing.graph().unwrap().connections.len(), 1);
+
     let resaved = file_cmds::save_bytes(&missing).unwrap();
     let resaved = formats::sbs::read_sbs(&resaved, "target.sbs", &|_| None).unwrap();
+
     assert_eq!(resaved.pkg.graph_by_name("Target").unwrap().1.connections.len(), 1);
     assert!(missing.path.is_some());
+
     std::fs::remove_dir_all(directory).unwrap();
 }
 
@@ -352,6 +399,7 @@ fn instance_defaults_follow_current_source_inputs_before_and_after_save() {
 
             assert_eq!(cooked.nodes[&instance].error, None);
             assert_eq!(cooked.nodes[&instance].parameters["tint"], Value::Color(expected));
+
             assert_instance_color(&mut session, instance, expected);
         }
 
@@ -360,7 +408,9 @@ fn instance_defaults_follow_current_source_inputs_before_and_after_save() {
         std::fs::write(&target_path, file_cmds::save_bytes(&session).unwrap()).unwrap();
         let mut reopened = Session::new(Package::new("Initial"));
         file_cmds::open_file(&mut reopened, target_path.to_str().unwrap()).unwrap();
+
         assert!(reopened.load_warnings.is_empty(), "{:?}", reopened.load_warnings);
+
         reopened.graph = target_graph;
         reopened.preview_size = Some(16);
         let instance = reopened.graph().unwrap().nodes.iter().find(|node| node.def == "graph_instance").unwrap().id;

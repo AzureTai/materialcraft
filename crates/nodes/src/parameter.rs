@@ -28,17 +28,19 @@ pub fn clamp_params(def: &NodeDefinition, params: &mut BTreeMap<String, Value>) 
             };
             continue;
         }
+
         if let Value::Color(c) = v {
             for x in c {
                 *x = clamp_finite(*x, -HARD_SPAN, 1.0 + HARD_SPAN, 0.0);
             }
             continue;
         }
-        // No range declared (an Input Value's default takes any number): only a value that isn't
-        // a number goes
+
+        // An unconstrained Input Value accepts any number; reject only nonnumeric values
         let ranged = p.min < p.max;
         let span = p.max - p.min;
         let (lo, hi) = if ranged { (p.min - HARD_SPAN * span, p.max + HARD_SPAN * span) } else { (f32::MIN, f32::MAX) };
+
         // The default's component `i`, or 0 when the default is a different variant
         let fallback = |i: usize| match &p.default {
             Value::Float(d) => [*d].get(i).copied(),

@@ -116,6 +116,7 @@ fn integer_math_preserves_all_32_bits_and_rejects_overflow() {
 #[test]
 fn vectors_concatenate_swizzle_and_cast_without_broadcasting() {
     let vector = operation("vector4", &[Value::Float2([1.0, 2.0]), Value::Float2([3.0, 4.0])], None).unwrap();
+
     assert_eq!(vector, Value::Float4([1.0, 2.0, 3.0, 4.0]));
     assert_eq!(operation("swizzle3", &[vector], Some(Value::Int3([3, 0, 3]))).unwrap(), Value::Float3([4.0, 1.0, 4.0]));
     assert_eq!(operation("toint2", &[Value::Float2([-1.9, 2.9])], None).unwrap(), Value::Int2([-2, 2]));
@@ -284,6 +285,7 @@ fn function_calls_consume_the_callers_random_stream() {
     caller.output = Some(caller.add("vector2", &calls, None));
     let expected = evaluate(&random, &BTreeMap::new()).unwrap();
     let Value::Float2(values) = expected else { panic!("expected two random values") };
+
     assert_ne!(values[0], values[1]);
     assert_eq!(evaluate(&caller, &BTreeMap::new()).unwrap(), expected);
 }
@@ -297,6 +299,7 @@ fn shared_conditions_keep_the_value_computed_before_a_sequence_assignment() {
     let assign = graph.add("set", &[one], Some(Value::Text("counter".into())));
     let after = graph.add("sequence", &[assign, condition], None);
     graph.output = Some(graph.add("sequence", &[condition, after], None));
+
     assert_eq!(evaluate(&graph, &BTreeMap::from([("counter".into(), Value::Int(0))])).unwrap(), Value::Bool(true));
 }
 
@@ -308,6 +311,7 @@ fn shared_assignment_nodes_run_once_per_function_evaluation() {
     let next = graph.add("add", &[current, one], None);
     let assign = graph.add("set", &[next], Some(Value::Text("counter".into())));
     graph.output = Some(graph.add("ivector2", &[assign, assign], None));
+
     assert_eq!(evaluate(&graph, &BTreeMap::from([("counter".into(), Value::Int(0))])).unwrap(), Value::Int2([1, 1]));
 }
 
@@ -330,13 +334,18 @@ fn pixel_random_samples_vary_spatially_and_repeat_for_the_same_seed() {
                     tile: true,
                     variables: &variables,
                 };
+
                 let value = program.evaluate_pixel(&context, state).unwrap();
+
                 assert_eq!(value, program.evaluate(&context, &mut EvaluationState::default()).unwrap());
+
                 value
             })
             .collect::<Vec<_>>()
     };
+
     let first = samples(&mut state);
+
     assert!(first.windows(2).all(|pair| pair[0] != pair[1]));
     assert_eq!(first, samples(&mut state));
 }
@@ -347,8 +356,11 @@ fn exposed_choices_are_integers_inside_functions() {
     let choice = graph.add("get_integer1", &[], Some(Value::Text("choice".into())));
     let one = graph.add_constant(Value::Int(1));
     graph.output = Some(graph.add("lr", &[choice, one], None));
+
     assert_eq!(evaluate(&graph, &BTreeMap::from([("choice".into(), Value::Enum(0))])).unwrap(), Value::Bool(true));
+
     graph.output = Some(graph.add("add", &[choice, one], None));
+
     assert_eq!(evaluate(&graph, &BTreeMap::from([("choice".into(), Value::Enum(2))])).unwrap(), Value::Int(3));
     assert!(evaluate(&graph, &BTreeMap::from([("choice".into(), Value::Enum(u32::MAX))])).is_err());
 }
@@ -374,6 +386,7 @@ fn nested_function_assignments_escape_but_arguments_stay_local() {
     let argument = caller.add("get_integer1", &[], Some(Value::Text("argument".into())));
     let pair = caller.add("ivector2", &[exported, argument], None);
     caller.output = Some(caller.add("sequence", &[call, pair], None));
+
     assert_eq!(evaluate(&caller, &BTreeMap::from([("argument".into(), Value::Int(7))])).unwrap(), Value::Int2([42, 7]));
 }
 
@@ -387,6 +400,7 @@ fn one_random_node_reuses_its_sample_across_vector_connections() {
     let Value::Float4(channels) = evaluate(&graph, &BTreeMap::new()).unwrap() else {
         panic!("expected color");
     };
+
     assert!(channels.iter().all(|value| *value == channels[0]), "{channels:?}");
 }
 
@@ -400,6 +414,7 @@ fn loops_refresh_random_samples_but_keep_each_iterations_fanout_equal() {
     let Value::Float3(expected) = evaluate(&samples, &BTreeMap::new()).unwrap() else {
         panic!("expected samples");
     };
+
     assert_ne!(expected[0], expected[2]);
 
     let mut graph = FunctionGraph::default();
@@ -418,6 +433,7 @@ fn loops_refresh_random_samples_but_keep_each_iterations_fanout_equal() {
     let pair = graph.add("vector2", &[random, random], None);
     let body = graph.add("sequence", &[advance, pair], None);
     graph.output = Some(graph.add("while", &[init, exit, body], Some(Value::Int(3))));
+
     assert_eq!(evaluate(&graph, &BTreeMap::new()).unwrap(), Value::Float2([expected[2]; 2]));
 }
 
@@ -431,11 +447,13 @@ fn a_node_runs_once_so_readers_before_and_after_a_set_share_its_value() {
     graph.output = Some(graph.add("sequence", &[store, read], None));
 
     let variables = BTreeMap::from([("count".to_string(), Value::Int(4))]);
+
     assert_eq!(evaluate(&graph, &variables).unwrap(), Value::Int(4), "the Get node read 4 before the Set and keeps it");
 
     // A second Get node reads the variable when it runs, after the Set
     let later = graph.add("get_integer1", &[], Some(Value::Text("count".into())));
     graph.output = Some(graph.add("sequence", &[store, later], None));
+
     assert_eq!(evaluate(&graph, &variables).unwrap(), Value::Int(5));
 }
 
@@ -476,10 +494,12 @@ fn variables_a_called_graph_sets_reach_its_caller_but_its_inputs_do_not() {
     node.source = Some(Ok(std::sync::Arc::new(called)));
     let shared = caller.add("get_integer1", &[], Some(Value::Text("shared".into())));
     caller.output = Some(caller.add("sequence", &[call, shared], None));
+
     assert_eq!(evaluate(&caller, &BTreeMap::new()).unwrap(), Value::Int(9));
 
     let leaked = caller.add("get_integer1", &[], Some(Value::Text("amount".into())));
     caller.output = Some(caller.add("sequence", &[call, leaked], None));
+
     assert_eq!(evaluate(&caller, &BTreeMap::new()).unwrap(), Value::Int(0));
 }
 
@@ -500,6 +520,7 @@ fn an_unconnected_input_computes_with_zero_and_a_loop_without_a_condition_runs_i
     let half = graph.add_constant(Value::Float(0.5));
     graph.output = Some(graph.add("lerp", &[high, high, half], None));
     graph.nodes.last_mut().unwrap().inputs = vec![None, Some(high), Some(half)];
+
     assert_eq!(evaluate(&graph, &BTreeMap::new()).unwrap(), Value::Float(4.0), "halfway between zero and 8");
 
     let mut graph = FunctionGraph::default();
@@ -511,6 +532,7 @@ fn an_unconnected_input_computes_with_zero_and_a_loop_without_a_condition_runs_i
     let step = graph.add("set", &[next], Some(Value::Text("count".into())));
     graph.output = Some(graph.add("while", &[start, start, step], Some(Value::Int(3))));
     graph.nodes.last_mut().unwrap().inputs = vec![Some(start), None, Some(step)];
+
     assert_eq!(evaluate(&graph, &BTreeMap::new()).unwrap(), Value::Int(3));
 }
 
@@ -544,5 +566,6 @@ fn every_pixel_of_a_processor_draws_its_own_random_numbers() {
 
     let first = image.get(0, 0, false)[0];
     let different = (0..8).flat_map(|y| (0..8).map(move |x| (x, y))).filter(|(x, y)| (image.get(*x, *y, false)[0] - first).abs() > 1e-4).count();
+
     assert!(different > 56, "{different} of 64 pixels differ from the first");
 }

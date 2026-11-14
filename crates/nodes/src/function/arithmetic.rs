@@ -38,6 +38,7 @@ pub(crate) fn evaluate(op: &str, args: &[Value], random: &mut u32, scope: super:
     if args.get(1).is_some_and(|value| dimensions(value) != count && !(op == "mulscalar" && dimensions(value) == 1)) {
         return Err("float operands must have the same dimensions".into());
     }
+
     if args.get(2).is_some_and(|value| dimensions(value) != count && dimensions(value) != 1) {
         return Err("interpolation factor must be a scalar or match its operands".into());
     }
@@ -45,16 +46,20 @@ pub(crate) fn evaluate(op: &str, args: &[Value], random: &mut u32, scope: super:
     if op == "dot" {
         return float_value(&[left.iter().zip(right).take(count).map(|(a, b)| a * b).sum()]);
     }
+
     if op == "atan2" {
         if count != 2 {
             return Err("arc tangent requires a float2".into());
         }
+
         return float_value(&[left[1].atan2(left[0])]);
     }
+
     if op == "cartesian" {
         if count != 1 {
             return Err("Cartesian requires scalar radius and angle".into());
         }
+
         return float_value(&[left[0] * right[0].cos(), left[0] * right[0].sin()]);
     }
 
@@ -65,7 +70,7 @@ pub(crate) fn evaluate(op: &str, args: &[Value], random: &mut u32, scope: super:
             "sub" => left - right,
             "mul" | "mulscalar" => left * right,
             "div" => left / right,
-            // Floored modulo wraps negative coordinates; remainder keeps their sign.
+            // Floored modulo wraps negative coordinates; remainder keeps their sign
             "mod" => left - right * (left / right).floor(),
             "neg" => -left,
             "abs" => left.abs(),
