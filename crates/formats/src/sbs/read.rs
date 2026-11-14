@@ -9,7 +9,7 @@ use super::{
 use crate::Result;
 use materialcraft_core::Package;
 use roxmltree::Node as XmlNode;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 pub fn read_sbs(bytes: &[u8], name: &str, linked: &dyn Fn(&str) -> Option<Vec<u8>>) -> Result<SbsRead> {
     super::SbsDocument::parse(bytes)?.read(name, linked)
@@ -36,6 +36,7 @@ pub(super) fn read_document(doc: &roxmltree::Document<'_>, name: &str, linked: &
         resource_names: HashMap::new(),
         external_resource_names: HashMap::new(),
         direct_resource_names: HashMap::new(),
+        used_resource_names: HashSet::new(),
         node_count: 0,
         wire_count: 0,
     };

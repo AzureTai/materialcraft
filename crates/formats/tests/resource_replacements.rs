@@ -126,3 +126,32 @@ fn foreign_font_binding_is_imported_once_and_round_trips() {
     assert_eq!(reopened.pkg.graphs[0].nodes[0].params["fontdata"], Value::Text("asset".into()));
     assert_eq!(reopened.pkg.resources[0].bytes.as_slice(), &[4, 5, 6]);
 }
+
+#[test]
+fn replacements_and_fallback_fonts_share_names_with_ordinary_resources() {
+    for (file, format) in [("old/sun.surface", "surface"), ("missing.ttf", "ttf")] {
+        let replacement = resource(file, format, "");
+        let ordinary = resource("ordinary.png", "png", "");
+
+        for content in [format!("{replacement}{ordinary}"), format!("{ordinary}{replacement}")] {
+            let xml = package(&content, "");
+            let read = read_sbs(xml.as_bytes(), "mixed.sbs", &|path| match path {
+                "ordinary.png" => Some(vec![1]),
+                "sbs://resources/sun.exr" | "sbs://resources/LiberationMono-Regular.ttf" => Some(vec![2]),
+                _ => None,
+            })
+            .unwrap();
+
+            assert!(read.warnings.is_empty(), "{:?}", read.warnings);
+            assert_eq!(read.pkg.resources.len(), 2);
+            assert_ne!(read.pkg.resources[0].name, read.pkg.resources[1].name);
+
+            let reopened = read_sbs(&write_sbs(&read.pkg).unwrap(), "reopened.sbs", &|_| None).unwrap();
+
+            assert!(reopened.warnings.is_empty(), "{:?}", reopened.warnings);
+            for resource in &read.pkg.resources {
+                assert_eq!(reopened.pkg.resource(&resource.name).unwrap().bytes, resource.bytes);
+            }
+        }
+    }
+}

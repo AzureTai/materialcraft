@@ -17,9 +17,8 @@ pub(super) fn is_font(reference: &str) -> bool {
     reference.rsplit_once('.').is_some_and(|(_, extension)| matches!(extension.to_ascii_lowercase().as_str(), "ttf" | "otf" | "ttc" | "otc" | "woff" | "woff2"))
 }
 
-fn store(pkg: &mut Package, identifier: &str, path: &str, source: &str, bytes: Vec<u8>) -> String {
-    let taken: Vec<_> = pkg.resources.iter().map(|resource| resource.name.clone()).collect();
-    let name = unique_name(&taken, if identifier.is_empty() { "resource" } else { identifier });
+fn store(reader: &mut SbsReader<'_, '_>, pkg: &mut Package, identifier: &str, path: &str, source: &str, bytes: Vec<u8>) -> String {
+    let name = unique_name(&mut reader.used_resource_names, if identifier.is_empty() { "resource" } else { identifier });
     let mut resource = Resource::new(name.clone(), crate::safe_file_name(source.rsplit(['/', '\\']).next().unwrap_or("resource")), ResourceBytes::new(bytes));
     resource.source = source.into();
     resource.folder = path.rsplit_once('/').map_or("", |(folder, _)| folder).into();
@@ -41,12 +40,18 @@ pub(super) fn load(
             reader.warnings.add(format!("resource `{path}` could not be loaded: replacement `{target}` is invalid, missing or exceeds 256 MiB"));
             Vec::new()
         });
-    store(pkg, identifier, path, target, bytes)
+    store(reader, pkg, identifier, path, target, bytes)
 }
 
-pub(super) fn load_font(pkg: &mut Package, identifier: &str, path: &str, linked: &dyn Fn(&str) -> Option<Vec<u8>>) -> Option<String> {
+pub(super) fn load_font(
+    reader: &mut SbsReader<'_, '_>,
+    pkg: &mut Package,
+    identifier: &str,
+    path: &str,
+    linked: &dyn Fn(&str) -> Option<Vec<u8>>,
+) -> Option<String> {
     let bytes = linked(library::FALLBACK_FONT).filter(|bytes| !bytes.is_empty() && bytes.len() as u64 <= crate::MAX_RESOURCE)?;
-    Some(store(pkg, identifier, path, library::FALLBACK_FONT, bytes))
+    Some(store(reader, pkg, identifier, path, library::FALLBACK_FONT, bytes))
 }
 
 pub(super) fn read_direct(reader: &mut SbsReader<'_, '_>, content: Node<'_, '_>, pkg: &mut Package, linked: &dyn Fn(&str) -> Option<Vec<u8>>) {
@@ -79,8 +84,8 @@ pub(super) fn read_direct(reader: &mut SbsReader<'_, '_>, content: Node<'_, '_>,
             let path = format!("Resources/{identifier}");
             let supplied = if package_reference { None } else { linked(reference).filter(|bytes| !bytes.is_empty() && bytes.len() <= remaining) };
             let name = if let Some(bytes) = supplied {
-                store(pkg, identifier, &path, reference, bytes)
-            } else if let Some(name) = load_font(pkg, identifier, &path, &|path| linked(path).filter(|bytes| bytes.len() <= remaining)) {
+                store(reader, pkg, identifier, &path, reference, bytes)
+            } else if let Some(name) = load_font(reader, pkg, identifier, &path, &|path| linked(path).filter(|bytes| bytes.len() <= remaining)) {
                 name
             } else {
                 reader.warnings.add(format!("font `{reference}` and fallback `{}` are unavailable", library::FALLBACK_FONT));
@@ -91,7 +96,7 @@ pub(super) fn read_direct(reader: &mut SbsReader<'_, '_>, content: Node<'_, '_>,
                     continue;
                 }
 
-                store(pkg, identifier, &path, reference, Vec::new())
+                store(reader, pkg, identifier, &path, reference, Vec::new())
             };
             if let Some(resource) = pkg.resources.last() {
                 remaining = remaining.saturating_sub(resource.bytes.len());
