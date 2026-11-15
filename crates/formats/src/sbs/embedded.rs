@@ -31,12 +31,33 @@ pub(super) fn encode_embedded(bytes: &[u8]) -> Result<String> {
     let mut encoder = flate2::write::ZlibEncoder::new(length.to_be_bytes().to_vec(), flate2::Compression::default());
     encoder.write_all(bytes).map_err(|e| FormatError::Io(e.to_string()))?;
     let raw = encoder.finish().map_err(|e| FormatError::Io(e.to_string()))?;
-    Ok(base64_engine().encode(raw))
+    Ok(craft_mime::transfer::base64(&raw))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn shared_encoder_preserves_embedded_wire_bytes() {
+        for len in 0..=513 {
+            let bytes: Vec<u8> = (0..len).map(|i| (i % 256) as u8).collect();
+            let mut encoder = flate2::write::ZlibEncoder::new((len as u32).to_be_bytes().to_vec(), flate2::Compression::default());
+            encoder.write_all(&bytes).unwrap();
+            let raw = encoder.finish().unwrap();
+            assert_eq!(encode_embedded(&bytes).unwrap(), base64_engine().encode(&raw));
+            assert_eq!(decode_embedded(&encode_embedded(&bytes).unwrap()).unwrap(), bytes);
+        }
+    }
+
+    #[test]
+    fn strict_decoder_policy_is_not_replaced_by_mime_tolerance() {
+        assert!(decode_embedded("!!!!").unwrap_err().starts_with("bad base64:"));
+        assert!(decode_embedded("AA").unwrap_err().starts_with("bad base64:"));
+        let encoded = encode_embedded(b"payload").unwrap();
+        let spaced = encoded.chars().map(|c| format!("{c} \n")).collect::<String>();
+        assert_eq!(decode_embedded(&spaced).unwrap(), b"payload");
+    }
 
     #[test]
     fn decompression_requires_the_declared_length() {
