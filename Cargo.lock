@@ -902,6 +902,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "craft-texture"
+version = "0.1.0"
+source = "git+https://github.com/storytold/craft-libs?rev=726ad0f8290bedb6ced60fa06200a6b574f9990d#726ad0f8290bedb6ced60fa06200a6b574f9990d"
+dependencies = [
+ "bytemuck",
+ "dds",
+ "thiserror 2.0.21",
+]
+
+[[package]]
 name = "craft-ui"
 version = "0.1.0"
 source = "git+https://github.com/storytold/craft-libs?rev=6e03f65bf45181db77ba6229716e6624db9eb25b#6e03f65bf45181db77ba6229716e6624db9eb25b"
@@ -2722,9 +2732,9 @@ name = "materialcraft-formats"
 version = "0.4.1"
 dependencies = [
  "base64 0.22.1",
- "bytemuck",
  "craft-fonts-build",
  "craft-mcmat",
+ "craft-texture",
  "dds",
  "flate2",
  "gltf",

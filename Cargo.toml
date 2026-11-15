@@ -42,6 +42,7 @@ rust-version = "1.95"
 repository = "https://github.com/storytold/materialcraft"
 
 [workspace.dependencies]
+craft-texture-dds = { package = "craft-texture", version = "0.1.0", git = "https://github.com/storytold/craft-libs", rev = "726ad0f8290bedb6ced60fa06200a6b574f9990d", features = ["dds"] }
 resvg = { version = "0.47", default-features = false }
 # internal
 materialcraft-core = { path = "crates/core" }
