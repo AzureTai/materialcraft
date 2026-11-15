@@ -10,61 +10,7 @@ use materialcraft_image::Image;
 use serde::{Deserialize, Serialize};
 
 use crate::snapshot::Snapshot;
-use crate::{AnnotationSelection, Clip, EngineError, Result, View2d};
-
-/// The 3D view's scene and look.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-#[serde(default, rename_all = "camelCase")]
-pub struct View3d {
-    /// Built-in mesh: `rounded_cube`, `cube`, `sphere`, `cylinder`, `plane`, `torus`, `material_ball`.
-    pub scene: String,
-    /// UV repeats of the material on the mesh.
-    pub tiling: f32,
-    /// Camera yaw and pitch (degrees) and distance (mesh radii).
-    pub yaw: f32,
-    pub pitch: f32,
-    pub distance: f32,
-    /// Where the camera orbits: offset from the mesh center (mesh radii, world axes).
-    pub target: [f32; 3],
-    /// Environment: `studio`, `sunset`, `overcast`, `night`.
-    pub environment: String,
-    pub env_rotation: f32,
-    pub exposure: f32,
-    /// Height relief in mesh radii
-    pub height_scale: f32,
-    pub height_level: f32,
-    pub normal_y_flip: bool,
-    pub show_axis: bool,
-    pub show_grid: bool,
-    /// See through the mesh where the material's alpha (opacity output, else base color alpha)
-    /// is below one.
-    pub transparency: bool,
-    /// Show the material's alpha channel on the mesh instead of the lit material.
-    pub alpha_view: bool,
-}
-
-impl Default for View3d {
-    fn default() -> Self {
-        View3d {
-            scene: "rounded_cube".into(),
-            tiling: 1.0,
-            yaw: 35.0,
-            pitch: 25.0,
-            distance: 3.2,
-            target: [0.0; 3],
-            environment: "studio".into(),
-            env_rotation: 0.0,
-            exposure: 0.0,
-            height_scale: 0.04,
-            height_level: 0.0,
-            normal_y_flip: false,
-            show_axis: false,
-            show_grid: false,
-            transparency: true,
-            alpha_view: false,
-        }
-    }
-}
+use crate::{AnnotationSelection, Clip, EngineError, Result, View2d, View3d};
 
 /// The 3D view's camera preferences. The app keeps them in its preferences (Edit ▸ Preferences)
 /// and pushes them in with [`Session::set_camera_prefs`]; headless sessions use the defaults.
@@ -121,6 +67,8 @@ pub struct Session {
     pub annotation_target: crate::AnnotationTarget,
     pub view2d: View2d,
     pub view3d: View3d,
+    /// The 3D view a reset goes back to, when the user saved one as the default
+    pub default_view3d: Option<View3d>,
     pub material_preview: crate::MaterialPreview,
     pub(crate) cooked_graph: Option<usize>,
     pub(crate) material_cooked: std::collections::BTreeMap<usize, Cooked>,
@@ -187,6 +135,7 @@ impl Session {
             annotation_target: Default::default(),
             view2d: View2d::default(),
             view3d: View3d::default(),
+            default_view3d: None,
             preview_size: Some(512),
             camera: CameraPrefs::default(),
             history_prefs: crate::HistoryPrefs::default(),

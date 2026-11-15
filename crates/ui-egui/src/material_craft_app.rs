@@ -131,6 +131,13 @@ impl MaterialCraftApp {
         };
         i18n::set_language(&app.ui.prefs.language);
         app.apply_prefs();
+
+        // A session that has not touched its 3D view starts from the saved default
+        if let Some(view) = &app.session.default_view3d
+            && app.session.view3d == materialcraft_engine::View3d::default()
+        {
+            app.session.view3d = view.clone();
+        }
         app
     }
 
@@ -143,6 +150,12 @@ impl MaterialCraftApp {
 
         if self.session.camera != self.ui.prefs.camera.sanitized() {
             self.session.set_camera_prefs(self.ui.prefs.camera);
+        }
+
+        // A saved default is a file like any other: its numbers are put in range before use
+        let default_view = self.ui.prefs.default_view3d.clone().map(materialcraft_engine::View3d::sanitized);
+        if self.session.default_view3d != default_view {
+            self.session.default_view3d = default_view;
         }
         let p = if self.ui.prefs.preview_size == 0 { None } else { Some(self.ui.prefs.preview_size.clamp(64, 8192)) };
         if self.session.preview_size != p {

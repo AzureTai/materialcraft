@@ -23,9 +23,15 @@ fn settle(h: &mut Harness<'static, MaterialCraftApp>, after: u64) {
     panic!("the normal-map preview did not finish rendering");
 }
 
+/// Show the 3D view's material in the Properties panel, through the view's Materials menu
+fn open_material_properties(h: &mut Harness<'static, MaterialCraftApp>) {
+    for label in ["Materials", "Default", "Edit properties"] {
+        h.get_by_label(label).click();
+        h.run_steps(4);
+    }
+}
+
 fn toggle(h: &mut Harness<'static, MaterialCraftApp>) {
-    h.get_by_label("Display").click();
-    h.run_steps(4);
     h.get_by_label("Flip normal map Y (DirectX)").click();
     h.run_steps(4);
 }
@@ -42,18 +48,18 @@ fn display_toggle_updates_the_session_and_rerenders_the_normal_map() {
     settle(&mut h, 0);
     let before = h.state().view3d.shown.clone().unwrap();
     let rendered = h.state().view3d.renders;
+    open_material_properties(&mut h);
     toggle(&mut h);
     assert!(h.state().session.view3d.normal_y_flip);
     settle(&mut h, rendered);
-    assert_ne!(before.2, h.state().view3d.shown.as_ref().unwrap().2);
-    // Close the open menu, then restore the OpenGL setting through the same pointer gesture.
-    h.key_press(egui::Key::Escape);
-    h.run_steps(4);
+    assert!(before.2 != h.state().view3d.shown.as_ref().unwrap().2, "the flipped normal map renders differently");
+
+    // The same check box restores the OpenGL setting
     let rendered = h.state().view3d.renders;
     toggle(&mut h);
     assert!(!h.state().session.view3d.normal_y_flip);
     settle(&mut h, rendered);
-    assert_eq!(before.2, h.state().view3d.shown.as_ref().unwrap().2);
+    assert!(before.2 == h.state().view3d.shown.as_ref().unwrap().2, "the first picture is back");
 }
 
 #[test]
@@ -68,10 +74,9 @@ fn normal_convention_snapshot() {
     );
     settle(&mut h, 0);
     let rendered = h.state().view3d.renders;
+    open_material_properties(&mut h);
     toggle(&mut h);
     settle(&mut h, rendered);
-    h.get_by_label("Display").click();
-    h.run_steps(4);
     assert!(h.state().session.view3d.normal_y_flip);
     let dir = std::path::PathBuf::from(std::env::var_os("MC_SNAPSHOT_DIR").expect("MC_SNAPSHOT_DIR"));
     std::fs::create_dir_all(&dir).unwrap();

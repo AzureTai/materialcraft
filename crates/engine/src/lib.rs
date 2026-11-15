@@ -71,7 +71,14 @@ pub mod wire_cmds;
 pub mod wire_swap;
 
 pub use commands::{CommandSpec, command_specs, execute, find};
-pub use session::{CameraPrefs, Session, View3d, WARNING_PREFIX};
+pub use materialcraft_geom::view::View3d;
+pub use session::{CameraPrefs, Session, WARNING_PREFIX};
+mod view3d_commands;
+mod view3d_state_file;
+pub use view3d_state_file::VIEW_STATE_EXTENSION;
+mod view3d_update;
+mod viewpoint;
+pub use viewpoint::Viewpoint;
 mod histogram_channel;
 mod view2d;
 pub use histogram_channel::HistogramChannel;
@@ -89,6 +96,7 @@ pub use export_size::ExportSize;
 pub use materialcraft_core as core;
 pub use materialcraft_eval as eval;
 pub use materialcraft_formats as formats;
+pub use materialcraft_geom as geom;
 pub use materialcraft_image as image;
 pub use materialcraft_nodes as nodes;
 

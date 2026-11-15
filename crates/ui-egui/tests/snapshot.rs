@@ -34,6 +34,9 @@ mod node_search;
 #[path = "snapshot/view2d.rs"]
 mod view2d;
 
+#[path = "snapshot/view3d.rs"]
+mod view3d;
+
 use std::time::Duration;
 
 use egui::vec2;

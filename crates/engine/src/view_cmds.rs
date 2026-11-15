@@ -4,19 +4,28 @@ use serde_json::{Value as J, json};
 
 use materialcraft_core::NodeId;
 
-use crate::commands::{CommandSpec, always, bad, boolp, f32p, has_graph, strp, u64p};
+use crate::commands::{CommandSpec, always, bad, has_graph, strp, u64p};
 use crate::{Result, Session, cmd};
 
-/// Built-in 3D view scenes: (id, label).
+/// Built-in 3D view scenes: (id, label), the plain shapes first.
 pub const SCENES: &[(&str, &str)] = &[
     ("cube", "Cube"),
     ("cylinder", "Cylinder"),
+    ("hollow_box", "Hollow box"),
+    ("inner_box", "Inner box"),
     ("plane", "Plane"),
+    ("plane_hi_res", "Plane (hi-res)"),
     ("sphere", "Sphere"),
+    ("cloth", "Cloth"),
     ("material_ball", "Mat ball"),
     ("rounded_cube", "Rounded cube"),
+    ("rounded_cylinder", "Rounded cylinder"),
+    ("sphere_2_tiles", "Sphere 2 tiles"),
     ("torus", "Torus"),
 ];
+
+/// How many of [`SCENES`] are the plain shapes; the menu draws a line after them
+pub const PLAIN_SCENES: usize = 7;
 
 /// Environments: (id, label).
 pub const ENVIRONMENTS: &[(&str, &str)] = &[("studio", "Studio"), ("sunset", "Sunset"), ("overcast", "Overcast"), ("night", "Night")];
@@ -37,13 +46,13 @@ pub(crate) fn specs() -> Vec<CommandSpec> {
             "3D view settings",
             [],
             None,
-            "{scene? (cube|cylinder|plane|sphere|material_ball|rounded_cube|torus), tiling?, yaw?, pitch?, distance?, target? ([x, y, z] orbit point in mesh radii from its center, within the pan limit preference), environment? (studio|sunset|overcast|night), envRotation?, exposure?, heightScale? (displacement depth in mesh radii, 0..0.5), heightLevel? (height that stays on the surface, 0..1; 0 = rises out), normalYFlip? (DirectX normal maps; default false/OpenGL), axis?, grid?, transparency? (see through where alpha < 1), alphaView? (show the alpha channel)}",
+            "{scene? (cube|cylinder|hollow_box|inner_box|plane|plane_hi_res|sphere|cloth|material_ball|rounded_cube|rounded_cylinder|sphere_2_tiles|torus|custom), tiling?, uvScale? ([u, v]), physicalSize? (size the material by the graph's physical size), yaw?, pitch?, distance?, target? ([x, y, z] orbit point in mesh radii from its center, within the pan limit preference), focalLength? (mm, 0.01..100), projection? (perspective|orthographic), background? (studio|color|environment; studio is a gray backdrop that darkens toward the corners), backgroundColor? ([r, g, b] linear), overrideResolution?, viewportResolution?, renderResolution? ([width, height]), renderScale? (25|50|100|200 percent), autoClip?, nearClip?, farClip? (scene units; a mesh is 100 across), environment? (studio|sunset|overcast|night), envEnabled?, envRotation?, exposure? (-10..10 stops), ambient? ({enabled?, color?}), light1?, light2? ({enabled?, color?, intensity?, yaw?, pitch?, distance?}), wireframe?, axis?, backfaceCulling?, boundingBox?, grid?, lightHelpers?, vertexTangentSpace?, resolution?, sceneStats?, fps?, shader? (openPbr|blinn|lambert|meshInfo|metallicRoughness|metallicRoughnessCoated|metallicRoughnessSss|specularGlossiness|unlit), technique? (tessellation|parallax), meshInfo? (normal|tangent|binormal|uv|uvTile|vertexColor|position), material? ({parameter: number|[r, g, b]|bool, or null for its default}), channels? ({parameter: bool} switches a parameter and its image on or off), heightScale? (displacement depth in mesh radii, 0..0.5), heightLevel? (height that stays on the surface, 0..1; 0 = rises out), tessellation? (1..8), normalYFlip? (DirectX normal maps; default false/OpenGL), samples? (1..4), ambientOcclusion? (rays, 0..32), shadows?, displacement?, viewChannels? (rgb|r|g|b), colorSpace? (aces|srgb), transparency? (see through where alpha < 1), alphaView? (show the alpha channel)}",
             always,
             view3d
         ),
         cmd!("view.3d.loadMesh", "Load mesh...", [], None, "{path} shows an OBJ, glTF or GLB mesh in the 3D view (scene \"custom\")", always, load_mesh),
-        cmd!("view.3d.reset", "Reset scene", [], None, "{}", always, |s, _| {
-            s.view3d = crate::View3d::default();
+        cmd!("view.3d.reset", "Reset scene", [], None, "{} back to the saved default view, or the built-in one", always, |s, _| {
+            s.view3d = s.default_view3d.clone().unwrap_or_default();
             Ok(J::Null)
         }),
         cmd!("view.previewSize", "Preview size", [], None, "{size: 64..8192, or 0 for full size} caps node outputs while editing", always, preview_size),
@@ -82,83 +91,10 @@ fn view2d(session: &mut Session, params: &J) -> Result<J> {
     Ok(serde_json::to_value(&session.view2d).unwrap_or(J::Null))
 }
 
-fn view3d(s: &mut Session, p: &J) -> Result<J> {
-    // Validated up front so a bad target changes nothing.
-    let target = match p.get("target") {
-        None => None,
-        Some(t) => {
-            let xyz: Option<Vec<f32>> =
-                t.as_array().filter(|a| a.len() == 3).map(|a| a.iter().filter_map(J::as_f64).map(|f| f as f32).filter(|f| f.is_finite()).collect());
-            match xyz.as_deref() {
-                Some(&[x, y, z]) => Some(s.camera.clamp_target([x, y, z])),
-                _ => return Err(bad("view.3d", "`target` is [x, y, z]")),
-            }
-        }
-    };
-    // A rejected environment must not leave a new scene applied.
-    let environment = strp(p, "environment");
-    if let Some(e) = environment
-        && !ENVIRONMENTS.iter().any(|(id, _)| *id == e)
-    {
-        return Err(bad("view.3d", format!("unknown environment `{e}`")));
-    }
-    if let Some(sc) = strp(p, "scene") {
-        if sc == "custom" && s.custom_mesh.is_none() {
-            return Err(bad("view.3d", "no mesh is loaded: use view.3d.loadMesh"));
-        }
-        let v = &mut s.view3d;
-        if sc != "custom" && !SCENES.iter().any(|(id, _)| *id == sc) {
-            return Err(bad("view.3d", format!("unknown scene `{sc}`")));
-        }
-        v.scene = sc.into();
-    }
-    let v = &mut s.view3d;
-    if let Some(e) = environment {
-        v.environment = e.into();
-    }
-    if let Some(t) = f32p(p, "tiling") {
-        v.tiling = t.clamp(0.1, 64.0);
-    }
-    if let Some(t) = f32p(p, "yaw") {
-        v.yaw = t.rem_euclid(360.0);
-    }
-    if let Some(t) = f32p(p, "pitch") {
-        v.pitch = t.clamp(-89.0, 89.0);
-    }
-    if let Some(t) = f32p(p, "distance") {
-        v.distance = t.clamp(1.2, 20.0);
-    }
-    if let Some(t) = target {
-        v.target = t;
-    }
-    if let Some(t) = f32p(p, "envRotation") {
-        v.env_rotation = t.rem_euclid(360.0);
-    }
-    if let Some(t) = f32p(p, "exposure") {
-        v.exposure = t.clamp(-10.0, 10.0);
-    }
-    if let Some(t) = f32p(p, "heightScale") {
-        v.height_scale = t.clamp(0.0, 0.5);
-    }
-    if let Some(t) = f32p(p, "heightLevel") {
-        v.height_level = t.clamp(0.0, 1.0);
-    }
-    if let Some(flip) = boolp(p, "normalYFlip") {
-        v.normal_y_flip = flip;
-    }
-    if let Some(b) = boolp(p, "axis") {
-        v.show_axis = b;
-    }
-    if let Some(b) = boolp(p, "grid") {
-        v.show_grid = b;
-    }
-    if let Some(b) = boolp(p, "transparency") {
-        v.transparency = b;
-    }
-    if let Some(b) = boolp(p, "alphaView") {
-        v.alpha_view = b;
-    }
-    Ok(serde_json::to_value(&s.view3d).unwrap_or(J::Null))
+fn view3d(session: &mut Session, parameters: &J) -> Result<J> {
+    // The settings are replaced as a whole, so a rejected parameter leaves all of them unchanged
+    session.view3d = crate::view3d_update::updated(session, parameters)?;
+    Ok(serde_json::to_value(&session.view3d).unwrap_or(J::Null))
 }
 
 #[cfg(not(target_arch = "wasm32"))]
