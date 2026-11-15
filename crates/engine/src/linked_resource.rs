@@ -1,7 +1,9 @@
+#[cfg(not(target_arch = "wasm32"))]
 use std::io::Read as _;
 
 /// Largest linked resource read from beside an SBS; matches the archive member cap.
-const MAX_LINKED_RESOURCE: u64 = 256 << 20;
+#[cfg(not(target_arch = "wasm32"))]
+const MAX_LINKED_RESOURCE_BYTES: u64 = 256 << 20;
 
 /// Read resource paths relative to an SBS package, including portable library aliases.
 pub fn reader(path: &str) -> impl Fn(&str) -> Option<Vec<u8>> + use<> {
@@ -10,6 +12,12 @@ pub fn reader(path: &str) -> impl Fn(&str) -> Option<Vec<u8>> + use<> {
     let folder = {
         let parent = std::path::Path::new(path).parent().filter(|parent| !parent.as_os_str().is_empty()).unwrap_or(std::path::Path::new("."));
         std::fs::canonicalize(parent).ok()
+    };
+    #[cfg(not(target_arch = "wasm32"))]
+    let allowed_root = if materialcraft_formats::sbs::library::contains_file(std::path::Path::new(path)) {
+        materialcraft_formats::sbs::library::root().canonicalize().ok()
+    } else {
+        folder.clone()
     };
 
     move |reference: &str| {
@@ -26,20 +34,26 @@ pub fn reader(path: &str) -> impl Fn(&str) -> Option<Vec<u8>> + use<> {
         {
             let relative = reference.trim().replace('\\', "/");
             let plain = !relative.is_empty() && !relative.contains(':') && !relative.starts_with('/');
-            if !plain || std::path::Path::new(&relative).components().any(|part| !matches!(part, std::path::Component::Normal(_))) {
+            if !plain
+                || std::path::Path::new(&relative)
+                    .components()
+                    .any(|part| !matches!(part, std::path::Component::Normal(_) | std::path::Component::ParentDir | std::path::Component::CurDir))
+            {
                 return None;
             }
 
             let folder = folder.as_ref()?;
             let file = std::fs::canonicalize(folder.join(&relative)).ok()?;
             let metadata = std::fs::metadata(&file).ok()?;
-            if !file.starts_with(folder) || !metadata.is_file() || metadata.len() > MAX_LINKED_RESOURCE {
+
+            // Parent references are legal inside the configured library, never beyond its root
+            if !file.starts_with(allowed_root.as_ref()?) || !metadata.is_file() || metadata.len() > MAX_LINKED_RESOURCE_BYTES {
                 return None;
             }
 
             let mut bytes = Vec::new();
-            std::fs::File::open(&file).ok()?.take(MAX_LINKED_RESOURCE + 1).read_to_end(&mut bytes).ok()?;
-            (bytes.len() as u64 <= MAX_LINKED_RESOURCE).then_some(bytes)
+            std::fs::File::open(&file).ok()?.take(MAX_LINKED_RESOURCE_BYTES + 1).read_to_end(&mut bytes).ok()?;
+            (bytes.len() as u64 <= MAX_LINKED_RESOURCE_BYTES).then_some(bytes)
         }
         #[cfg(target_arch = "wasm32")]
         None
@@ -63,11 +77,14 @@ mod tests {
         let sbs = dir.join("p.sbs");
         std::fs::write(&sbs, b"x").unwrap();
         let big = dir.join("big.bin");
-        std::fs::File::create(&big).unwrap().set_len(MAX_LINKED_RESOURCE + 1).unwrap();
+        std::fs::File::create(&big).unwrap().set_len(MAX_LINKED_RESOURCE_BYTES + 1).unwrap();
+
         let read = reader(&sbs.to_string_lossy());
         assert!(read("big.bin").is_none(), "a resource over the cap is not read");
+
         std::fs::write(dir.join("small.bin"), b"ok").unwrap();
         assert_eq!(read("small.bin").as_deref(), Some(&b"ok"[..]));
+
         let _ = std::fs::remove_dir_all(&dir);
     }
 }

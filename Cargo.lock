@@ -808,6 +808,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "craft-atomic"
+version = "0.1.0"
+source = "git+https://github.com/storytold/craft-libs?rev=6e03f65bf45181db77ba6229716e6624db9eb25b#6e03f65bf45181db77ba6229716e6624db9eb25b"
+dependencies = [
+ "rustix 1.1.6",
+]
+
+[[package]]
 name = "craft-dialogs"
 version = "0.1.0"
 source = "git+https://github.com/storytold/craft-libs?rev=6e03f65bf45181db77ba6229716e6624db9eb25b#6e03f65bf45181db77ba6229716e6624db9eb25b"
@@ -2693,6 +2701,7 @@ dependencies = [
  "materialcraft-nodes",
  "serde",
  "serde_json",
+ "sha2",
  "thiserror 2.0.21",
 ]
 
@@ -2700,6 +2709,7 @@ dependencies = [
 name = "materialcraft-eval"
 version = "0.4.1"
 dependencies = [
+ "half",
  "materialcraft-core",
  "materialcraft-image",
  "materialcraft-nodes",
@@ -2713,6 +2723,7 @@ version = "0.4.1"
 dependencies = [
  "base64 0.22.1",
  "bytemuck",
+ "craft-fonts-build",
  "craft-mcmat",
  "dds",
  "flate2",
@@ -2726,6 +2737,7 @@ dependencies = [
  "roxmltree 0.20.0",
  "serde",
  "serde_json",
+ "sha2",
  "thiserror 2.0.21",
  "tobj",
  "zip 2.6.1",
@@ -2774,6 +2786,7 @@ name = "materialcraft-ui-egui"
 version = "0.4.1"
 dependencies = [
  "base64 0.22.1",
+ "craft-atomic",
  "craft-dialogs",
  "craft-keymap",
  "craft-quit",
@@ -2792,7 +2805,9 @@ dependencies = [
  "rfd",
  "serde",
  "serde_json",
+ "sha2",
  "sys-locale",
+ "tempfile",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
