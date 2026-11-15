@@ -33,9 +33,19 @@ pub fn gaussian(img: &Image, sigma: f32, tile: bool) -> Image {
     out
 }
 
+/// The default limits, raised to admit `src`, so a pass over an image made with raised limits
+/// returns an image of the same size.
+fn limits_for(src: &Image) -> Limits {
+    let mut limits = Limits::default();
+    limits.max_side = limits.max_side.max(src.width()).max(src.height());
+    limits.max_pixels = limits.max_pixels.max(u64::from(src.width()) * u64::from(src.height()));
+    limits.max_bytes = limits.max_bytes.max(size_of_val(src.data()) as u64);
+    limits
+}
+
 fn convolve_1d(src: &Image, k: &[f32], r: i64, horizontal: bool, tile: bool) -> Image {
     let c = src.channels();
-    Image::generate(src.width(), src.height(), src.kind(), |x, y| {
+    Image::try_generate(src.width(), src.height(), src.kind(), &limits_for(src), |x, y| {
         let mut acc = [0.0f32; 4];
         for (i, kv) in k.iter().enumerate() {
             let o = i as i64 - r;
@@ -46,6 +56,7 @@ fn convolve_1d(src: &Image, k: &[f32], r: i64, horizontal: bool, tile: bool) -> 
         }
         if c == 1 { [acc[0], 0.0, 0.0, 0.0] } else { acc }
     })
+    .unwrap_or_else(|_| src.clone())
 }
 
 /// One running-sum box pass of radius `r`.
@@ -88,7 +99,7 @@ fn box_1d(src: &Image, r: i64, horizontal: bool, tile: bool) -> Image {
         }
     }
     // `data` has the size and kind of `src`, which is a valid image.
-    Image::from_data(src.width(), src.height(), src.kind(), data, &Limits::default()).unwrap_or_else(|_| src.clone())
+    Image::from_data(src.width(), src.height(), src.kind(), data, &limits_for(src)).unwrap_or_else(|_| src.clone())
 }
 
 /// Squared Euclidean distance (pixels) from every pixel to the nearest pixel where `inside` is
@@ -378,6 +389,22 @@ mod tests {
         for x in 0..16 {
             let v = blurred.get(x, 1, false)[0];
             assert!(v.is_finite() && (v / value - 1.0).abs() < 1e-5, "pixel {x} is {v}");
+        }
+    }
+
+    #[test]
+    fn blur_keeps_the_size_and_result_of_an_image_over_the_default_limits() {
+        let w = craft_texture::MAX_SIDE + 1;
+        let mut limits = Limits::default();
+        limits.max_side = w;
+        let values: Vec<f32> = (0..w).map(|x| if (x / 8) % 2 == 0 { 1.0 } else { 0.0 }).collect();
+        let Ok(img) = Image::from_data(w, 1, Kind::Gray, values, &limits) else {
+            panic!("a {w}x1 image fits the raised limits");
+        };
+        for sigma in [1.0, 5.0] {
+            let blurred = gaussian(&img, sigma, false);
+            assert_eq!((blurred.width(), blurred.height()), (w, 1), "sigma {sigma}");
+            assert_ne!(blurred.data(), img.data(), "sigma {sigma} left the pixels unchanged");
         }
     }
 
