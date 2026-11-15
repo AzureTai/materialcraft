@@ -859,6 +859,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "craft-mcmat"
+version = "0.1.0"
+source = "git+https://github.com/storytold/craft-libs?rev=b6d9feed23ceae249b40593ed84a668343091627#b6d9feed23ceae249b40593ed84a668343091627"
+dependencies = [
+ "craft-zip",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.21",
+]
+
+[[package]]
 name = "craft-menu"
 version = "0.1.0"
 source = "git+https://github.com/storytold/craft-libs?rev=29fb8f8e860677e375263f9c8f4debe129d7add4#29fb8f8e860677e375263f9c8f4debe129d7add4"
@@ -948,6 +959,16 @@ dependencies = [
  "objc2 0.6.5",
  "objc2-app-kit 0.3.2",
  "wayland-client",
+]
+
+[[package]]
+name = "craft-zip"
+version = "0.1.0"
+source = "git+https://github.com/storytold/craft-libs?rev=b6d9feed23ceae249b40593ed84a668343091627#b6d9feed23ceae249b40593ed84a668343091627"
+dependencies = [
+ "flate2",
+ "thiserror 2.0.21",
+ "zip 9.5.0",
 ]
 
 [[package]]
@@ -2701,6 +2722,7 @@ version = "0.4.1"
 dependencies = [
  "base64 0.22.1",
  "bytemuck",
+ "craft-mcmat",
  "craft-texture",
  "dds",
  "flate2",
