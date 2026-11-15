@@ -83,7 +83,7 @@ getrandom = "0.3"
 # Shared Craft egui components (widget palette, icon buttons, panel docking): storytold/craft-libs,
 # MIT OR Apache-2.0, every craft-libs crate pinned to one rev.
 egui_kittest = "0.37"
-craft-mcmat = { git = "https://github.com/storytold/craft-libs", rev = "b6d9feed23ceae249b40593ed84a668343091627" }
+craft-mcmat = { git = "https://github.com/storytold/craft-libs", rev = "828b07f3c9f3f6a2e935087b859016a5e46b1c31" }
 craft-ui = { git = "https://github.com/storytold/craft-libs", rev = "29fb8f8e860677e375263f9c8f4debe129d7add4", features = ["serde"] }
 # Keyboard bindings (chords, dispatch and display text): storytold/craft-libs, MIT OR Apache-2.0.
 craft-keymap = { git = "https://github.com/storytold/craft-libs", rev = "29fb8f8e860677e375263f9c8f4debe129d7add4", features = ["egui"] }
