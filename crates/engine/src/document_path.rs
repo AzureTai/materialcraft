@@ -62,7 +62,9 @@ pub(crate) fn relative(owner: &str, source: &str) -> String {
         && materialcraft_formats::sbs::library::contains_file(std::path::Path::new(owner))
         && let Ok(relative) = materialcraft_formats::sbs::library::relative_path(source)
     {
-        return self::relative(&normalize(owner), &materialcraft_formats::sbs::library::root().join(relative).to_string_lossy());
+        // Windows canonicalization adds a verbatim prefix; both paths need the same
+        // representation so a library resource remains a portable relative link.
+        return self::relative(&normalize(owner), &normalize(&materialcraft_formats::sbs::library::root().join(relative).to_string_lossy()));
     }
 
     if source.contains("://") {

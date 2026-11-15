@@ -141,6 +141,8 @@ fn verify_library_resources(root: &std::path::Path) {
     assert_eq!(linked.files.len(), 1, "a library save retains links instead of copying resource bytes");
     let xml = linked.xml().unwrap();
     assert!(!std::str::from_utf8(xml).unwrap().contains("sbs://"));
+    let links = sbs::read_sbs(xml, destination.to_str().unwrap(), &|_| None).unwrap();
+    assert_eq!(links.pkg.resources[0].source, "resources/tile.svg", "library saves must use a relative resource path on every platform");
     let restored = sbs::read_sbs(xml, destination.to_str().unwrap(), &file_cmds::linked_files(destination.to_str().unwrap())).unwrap();
     assert!(restored.warnings.is_empty(), "{:?}", restored.warnings);
     assert_eq!(restored.pkg.resources[0].bytes.as_slice(), TILE);
