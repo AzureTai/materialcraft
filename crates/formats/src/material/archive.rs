@@ -1,5 +1,3 @@
-use std::io::Cursor;
-
 use super::Manifest;
 use materialcraft_core::Value;
 
@@ -11,7 +9,6 @@ pub const MATERIAL_EXT: &str = "mcmat";
 pub const FORMAT: &str = "craft-material";
 /// Newest manifest version this build reads and writes
 pub const VERSION: u32 = 2;
-const MANIFEST: &str = "material.json";
 const SOURCE: &str = "source.sbs";
 
 /// Whether maps of `usage` hold colors (stored sRGB-encoded) rather than data (linear)
@@ -114,7 +111,7 @@ pub fn read_material(bytes: &[u8]) -> Result<(Manifest, Vec<u8>)> {
 
 /// Whether `bytes` look like a portable material (a zip with `material.json`)
 pub fn is_material(bytes: &[u8]) -> bool {
-    zip::ZipArchive::new(Cursor::new(bytes)).is_ok_and(|mut z| z.by_name(MANIFEST).is_ok())
+    craft_mcmat::is_material(bytes, 100_000)
 }
 
 #[cfg(test)]
