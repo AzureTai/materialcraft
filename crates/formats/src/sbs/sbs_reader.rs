@@ -1,7 +1,7 @@
 use super::base_parameters::read_base_params;
 use super::component_usage;
 use super::connection::connect_all;
-use super::constant::MAX_NODES;
+use super::constant::{MAX_NODES, MAX_WIRES};
 use super::constant::{NODE_HALF_SIZE, SELF_DEPENDENCY};
 use super::embedded::decode_embedded;
 use super::filter_map::{BASE_PARAMS, FilterMap, HANDLED_PARAMS, filter_by_sbs_name};
@@ -18,7 +18,7 @@ use materialcraft_core::{
 };
 use materialcraft_nodes::find;
 use roxmltree::Node as XmlNode;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 pub(super) struct SbsReader<'text, 'warnings> {
     pub(super) text: &'text str,
@@ -26,7 +26,9 @@ pub(super) struct SbsReader<'text, 'warnings> {
     pub(super) dependencies: HashMap<String, String>,
     pub(super) graph_names: HashMap<String, String>,
     pub(super) resource_names: HashMap<String, String>,
+    pub(super) used_resource_names: HashSet<String>,
     pub(super) node_count: usize,
+    pub(super) wire_count: usize,
 }
 
 impl<'text> SbsReader<'text, '_> {
@@ -113,8 +115,7 @@ impl<'text> SbsReader<'text, '_> {
             }
         }
 
-        let taken: Vec<String> = pkg.resources.iter().map(|r| r.name.clone()).collect();
-        let name = unique_name(&taken, if identifier.is_empty() { "resource" } else { identifier });
+        let name = unique_name(&mut self.used_resource_names, if identifier.is_empty() { "resource" } else { identifier });
         self.resource_names.insert(path.to_string(), name.clone());
         match bytes {
             Some(data) => {
@@ -341,6 +342,11 @@ impl<'text> SbsReader<'text, '_> {
                     }
                 };
 
+                if self.wire_count >= MAX_WIRES {
+                    self.warnings.add(format!("graph `{name}`: the {MAX_WIRES} wire limit was reached; later wires were dropped"));
+                    return wires;
+                }
+                self.wire_count += 1;
                 wires.push(Connection { from: from.id, from_port, to: to.id, to_port });
             }
         }
@@ -579,12 +585,11 @@ impl<'text> SbsReader<'text, '_> {
         }
     }
 }
-pub(super) fn unique_name(taken: &[String], base: &str) -> String {
-    let free = |name: &str| !taken.iter().any(|t| t == name);
-    if free(base) {
+pub(super) fn unique_name(taken: &mut HashSet<String>, base: &str) -> String {
+    if taken.insert(base.to_string()) {
         return base.to_string();
     }
-    (1..).map(|i| format!("{base}_{i}")).find(|name| free(name)).unwrap_or_else(|| base.to_string())
+    (1..).map(|i| format!("{base}_{i}")).find(|name| taken.insert(name.clone())).unwrap_or_else(|| base.to_string())
 }
 pub(super) fn push_node<'g>(graph: &'g mut Graph, def: &str, pos: [f32; 2]) -> (NodeId, usize, Option<&'g mut Node>) {
     let id = graph.add_node(def, pos);

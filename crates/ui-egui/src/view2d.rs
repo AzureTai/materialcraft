@@ -36,6 +36,27 @@ const MIN_IMAGE_HEIGHT: f32 = 40.0;
 const INFORMATION_SHARE: f32 = 0.55;
 /// Space between a panel's edge and its content
 const PANEL_MARGIN: egui::Vec2 = vec2(6.0, 2.0);
+#[derive(Default)]
+pub struct View2dState {
+    tex: Option<(u64, TextureHandle)>,
+    /// The last shown image (RGBA8, for `view.screenshot`).
+    pub shown: Option<(u32, u32, Vec<u8>)>,
+    /// Per-channel histograms of `shown` (R, G, B; one channel for gray), keyed like `tex`.
+    histogram: Option<(u64, Vec<[u32; BINS]>)>,
+}
+
+const BINS: usize = 64;
+
+/// Histograms of the displayed 8-bit values: one for gray or isolated channels, else R, G and B.
+fn histogram(px: &[u8], channels: usize) -> Vec<[u32; BINS]> {
+    let mut h = vec![[0u32; BINS]; channels];
+    for p in px.as_chunks::<4>().0 {
+        for (c, bins) in h.iter_mut().enumerate() {
+            bins[p[c] as usize * BINS / 256] += 1;
+        }
+    }
+    h
+}
 
 pub fn title(app: &MaterialCraftApp) -> String {
     let name = app.session.view2d_image().and_then(|(node, _)| shown_name(app, node));
