@@ -29,6 +29,7 @@ pub fn decode(bytes: &[u8], linear: bool) -> Result<Image> {
         image::ImageError::Limits(_) => FormatError::Image(format!("image is larger than {MAX_SIDE} pixels")),
         e => FormatError::Image(e.to_string()),
     };
+
     let (w, h) = guard(|| open()?.into_dimensions().map_err(image_error), failed)?;
     if w == 0 || h == 0 || w > MAX_SIDE || h > MAX_SIDE {
         return Err(FormatError::Image(format!("{w}x{h} is outside 1..={MAX_SIDE} pixels")));
@@ -51,6 +52,7 @@ pub fn decode(bytes: &[u8], linear: bool) -> Result<Image> {
             }
         }
     }
+
     Image::from_data(w, h, Kind::Color, data, &Limits::default()).map_err(|e| FormatError::Image(e.to_string()))
 }
 

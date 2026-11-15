@@ -20,5 +20,6 @@ pub(crate) fn decode(bytes: &[u8], linear: bool) -> Result<Image> {
             }
         }
     }
+
     Image::from_data(size.width, size.height, Kind::Color, data, &Limits::default()).map_err(|e| error(e.to_string()))
 }

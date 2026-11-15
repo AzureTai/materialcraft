@@ -136,6 +136,7 @@ fn layout(context: &CookContext, text: &str) -> Vec<CapsuleSegment> {
     let matrix = context.v4("matrix");
     let anchor = [(0.5 + position[0]) * context.w as f32, (0.5 + position[1]) * context.h as f32];
     let lines: Vec<&str> = text.split('\n').collect();
+
     // The block is centered vertically on the anchor (cap height of the first line to baseline of the last)
     let top = -((lines.len().max(1) - 1) as f32 * line_height + 6.0) * 0.5;
     let mut segments = Vec::new();
@@ -166,6 +167,7 @@ fn layout(context: &CookContext, text: &str) -> Vec<CapsuleSegment> {
             }
         }
     }
+
     segments
 }
 
@@ -206,10 +208,23 @@ mod tests {
         let p = resolve_params(def, &BTreeMap::new());
         let no_res = |_: &str| None;
         let vars = BTreeMap::new();
-        let context = CookContext { w: 256, h: 256, seed: 0, tile: true, inputs: &[], params: &p, resource: &no_res, vars: &vars };
+        let context = CookContext {
+            format: materialcraft_core::OutputFormat::F32,
+            w: 256,
+            h: 256,
+            seed: 0,
+            tile: true,
+            inputs: &[],
+            params: &p,
+            resource: &no_res,
+            vars: &vars,
+        };
+
         let img = &text(&context).unwrap()[0];
         let lit = img.data().iter().filter(|value| **value > 0.5).count();
+
         assert!(lit > 300, "{lit} pixels");
+
         // Centered: nothing in the top and bottom quarters
         assert!((0..256).all(|x| img.get(x, 20, false)[0] == 0.0 && img.get(x, 236, false)[0] == 0.0));
     }

@@ -808,9 +808,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "craft-atomic"
+version = "0.1.0"
+source = "git+https://github.com/storytold/craft-libs?rev=92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d#92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d"
+dependencies = [
+ "rustix 1.1.6",
+]
+
+[[package]]
 name = "craft-dialogs"
 version = "0.1.0"
-source = "git+https://github.com/storytold/craft-libs?rev=29fb8f8e860677e375263f9c8f4debe129d7add4#29fb8f8e860677e375263f9c8f4debe129d7add4"
+source = "git+https://github.com/storytold/craft-libs?rev=92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d#92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d"
 dependencies = [
  "block2 0.6.2",
  "objc2 0.6.5",
@@ -823,12 +831,12 @@ dependencies = [
 [[package]]
 name = "craft-fonts-build"
 version = "0.1.0"
-source = "git+https://github.com/storytold/craft-libs?rev=29fb8f8e860677e375263f9c8f4debe129d7add4#29fb8f8e860677e375263f9c8f4debe129d7add4"
+source = "git+https://github.com/storytold/craft-libs?rev=92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d#92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d"
 
 [[package]]
 name = "craft-i18n"
 version = "0.1.0"
-source = "git+https://github.com/storytold/craft-libs?rev=29fb8f8e860677e375263f9c8f4debe129d7add4#29fb8f8e860677e375263f9c8f4debe129d7add4"
+source = "git+https://github.com/storytold/craft-libs?rev=92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d#92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d"
 dependencies = [
  "fixed_decimal",
  "icu_decimal",
@@ -851,7 +859,7 @@ dependencies = [
 [[package]]
 name = "craft-keymap"
 version = "0.1.0"
-source = "git+https://github.com/storytold/craft-libs?rev=29fb8f8e860677e375263f9c8f4debe129d7add4#29fb8f8e860677e375263f9c8f4debe129d7add4"
+source = "git+https://github.com/storytold/craft-libs?rev=92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d#92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d"
 dependencies = [
  "egui",
  "serde",
@@ -861,7 +869,7 @@ dependencies = [
 [[package]]
 name = "craft-mcmat"
 version = "0.1.0"
-source = "git+https://github.com/storytold/craft-libs?rev=828b07f3c9f3f6a2e935087b859016a5e46b1c31#828b07f3c9f3f6a2e935087b859016a5e46b1c31"
+source = "git+https://github.com/storytold/craft-libs?rev=92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d#92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d"
 dependencies = [
  "craft-zip",
  "serde",
@@ -872,7 +880,7 @@ dependencies = [
 [[package]]
 name = "craft-menu"
 version = "0.1.0"
-source = "git+https://github.com/storytold/craft-libs?rev=29fb8f8e860677e375263f9c8f4debe129d7add4#29fb8f8e860677e375263f9c8f4debe129d7add4"
+source = "git+https://github.com/storytold/craft-libs?rev=92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d#92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d"
 dependencies = [
  "craft-keymap",
  "craft-quit",
@@ -885,7 +893,7 @@ dependencies = [
 [[package]]
 name = "craft-quit"
 version = "0.1.0"
-source = "git+https://github.com/storytold/craft-libs?rev=29fb8f8e860677e375263f9c8f4debe129d7add4#29fb8f8e860677e375263f9c8f4debe129d7add4"
+source = "git+https://github.com/storytold/craft-libs?rev=92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d#92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d"
 dependencies = [
  "dispatch2",
  "egui",
@@ -896,7 +904,7 @@ dependencies = [
 [[package]]
 name = "craft-texture"
 version = "0.1.0"
-source = "git+https://github.com/storytold/craft-libs?rev=29fb8f8e860677e375263f9c8f4debe129d7add4#29fb8f8e860677e375263f9c8f4debe129d7add4"
+source = "git+https://github.com/storytold/craft-libs?rev=92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d#92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d"
 dependencies = [
  "rayon",
  "thiserror 2.0.21",
@@ -905,7 +913,7 @@ dependencies = [
 [[package]]
 name = "craft-ui"
 version = "0.1.0"
-source = "git+https://github.com/storytold/craft-libs?rev=29fb8f8e860677e375263f9c8f4debe129d7add4#29fb8f8e860677e375263f9c8f4debe129d7add4"
+source = "git+https://github.com/storytold/craft-libs?rev=92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d#92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d"
 dependencies = [
  "craft-fonts-build",
  "craft-i18n",
@@ -926,7 +934,7 @@ dependencies = [
 [[package]]
 name = "craft-update"
 version = "0.1.0"
-source = "git+https://github.com/storytold/craft-libs?rev=29fb8f8e860677e375263f9c8f4debe129d7add4#29fb8f8e860677e375263f9c8f4debe129d7add4"
+source = "git+https://github.com/storytold/craft-libs?rev=92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d#92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d"
 dependencies = [
  "chrono",
  "dunce",
@@ -953,7 +961,7 @@ dependencies = [
 [[package]]
 name = "craft-window"
 version = "0.1.0"
-source = "git+https://github.com/storytold/craft-libs?rev=29fb8f8e860677e375263f9c8f4debe129d7add4#29fb8f8e860677e375263f9c8f4debe129d7add4"
+source = "git+https://github.com/storytold/craft-libs?rev=92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d#92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d"
 dependencies = [
  "egui",
  "objc2 0.6.5",
@@ -964,7 +972,7 @@ dependencies = [
 [[package]]
 name = "craft-zip"
 version = "0.1.0"
-source = "git+https://github.com/storytold/craft-libs?rev=828b07f3c9f3f6a2e935087b859016a5e46b1c31#828b07f3c9f3f6a2e935087b859016a5e46b1c31"
+source = "git+https://github.com/storytold/craft-libs?rev=92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d#92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d"
 dependencies = [
  "flate2",
  "thiserror 2.0.21",
@@ -2702,6 +2710,7 @@ dependencies = [
  "materialcraft-nodes",
  "serde",
  "serde_json",
+ "sha2",
  "thiserror 2.0.21",
 ]
 
@@ -2710,6 +2719,7 @@ name = "materialcraft-eval"
 version = "0.4.1"
 dependencies = [
  "craft-texture",
+ "half",
  "materialcraft-core",
  "materialcraft-nodes",
  "serde",
@@ -2722,6 +2732,7 @@ version = "0.4.1"
 dependencies = [
  "base64 0.22.1",
  "bytemuck",
+ "craft-fonts-build",
  "craft-mcmat",
  "craft-texture",
  "dds",
@@ -2735,6 +2746,7 @@ dependencies = [
  "roxmltree 0.20.0",
  "serde",
  "serde_json",
+ "sha2",
  "thiserror 2.0.21",
  "tobj",
  "zip 2.6.1",
@@ -2775,6 +2787,7 @@ name = "materialcraft-ui-egui"
 version = "0.4.1"
 dependencies = [
  "base64 0.22.1",
+ "craft-atomic",
  "craft-dialogs",
  "craft-keymap",
  "craft-quit",
@@ -2793,7 +2806,9 @@ dependencies = [
  "rfd",
  "serde",
  "serde_json",
+ "sha2",
  "sys-locale",
+ "tempfile",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",

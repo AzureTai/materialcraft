@@ -10,6 +10,7 @@ pub fn gaussian(img: &Image, sigma: f32, tile: bool) -> Image {
     if sigma.is_nan() || sigma <= 0.05 || !sigma.is_finite() {
         return img.clone();
     }
+
     let sigma = sigma.min(img.width().max(img.height()) as f32);
     if sigma < 3.0 {
         let r = (sigma * 3.0).ceil() as i64;
@@ -19,7 +20,8 @@ pub fn gaussian(img: &Image, sigma: f32, tile: bool) -> Image {
         let pass = |src: &Image, horizontal: bool| convolve_1d(src, &k, r, horizontal, tile);
         return pass(&pass(img, true), false);
     }
-    // Box widths for three passes (Kovesi, "Fast almost-Gaussian filtering").
+
+    // Box widths for three passes (Kovesi, "Fast almost-Gaussian filtering")
     let n = 3.0f32;
     let wl = ((12.0 * sigma * sigma / n + 1.0).sqrt()).floor() as i64;
     let wl = if wl % 2 == 0 { wl - 1 } else { wl };
@@ -30,6 +32,7 @@ pub fn gaussian(img: &Image, sigma: f32, tile: bool) -> Image {
         let r = (if i < m { wl } else { wu } - 1) / 2;
         out = box_1d(&box_1d(&out, r.max(0), true, tile), r.max(0), false, tile);
     }
+
     out
 }
 
@@ -64,6 +67,7 @@ fn box_1d(src: &Image, r: i64, horizontal: bool, tile: bool) -> Image {
     if r <= 0 {
         return src.clone();
     }
+
     let (w, h) = (src.width() as usize, src.height() as usize);
     let c = src.channels();
     let inv = 1.0 / (2 * r + 1) as f64;
@@ -77,6 +81,7 @@ fn box_1d(src: &Image, r: i64, horizontal: bool, tile: bool) -> Image {
         let (x, y) = if horizontal { (i, line) } else { (line, i) };
         f64::from(src.data().get((y * w + x) * c + ch).copied().unwrap_or(0.0))
     };
+
     let results: Vec<Vec<f32>> = (0..lines)
         .into_par_iter()
         .map(|line| {
@@ -88,6 +93,7 @@ fn box_1d(src: &Image, r: i64, horizontal: bool, tile: bool) -> Image {
                     sum += get(line, i as i64 + r + 1, ch) - get(line, i as i64 - r, ch);
                 }
             }
+
             out
         })
         .collect();
@@ -98,6 +104,7 @@ fn box_1d(src: &Image, r: i64, horizontal: bool, tile: bool) -> Image {
             data[dst..dst + c].copy_from_slice(&vals[i * c..i * c + c]);
         }
     }
+
     // `data` has the size and kind of `src`, which is a valid image.
     Image::from_data(src.width(), src.height(), src.kind(), data, &limits_for(src)).unwrap_or_else(|_| src.clone())
 }
@@ -121,9 +128,11 @@ fn edt_1d<const SITES: bool>(f: &[f32]) -> (Vec<f32>, Vec<usize>) {
     if n == 0 {
         return (Vec::new(), Vec::new());
     }
+
     let f: Vec<f64> = f.iter().map(|v| *v as f64).collect();
     let mut d = vec![0.0f32; n];
-    // Distance-only callers do not allocate or propagate site indices.
+
+    // Distance-only callers do not allocate or propagate site indices
     let mut sites = if SITES { vec![usize::MAX; n] } else { Vec::new() };
     let mut v = vec![0usize; n];
     let mut z = vec![0.0f64; n + 1];
@@ -142,6 +151,7 @@ fn edt_1d<const SITES: bool>(f: &[f32]) -> (Vec<f32>, Vec<usize>) {
         z[k] = s;
         z[k + 1] = DISTANCE_INF as f64;
     }
+
     k = 0;
     for (q, dq) in d.iter_mut().enumerate() {
         while k + 1 < n && z[k + 1] < q as f64 {
@@ -153,6 +163,7 @@ fn edt_1d<const SITES: bool>(f: &[f32]) -> (Vec<f32>, Vec<usize>) {
             sites[q] = p;
         }
     }
+
     (d, sites)
 }
 
@@ -161,9 +172,11 @@ fn distance_transform<const SITES: bool>(w: u32, h: u32, inside: impl Fn(usize) 
     if w == 0 || h == 0 {
         return (Vec::new(), Vec::new());
     }
-    // Tiling: run on a 3x tiled line so distances cross the edges.
+
+    // Tiling: run on a 3x tiled line so distances cross the edges
     let rep = if tile { 3 } else { 1 };
-    // Columns. Site indices are vertical coordinates at this stage.
+
+    // Columns. Site indices are vertical coordinates at this stage
     let cols: Vec<_> = (0..w)
         .into_par_iter()
         .map(|x| {
@@ -173,7 +186,8 @@ fn distance_transform<const SITES: bool>(w: u32, h: u32, inside: impl Fn(usize) 
             (d[off..off + h].to_vec(), if SITES { sites[off..off + h].to_vec() } else { Vec::new() })
         })
         .collect();
-    // Rows. Carry the chosen column's vertical site through the horizontal transform.
+
+    // Rows. Carry the chosen column's vertical site through the horizontal transform
     let rows: Vec<_> = (0..h)
         .into_par_iter()
         .map(|y| {
@@ -206,6 +220,7 @@ fn distance_transform<const SITES: bool>(w: u32, h: u32, inside: impl Fn(usize) 
         distances.extend(row);
         sites.extend(row_sites);
     }
+
     (distances, sites)
 }
 
@@ -225,6 +240,7 @@ pub fn rgb_to_hsl(c: [f32; 4]) -> [f32; 3] {
     if (mx - mn).abs() < 1e-7 {
         return [0.0, 0.0, l];
     }
+
     let d = mx - mn;
     let s = if l > 0.5 { d / (2.0 - mx - mn) } else { d / (mx + mn) };
     let h = if mx == r {
@@ -234,6 +250,7 @@ pub fn rgb_to_hsl(c: [f32; 4]) -> [f32; 3] {
     } else {
         (r - g) / d + 4.0
     };
+
     [h / 6.0, s, l]
 }
 
@@ -241,6 +258,7 @@ pub fn hsl_to_rgb(h: f32, s: f32, l: f32) -> [f32; 3] {
     if s <= 0.0 {
         return [l, l, l];
     }
+
     let q = if l < 0.5 { l * (1.0 + s) } else { l + s - l * s };
     let p = 2.0 * l - q;
     let f = |mut t: f32| {
@@ -303,7 +321,7 @@ pub fn blend_channel(mode: i32, b: f32, f: f32) -> f32 {
         }
         10 => 1.0 - (1.0 - b) * (1.0 - f),
         11 => {
-            // W3C soft light.
+            // W3C soft light
             if f <= 0.5 {
                 b - (1.0 - 2.0 * f) * b * (1.0 - b)
             } else {
@@ -332,19 +350,40 @@ pub fn blend_channel(mode: i32, b: f32, f: f32) -> f32 {
 }
 
 /// Blend `fg` over `bg` with `mode`, weighted by `opacity` (0..1, already including any mask).
-/// `use_alpha`: the foreground's alpha also weights it.
+/// `blend_alpha`: composite coverage; false preserves background alpha.
 #[inline]
-pub fn blend_px(mode: i32, bg: [f32; 4], fg: [f32; 4], opacity: f32, use_alpha: bool, clamp: bool) -> [f32; 4] {
-    let t = opacity * if use_alpha { fg[3] } else { 1.0 };
+pub fn blend_px(mode: i32, bg: [f32; 4], fg: [f32; 4], opacity: f32, color_blending: i32, blend_alpha: bool, clamp: bool) -> [f32; 4] {
+    // Switch already interpolates RGBA; another alpha weight composites twice
+    let t = opacity * if mode != 7 { fg[3] } else { 1.0 };
+    let coverage = bg[3] * (1.0 - t) + t;
     let mut o = [0.0; 4];
     for k in 0..3 {
-        let mut v = blend_channel(mode, bg[k], fg[k]);
+        let v = blend_channel(mode, bg[k], fg[k]);
+
+        // Weight before adding to preserve integer-boundary rounding
+        o[k] = match color_blending {
+            1 if mode != 7 => bg[k] * (1.0 - opacity) + v * opacity,
+            2 if mode != 7 && coverage > 0.0 => {
+                let v = if clamp { v.clamp(0.0, 1.0) } else { v };
+                (bg[k] * bg[3] * (1.0 - t) + fg[k] * t * (1.0 - bg[3]) + v * bg[3] * t) / coverage
+            }
+            2 if mode != 7 => bg[k],
+            3 if mode == 0 => bg[k] * (1.0 - t) + fg[k] * opacity,
+            _ => bg[k] * (1.0 - t) + v * t,
+        };
         if clamp {
-            v = v.clamp(0.0, 1.0);
+            o[k] = o[k].clamp(0.0, 1.0);
         }
-        o[k] = bg[k] + (v - bg[k]) * t;
     }
-    o[3] = if mode == 0 || mode == 7 { bg[3] + (fg[3] - bg[3]) * opacity } else { bg[3] };
+
+    o[3] = if mode == 7 {
+        bg[3] * (1.0 - opacity) + fg[3] * opacity
+    } else if blend_alpha || color_blending == 2 || (color_blending == 3 && mode == 0) {
+        coverage
+    } else {
+        bg[3]
+    };
+
     o
 }
 
@@ -362,10 +401,12 @@ mod tests {
     fn color_dodge_and_burn_keep_black_and_white_backgrounds() {
         const DODGE: i32 = 13;
         const BURN: i32 = 14;
+
         // (background, foreground, expected), W3C compositing formulas
         for (b, f, expected) in [(0.0, 1.0, 0.0), (0.0, 0.5, 0.0), (0.5, 1.0, 1.0), (0.25, 0.5, 0.5), (1.0, 0.75, 1.0)] {
             assert_eq!(blend_channel(DODGE, b, f), expected, "dodge b={b} f={f}");
         }
+
         for (b, f, expected) in [(1.0, 0.0, 1.0), (1.0, 0.5, 1.0), (0.5, 0.0, 0.0), (0.75, 0.5, 0.5), (0.0, 0.25, 0.0)] {
             assert_eq!(blend_channel(BURN, b, f), expected, "burn b={b} f={f}");
         }
@@ -425,8 +466,7 @@ mod tests {
 
     #[test]
     fn edt_sites_match_brute_force() {
-        // Exhaust all small masks, including ties and empty/full masks. Larger rectangles use
-        // deterministic pseudo-random masks; the oracle measures every site independently.
+        // Exhaust small masks; use deterministic masks and per-site checks for larger ones
         for (w, h) in [(1usize, 1usize), (1, 7), (7, 1), (2, 3), (3, 3), (5, 7), (8, 6)] {
             let cases = if w * h <= 9 { 1usize << (w * h) } else { 128 };
             for case in 0..cases {
@@ -443,7 +483,9 @@ mod tests {
                     .collect();
                 for tile in [false, true] {
                     let (d, sites) = distance_sq_with_sites(w as u32, h as u32, |i| mask[i], tile);
+
                     assert_eq!(d, distance_sq(w as u32, h as u32, |i| mask[i], tile));
+
                     for i in 0..w * h {
                         let distance = |site: usize| {
                             let dx = (i % w).abs_diff(site % w);
@@ -464,6 +506,7 @@ mod tests {
                 }
             }
         }
+
         assert!(distance_sq_with_sites(0, 3, |_| true, true).0.is_empty());
         assert!(distance_sq_with_sites(3, 0, |_| true, false).1.is_empty());
     }
