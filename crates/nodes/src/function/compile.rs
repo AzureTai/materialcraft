@@ -78,7 +78,14 @@ fn compile_nested(graph: &FunctionGraph, seed: u32, depth: usize, remaining: &mu
         let inputs = if node.instance.is_some() || ports.iter().all(|(_, input)| input.is_some()) {
             connected
         } else {
-            let sibling = connected.first().and_then(|index| instructions.get(*index)).map(|instruction| instruction.type_code);
+            let sibling = if node.op == "ifelse" {
+                // The condition is Boolean; absent value branches must use a value-port type.
+                ports.iter().skip(1).find_map(|(_, input)| {
+                    input.and_then(|id| indices.get(&id)).and_then(|index| instructions.get(*index)).map(|instruction| instruction.type_code)
+                })
+            } else {
+                connected.first().and_then(|index| instructions.get(*index)).map(|instruction| instruction.type_code)
+            };
             let mut connected = connected.into_iter();
             let mut inputs = Vec::with_capacity(ports.len());
             for (name, input) in &ports {

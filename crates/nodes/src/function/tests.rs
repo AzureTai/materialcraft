@@ -569,3 +569,49 @@ fn every_pixel_of_a_processor_draws_its_own_random_numbers() {
 
     assert!(different > 56, "{different} of 64 pixels differ from the first");
 }
+
+#[test]
+fn unconnected_ifelse_branches_use_the_value_type_not_the_condition() {
+    for (value, zero, type_code) in
+        [(Value::Float(8.0), Value::Float(0.0), 256), (Value::Int(8), Value::Int(0), 16), (Value::Float2([8.0; 2]), Value::Float2([0.0; 2]), 512)]
+    {
+        for declared_type in [0, type_code] {
+            for missing in [1, 2] {
+                for condition_value in [false, true] {
+                    let mut graph = FunctionGraph::default();
+                    let condition = graph.add_constant(Value::Bool(condition_value));
+                    let branch = graph.add_constant(value.clone());
+                    graph.output = Some(graph.add("ifelse", &[condition, branch, branch], None));
+                    let node = graph.nodes.last_mut().unwrap();
+                    node.inputs[missing] = None;
+                    node.type_code = declared_type;
+                    let selected = if condition_value { 1 } else { 2 };
+                    let expected = if selected == missing { zero.clone() } else { value.clone() };
+                    assert_eq!(evaluate(&graph, &BTreeMap::new()).unwrap(), expected);
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn unconnected_ifelse_condition_stays_boolean_and_empty_branches_keep_declared_type() {
+    let mut graph = FunctionGraph::default();
+    let condition = graph.add_constant(Value::Bool(true));
+    let branch = graph.add_constant(Value::Float(8.0));
+    graph.output = Some(graph.add("ifelse", &[condition, branch, branch], None));
+    let node = graph.nodes.last_mut().unwrap();
+    node.inputs = vec![None, Some(branch), None];
+    node.type_code = 0;
+    assert_eq!(evaluate(&graph, &BTreeMap::new()).unwrap(), Value::Float(0.0));
+
+    for condition_value in [false, true] {
+        let mut graph = FunctionGraph::default();
+        let condition = graph.add_constant(Value::Bool(condition_value));
+        graph.output = Some(graph.add("ifelse", &[condition, condition, condition], None));
+        let node = graph.nodes.last_mut().unwrap();
+        node.inputs = vec![Some(condition), None, None];
+        node.type_code = 512;
+        assert_eq!(evaluate(&graph, &BTreeMap::new()).unwrap(), Value::Float2([0.0; 2]));
+    }
+}
