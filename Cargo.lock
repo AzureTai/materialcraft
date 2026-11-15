@@ -970,6 +970,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "craft-xml"
+version = "0.1.0"
+source = "git+https://github.com/storytold/craft-libs?rev=b6d9feed23ceae249b40593ed84a668343091627#b6d9feed23ceae249b40593ed84a668343091627"
+dependencies = [
+ "quick-xml 0.41.0",
+ "serde",
+ "thiserror 2.0.21",
+]
+
+[[package]]
 name = "craft-zip"
 version = "0.1.0"
 source = "git+https://github.com/storytold/craft-libs?rev=92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d#92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d"
@@ -2735,6 +2745,7 @@ dependencies = [
  "craft-fonts-build",
  "craft-mcmat",
  "craft-texture",
+ "craft-xml",
  "dds",
  "flate2",
  "gltf",
