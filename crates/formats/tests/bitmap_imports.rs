@@ -76,7 +76,7 @@ fn dds_supports_compressed_uncompressed_and_float_textures() {
 #[test]
 fn shared_dds_keeps_rgb_transfer_alpha_and_float_range() {
     let mut bytes = Vec::new();
-    dds::Header::new_image(1, 1, dds::Format::R8G8B8A8_UNORM).write(&mut bytes).unwrap();
+    dds::header::Header::new_image(1, 1, dds::Format::R8G8B8A8_UNORM).write(&mut bytes).unwrap();
     bytes.extend_from_slice(&[128, 64, 255, 32]);
     let raw = decode(&bytes, true).unwrap();
     let converted = decode(&bytes, false).unwrap();
@@ -85,7 +85,7 @@ fn shared_dds_keeps_rgb_transfer_alpha_and_float_range() {
     }
     assert_eq!(converted.data[3], raw.data[3]);
     let mut floats = Vec::new();
-    dds::Header::new_image(1, 1, dds::Format::R32G32B32A32_FLOAT).write(&mut floats).unwrap();
+    dds::header::Header::new_image(1, 1, dds::Format::R32G32B32A32_FLOAT).write(&mut floats).unwrap();
     for v in [-0.5_f32, 2.0, 0.25, 0.75] {
         floats.extend_from_slice(&v.to_le_bytes());
     }
