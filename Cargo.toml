@@ -49,7 +49,8 @@ craft-texture-dds = { package = "craft-texture", version = "0.1.0", git = "https
 craft-mesh = { version = "0.1.0", git = "https://github.com/storytold/craft-libs", rev = "57288edafdc45552e30481cc649021de446abfa0", default-features = false, features = ["obj", "gltf"] }
 # Shared XML escaping; SBS model and serialization policy stay app-local.
 craft-xml = { version = "0.1.0", git = "https://github.com/storytold/craft-libs", rev = "b6d9feed23ceae249b40593ed84a668343091627" }
-resvg = { version = "0.47", default-features = false }
+# SVG: bounded parsing (usvg re-exported) and drawing (resvg) behind the shared checks.
+craft-svg = { version = "0.1.0", git = "https://github.com/storytold/craft-libs", rev = "57288edafdc45552e30481cc649021de446abfa0", features = ["tree-render"] }
 # internal
 materialcraft-core = { path = "crates/core" }
 materialcraft-image = { path = "crates/image" }
