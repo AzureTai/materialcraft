@@ -105,16 +105,19 @@ fn non_finite(scene: &Scene) -> Option<&'static str> {
     None
 }
 
-/// One triangle mesh of every placed mesh in the scene, in world space. Normals and UVs are kept
-/// only when every placed mesh has them (otherwise [`load_mesh`] computes normals and projects
-/// UVs for the whole mesh); the first UV set is used. Normals go through the inverse transpose,
-/// and a mirrored placement has its winding reversed so its triangles keep facing out.
+/// One triangle mesh of every placed mesh in the scene. Positions are transformed into world
+/// space in `f64`, then centered and scaled to a unit-size box before conversion to `f32`, so a
+/// placement far from the origin keeps its shape; [`load_mesh`] then normalizes to a unit sphere.
+/// Normals and UVs are kept only when every placed mesh has them (otherwise [`load_mesh`]
+/// computes normals and projects UVs for the whole mesh); the first UV set is used. Normals go
+/// through the inverse transpose, and a mirrored placement has its winding reversed so its
+/// triangles keep facing out.
 fn scene_mesh(scene: &Scene, limits: &Limits) -> Result<Mesh> {
     if let Some(what) = non_finite(scene) {
         return Err(bad(format!("the mesh has non-finite (NaN or infinite) {what}")));
     }
     let instances = scene.instances(limits).map_err(|e| read_error("mesh", e))?;
-    let mut positions = Vec::new();
+    let mut world_positions = Vec::new();
     let mut normals = Vec::new();
     let mut uvs = Vec::new();
     let mut indices = Vec::new();
@@ -124,9 +127,9 @@ fn scene_mesh(scene: &Scene, limits: &Limits) -> Result<Mesh> {
         let Some(mesh) = scene.meshes.get(index) else { continue };
         let unified = mesh.unified();
         let n = unified.positions.len();
-        check_vertex_bound(positions.len(), n)?;
-        let Ok(base) = u32::try_from(positions.len()) else { return Err(bad("the mesh is too large")) };
-        positions.extend(unified.positions.iter().map(|p| to_vec3(craft_mesh::transform_point(&world, *p))));
+        check_vertex_bound(world_positions.len(), n)?;
+        let Ok(base) = u32::try_from(world_positions.len()) else { return Err(bad("the mesh is too large")) };
+        world_positions.extend(unified.positions.iter().map(|p| craft_mesh::transform_point(&world, *p)));
         if unified.normals.len() == n {
             normals.extend(unified.normals.iter().map(|q| to_vec3(craft_mesh::transform_normal(&world, *q))));
         } else {
@@ -146,12 +149,35 @@ fn scene_mesh(scene: &Scene, limits: &Limits) -> Result<Mesh> {
             indices.extend(if mirror { [a, c, b] } else { [a, b, c] });
         }
     }
+    let positions = to_f32_positions(&world_positions);
     let normals = (all_normals && normals.len() == positions.len()).then_some(normals);
     // Partial UVs would hide the gap from the projection fallback: drop them all instead.
     if !all_uvs || uvs.len() != positions.len() {
         uvs.clear();
     }
     finish(positions, normals, uvs, indices)
+}
+
+/// Center and scale world-space positions in `f64`, then convert to `f32`. A unit quad whose
+/// node sits at a large translation would otherwise collapse: at magnitude `2^25` the `f32`
+/// spacing is 4, so the four corners round to one point and [`Mesh::normalize_to`] cannot
+/// recover the shape.
+fn to_f32_positions(world: &[[f64; 3]]) -> Vec<Vec3> {
+    if world.is_empty() {
+        return Vec::new();
+    }
+    let mut lo = [f64::INFINITY; 3];
+    let mut hi = [f64::NEG_INFINITY; 3];
+    for p in world {
+        for (i, &x) in p.iter().enumerate() {
+            lo[i] = lo[i].min(x);
+            hi[i] = hi[i].max(x);
+        }
+    }
+    let center = [0, 1, 2].map(|i| (lo[i] + hi[i]) * 0.5);
+    let extent = hi.iter().zip(&lo).map(|(h, l)| h - l).fold(0.0, f64::max);
+    let scale = if extent.is_finite() && extent > 0.0 { 1.0 / extent } else { 1.0 };
+    world.iter().map(|p| to_vec3([(p[0] - center[0]) * scale, (p[1] - center[1]) * scale, (p[2] - center[2]) * scale])).collect()
 }
 
 fn to_vec3(p: [f64; 3]) -> Vec3 {
@@ -319,6 +345,23 @@ mod tests {
         let mut inf_normals = [[0.0f32, 0.0, 1.0]; 4];
         inf_normals[1][2] = f32::INFINITY;
         assert!(load_mesh("x.gltf", &gltf_with_normals(inf_normals)).is_err());
+    }
+
+    #[test]
+    fn a_far_translation_keeps_the_quads_shape() {
+        // 2^25: an f32 ULP at this magnitude is 4, so a unit quad converted in world space
+        // would collapse to a point before normalize_to runs.
+        let local = load_mesh("quad.gltf", &gltf_json(QUAD, None, &[0, 1, 2, 0, 2, 3])).unwrap();
+        let far = 33_554_432.0;
+        let placed = placed(gltf_json(QUAD, None, &[0, 1, 2, 0, 2, 3]), &format!(r#"{{"mesh":0,"translation":[{far},{far},0]}}"#));
+        let distant = load_mesh("far.gltf", &placed).unwrap();
+        assert_eq!(distant.triangle_count(), local.triangle_count());
+        let local_ext = extent(&local);
+        let distant_ext = extent(&distant);
+        assert!((distant_ext - local_ext).length() < 1e-4, "local={local_ext} far={distant_ext}");
+        for (a, b) in local.positions.iter().zip(&distant.positions) {
+            assert!(a.distance(*b) < 1e-4, "local={a} far={b}");
+        }
     }
 
     #[test]
