@@ -1,0 +1,8841 @@
+[
+  {
+    "name": "exact_blur_4x4_grid_tileFalse",
+    "operation": "blur",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "tile": [
+      false,
+      false
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10.0
+      }
+    }
+  },
+  {
+    "name": "exact_blur_4x4_grid_tileTrue",
+    "operation": "blur",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "tile": [
+      true,
+      true
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10.0
+      }
+    }
+  },
+  {
+    "name": "exact_blur_5x4_grid_tileFalse",
+    "operation": "blur",
+    "size": [
+      5,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "tile": [
+      false,
+      false
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10.0
+      }
+    }
+  },
+  {
+    "name": "exact_blur_5x4_grid_tileTrue",
+    "operation": "blur",
+    "size": [
+      5,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "tile": [
+      true,
+      true
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10.0
+      }
+    }
+  },
+  {
+    "name": "exact_blur_4x5_grid_tileFalse",
+    "operation": "blur",
+    "size": [
+      4,
+      5
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "tile": [
+      false,
+      false
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10.0
+      }
+    }
+  },
+  {
+    "name": "exact_blur_4x5_grid_tileTrue",
+    "operation": "blur",
+    "size": [
+      4,
+      5
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "tile": [
+      true,
+      true
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10.0
+      }
+    }
+  },
+  {
+    "name": "exact_blur_6x6_grid_tileFalse",
+    "operation": "blur",
+    "size": [
+      6,
+      6
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "tile": [
+      false,
+      false
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10.0
+      }
+    }
+  },
+  {
+    "name": "exact_blur_6x6_grid_tileTrue",
+    "operation": "blur",
+    "size": [
+      6,
+      6
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "tile": [
+      true,
+      true
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10.0
+      }
+    }
+  },
+  {
+    "name": "exact_blur_8x8_grid_tileFalse",
+    "operation": "blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "tile": [
+      false,
+      false
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10.0
+      }
+    }
+  },
+  {
+    "name": "exact_blur_8x8_grid_tileTrue",
+    "operation": "blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "tile": [
+      true,
+      true
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10.0
+      }
+    }
+  },
+  {
+    "name": "exact_directional_blur_4x4_grid_tileFalse",
+    "operation": "directional_blur",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "tile": [
+      false,
+      false
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10.0
+      }
+    }
+  },
+  {
+    "name": "exact_directional_blur_4x4_grid_tileTrue",
+    "operation": "directional_blur",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "tile": [
+      true,
+      true
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10.0
+      }
+    }
+  },
+  {
+    "name": "exact_directional_blur_5x4_grid_tileFalse",
+    "operation": "directional_blur",
+    "size": [
+      5,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "tile": [
+      false,
+      false
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10.0
+      }
+    }
+  },
+  {
+    "name": "exact_directional_blur_5x4_grid_tileTrue",
+    "operation": "directional_blur",
+    "size": [
+      5,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "tile": [
+      true,
+      true
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10.0
+      }
+    }
+  },
+  {
+    "name": "exact_directional_blur_4x5_grid_tileFalse",
+    "operation": "directional_blur",
+    "size": [
+      4,
+      5
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "tile": [
+      false,
+      false
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10.0
+      }
+    }
+  },
+  {
+    "name": "exact_directional_blur_4x5_grid_tileTrue",
+    "operation": "directional_blur",
+    "size": [
+      4,
+      5
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "tile": [
+      true,
+      true
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10.0
+      }
+    }
+  },
+  {
+    "name": "exact_directional_blur_6x6_grid_tileFalse",
+    "operation": "directional_blur",
+    "size": [
+      6,
+      6
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "tile": [
+      false,
+      false
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10.0
+      }
+    }
+  },
+  {
+    "name": "exact_directional_blur_6x6_grid_tileTrue",
+    "operation": "directional_blur",
+    "size": [
+      6,
+      6
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "tile": [
+      true,
+      true
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10.0
+      }
+    }
+  },
+  {
+    "name": "exact_directional_blur_8x8_grid_tileFalse",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "tile": [
+      false,
+      false
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10.0
+      }
+    }
+  },
+  {
+    "name": "exact_directional_blur_8x8_grid_tileTrue",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "tile": [
+      true,
+      true
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10.0
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_4x4_grid_tileFalse",
+    "operation": "sharpen",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "tile": [
+      false,
+      false
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 1.0
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_4x4_grid_tileTrue",
+    "operation": "sharpen",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "tile": [
+      true,
+      true
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 1.0
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_5x4_grid_tileFalse",
+    "operation": "sharpen",
+    "size": [
+      5,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "tile": [
+      false,
+      false
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 1.0
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_5x4_grid_tileTrue",
+    "operation": "sharpen",
+    "size": [
+      5,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "tile": [
+      true,
+      true
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 1.0
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_4x5_grid_tileFalse",
+    "operation": "sharpen",
+    "size": [
+      4,
+      5
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "tile": [
+      false,
+      false
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 1.0
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_4x5_grid_tileTrue",
+    "operation": "sharpen",
+    "size": [
+      4,
+      5
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "tile": [
+      true,
+      true
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 1.0
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_6x6_grid_tileFalse",
+    "operation": "sharpen",
+    "size": [
+      6,
+      6
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "tile": [
+      false,
+      false
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 1.0
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_6x6_grid_tileTrue",
+    "operation": "sharpen",
+    "size": [
+      6,
+      6
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "tile": [
+      true,
+      true
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 1.0
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_8x8_grid_tileFalse",
+    "operation": "sharpen",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "tile": [
+      false,
+      false
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 1.0
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_8x8_grid_tileTrue",
+    "operation": "sharpen",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "tile": [
+      true,
+      true
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 1.0
+      }
+    }
+  },
+  {
+    "name": "exact_blur_strength0.5_impulse",
+    "operation": "blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 0.5
+      }
+    }
+  },
+  {
+    "name": "exact_blur_strength0.5_grid",
+    "operation": "blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 0.5
+      }
+    }
+  },
+  {
+    "name": "exact_blur_strength0.625_impulse",
+    "operation": "blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 0.625
+      }
+    }
+  },
+  {
+    "name": "exact_blur_strength0.625_grid",
+    "operation": "blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 0.625
+      }
+    }
+  },
+  {
+    "name": "exact_blur_strength0.75_impulse",
+    "operation": "blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 0.75
+      }
+    }
+  },
+  {
+    "name": "exact_blur_strength0.75_grid",
+    "operation": "blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 0.75
+      }
+    }
+  },
+  {
+    "name": "exact_blur_strength1_impulse",
+    "operation": "blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 1
+      }
+    }
+  },
+  {
+    "name": "exact_blur_strength1_grid",
+    "operation": "blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 1
+      }
+    }
+  },
+  {
+    "name": "exact_blur_strength1.25_impulse",
+    "operation": "blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 1.25
+      }
+    }
+  },
+  {
+    "name": "exact_blur_strength1.25_grid",
+    "operation": "blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 1.25
+      }
+    }
+  },
+  {
+    "name": "exact_blur_strength1.5_impulse",
+    "operation": "blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 1.5
+      }
+    }
+  },
+  {
+    "name": "exact_blur_strength1.5_grid",
+    "operation": "blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 1.5
+      }
+    }
+  },
+  {
+    "name": "exact_blur_strength2.5_impulse",
+    "operation": "blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2.5
+      }
+    }
+  },
+  {
+    "name": "exact_blur_strength2.5_grid",
+    "operation": "blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2.5
+      }
+    }
+  },
+  {
+    "name": "exact_blur_strength2.75_impulse",
+    "operation": "blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2.75
+      }
+    }
+  },
+  {
+    "name": "exact_blur_strength2.75_grid",
+    "operation": "blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2.75
+      }
+    }
+  },
+  {
+    "name": "exact_blur_strength4_impulse",
+    "operation": "blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 4
+      }
+    }
+  },
+  {
+    "name": "exact_blur_strength4_grid",
+    "operation": "blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 4
+      }
+    }
+  },
+  {
+    "name": "exact_blur_strength10_impulse",
+    "operation": "blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10
+      }
+    }
+  },
+  {
+    "name": "exact_blur_strength10_grid",
+    "operation": "blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10
+      }
+    }
+  },
+  {
+    "name": "exact_directional_blur_strength0.5_impulse",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 0.5
+      }
+    }
+  },
+  {
+    "name": "exact_directional_blur_strength0.5_grid",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 0.5
+      }
+    }
+  },
+  {
+    "name": "exact_directional_blur_strength0.625_impulse",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 0.625
+      }
+    }
+  },
+  {
+    "name": "exact_directional_blur_strength0.625_grid",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 0.625
+      }
+    }
+  },
+  {
+    "name": "exact_directional_blur_strength0.75_impulse",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 0.75
+      }
+    }
+  },
+  {
+    "name": "exact_directional_blur_strength0.75_grid",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 0.75
+      }
+    }
+  },
+  {
+    "name": "exact_directional_blur_strength1_impulse",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 1
+      }
+    }
+  },
+  {
+    "name": "exact_directional_blur_strength1_grid",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 1
+      }
+    }
+  },
+  {
+    "name": "exact_directional_blur_strength1.25_impulse",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 1.25
+      }
+    }
+  },
+  {
+    "name": "exact_directional_blur_strength1.25_grid",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 1.25
+      }
+    }
+  },
+  {
+    "name": "exact_directional_blur_strength1.5_impulse",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 1.5
+      }
+    }
+  },
+  {
+    "name": "exact_directional_blur_strength1.5_grid",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 1.5
+      }
+    }
+  },
+  {
+    "name": "exact_directional_blur_strength2.5_impulse",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2.5
+      }
+    }
+  },
+  {
+    "name": "exact_directional_blur_strength2.5_grid",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2.5
+      }
+    }
+  },
+  {
+    "name": "exact_directional_blur_strength2.75_impulse",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2.75
+      }
+    }
+  },
+  {
+    "name": "exact_directional_blur_strength2.75_grid",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2.75
+      }
+    }
+  },
+  {
+    "name": "exact_directional_blur_strength4_impulse",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 4
+      }
+    }
+  },
+  {
+    "name": "exact_directional_blur_strength4_grid",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 4
+      }
+    }
+  },
+  {
+    "name": "exact_directional_blur_strength10_impulse",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10
+      }
+    }
+  },
+  {
+    "name": "exact_directional_blur_strength10_grid",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_pos0_tileFalse",
+    "operation": "sharpen",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse",
+        "position": [
+          128,
+          0
+        ],
+        "background": [
+          0.5,
+          0.5,
+          0.5,
+          0.5
+        ],
+        "value": [
+          0.5625,
+          0.5625,
+          0.5625,
+          0.5625
+        ]
+      }
+    ],
+    "tile": [
+      false,
+      false
+    ]
+  },
+  {
+    "name": "exact_sharpen_pos0_tileTrue",
+    "operation": "sharpen",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse",
+        "position": [
+          128,
+          0
+        ],
+        "background": [
+          0.5,
+          0.5,
+          0.5,
+          0.5
+        ],
+        "value": [
+          0.5625,
+          0.5625,
+          0.5625,
+          0.5625
+        ]
+      }
+    ],
+    "tile": [
+      true,
+      true
+    ]
+  },
+  {
+    "name": "exact_sharpen_pos1_tileFalse",
+    "operation": "sharpen",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse",
+        "position": [
+          128,
+          1
+        ],
+        "background": [
+          0.5,
+          0.5,
+          0.5,
+          0.5
+        ],
+        "value": [
+          0.5625,
+          0.5625,
+          0.5625,
+          0.5625
+        ]
+      }
+    ],
+    "tile": [
+      false,
+      false
+    ]
+  },
+  {
+    "name": "exact_sharpen_pos1_tileTrue",
+    "operation": "sharpen",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse",
+        "position": [
+          128,
+          1
+        ],
+        "background": [
+          0.5,
+          0.5,
+          0.5,
+          0.5
+        ],
+        "value": [
+          0.5625,
+          0.5625,
+          0.5625,
+          0.5625
+        ]
+      }
+    ],
+    "tile": [
+      true,
+      true
+    ]
+  },
+  {
+    "name": "exact_sharpen_pos15_tileFalse",
+    "operation": "sharpen",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse",
+        "position": [
+          128,
+          15
+        ],
+        "background": [
+          0.5,
+          0.5,
+          0.5,
+          0.5
+        ],
+        "value": [
+          0.5625,
+          0.5625,
+          0.5625,
+          0.5625
+        ]
+      }
+    ],
+    "tile": [
+      false,
+      false
+    ]
+  },
+  {
+    "name": "exact_sharpen_pos15_tileTrue",
+    "operation": "sharpen",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse",
+        "position": [
+          128,
+          15
+        ],
+        "background": [
+          0.5,
+          0.5,
+          0.5,
+          0.5
+        ],
+        "value": [
+          0.5625,
+          0.5625,
+          0.5625,
+          0.5625
+        ]
+      }
+    ],
+    "tile": [
+      true,
+      true
+    ]
+  },
+  {
+    "name": "exact_sharpen_pos16_tileFalse",
+    "operation": "sharpen",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse",
+        "position": [
+          128,
+          16
+        ],
+        "background": [
+          0.5,
+          0.5,
+          0.5,
+          0.5
+        ],
+        "value": [
+          0.5625,
+          0.5625,
+          0.5625,
+          0.5625
+        ]
+      }
+    ],
+    "tile": [
+      false,
+      false
+    ]
+  },
+  {
+    "name": "exact_sharpen_pos16_tileTrue",
+    "operation": "sharpen",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse",
+        "position": [
+          128,
+          16
+        ],
+        "background": [
+          0.5,
+          0.5,
+          0.5,
+          0.5
+        ],
+        "value": [
+          0.5625,
+          0.5625,
+          0.5625,
+          0.5625
+        ]
+      }
+    ],
+    "tile": [
+      true,
+      true
+    ]
+  },
+  {
+    "name": "exact_sharpen_pos31_tileFalse",
+    "operation": "sharpen",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse",
+        "position": [
+          128,
+          31
+        ],
+        "background": [
+          0.5,
+          0.5,
+          0.5,
+          0.5
+        ],
+        "value": [
+          0.5625,
+          0.5625,
+          0.5625,
+          0.5625
+        ]
+      }
+    ],
+    "tile": [
+      false,
+      false
+    ]
+  },
+  {
+    "name": "exact_sharpen_pos31_tileTrue",
+    "operation": "sharpen",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse",
+        "position": [
+          128,
+          31
+        ],
+        "background": [
+          0.5,
+          0.5,
+          0.5,
+          0.5
+        ],
+        "value": [
+          0.5625,
+          0.5625,
+          0.5625,
+          0.5625
+        ]
+      }
+    ],
+    "tile": [
+      true,
+      true
+    ]
+  },
+  {
+    "name": "exact_sharpen_pos32_tileFalse",
+    "operation": "sharpen",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse",
+        "position": [
+          128,
+          32
+        ],
+        "background": [
+          0.5,
+          0.5,
+          0.5,
+          0.5
+        ],
+        "value": [
+          0.5625,
+          0.5625,
+          0.5625,
+          0.5625
+        ]
+      }
+    ],
+    "tile": [
+      false,
+      false
+    ]
+  },
+  {
+    "name": "exact_sharpen_pos32_tileTrue",
+    "operation": "sharpen",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse",
+        "position": [
+          128,
+          32
+        ],
+        "background": [
+          0.5,
+          0.5,
+          0.5,
+          0.5
+        ],
+        "value": [
+          0.5625,
+          0.5625,
+          0.5625,
+          0.5625
+        ]
+      }
+    ],
+    "tile": [
+      true,
+      true
+    ]
+  },
+  {
+    "name": "exact_sharpen_pos63_tileFalse",
+    "operation": "sharpen",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse",
+        "position": [
+          128,
+          63
+        ],
+        "background": [
+          0.5,
+          0.5,
+          0.5,
+          0.5
+        ],
+        "value": [
+          0.5625,
+          0.5625,
+          0.5625,
+          0.5625
+        ]
+      }
+    ],
+    "tile": [
+      false,
+      false
+    ]
+  },
+  {
+    "name": "exact_sharpen_pos63_tileTrue",
+    "operation": "sharpen",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse",
+        "position": [
+          128,
+          63
+        ],
+        "background": [
+          0.5,
+          0.5,
+          0.5,
+          0.5
+        ],
+        "value": [
+          0.5625,
+          0.5625,
+          0.5625,
+          0.5625
+        ]
+      }
+    ],
+    "tile": [
+      true,
+      true
+    ]
+  },
+  {
+    "name": "exact_sharpen_pos64_tileFalse",
+    "operation": "sharpen",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse",
+        "position": [
+          128,
+          64
+        ],
+        "background": [
+          0.5,
+          0.5,
+          0.5,
+          0.5
+        ],
+        "value": [
+          0.5625,
+          0.5625,
+          0.5625,
+          0.5625
+        ]
+      }
+    ],
+    "tile": [
+      false,
+      false
+    ]
+  },
+  {
+    "name": "exact_sharpen_pos64_tileTrue",
+    "operation": "sharpen",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse",
+        "position": [
+          128,
+          64
+        ],
+        "background": [
+          0.5,
+          0.5,
+          0.5,
+          0.5
+        ],
+        "value": [
+          0.5625,
+          0.5625,
+          0.5625,
+          0.5625
+        ]
+      }
+    ],
+    "tile": [
+      true,
+      true
+    ]
+  },
+  {
+    "name": "exact_sharpen_pos127_tileFalse",
+    "operation": "sharpen",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse",
+        "position": [
+          128,
+          127
+        ],
+        "background": [
+          0.5,
+          0.5,
+          0.5,
+          0.5
+        ],
+        "value": [
+          0.5625,
+          0.5625,
+          0.5625,
+          0.5625
+        ]
+      }
+    ],
+    "tile": [
+      false,
+      false
+    ]
+  },
+  {
+    "name": "exact_sharpen_pos127_tileTrue",
+    "operation": "sharpen",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse",
+        "position": [
+          128,
+          127
+        ],
+        "background": [
+          0.5,
+          0.5,
+          0.5,
+          0.5
+        ],
+        "value": [
+          0.5625,
+          0.5625,
+          0.5625,
+          0.5625
+        ]
+      }
+    ],
+    "tile": [
+      true,
+      true
+    ]
+  },
+  {
+    "name": "exact_sharpen_pos128_tileFalse",
+    "operation": "sharpen",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse",
+        "position": [
+          128,
+          128
+        ],
+        "background": [
+          0.5,
+          0.5,
+          0.5,
+          0.5
+        ],
+        "value": [
+          0.5625,
+          0.5625,
+          0.5625,
+          0.5625
+        ]
+      }
+    ],
+    "tile": [
+      false,
+      false
+    ]
+  },
+  {
+    "name": "exact_sharpen_pos128_tileTrue",
+    "operation": "sharpen",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse",
+        "position": [
+          128,
+          128
+        ],
+        "background": [
+          0.5,
+          0.5,
+          0.5,
+          0.5
+        ],
+        "value": [
+          0.5625,
+          0.5625,
+          0.5625,
+          0.5625
+        ]
+      }
+    ],
+    "tile": [
+      true,
+      true
+    ]
+  },
+  {
+    "name": "exact_sharpen_pos129_tileFalse",
+    "operation": "sharpen",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse",
+        "position": [
+          128,
+          129
+        ],
+        "background": [
+          0.5,
+          0.5,
+          0.5,
+          0.5
+        ],
+        "value": [
+          0.5625,
+          0.5625,
+          0.5625,
+          0.5625
+        ]
+      }
+    ],
+    "tile": [
+      false,
+      false
+    ]
+  },
+  {
+    "name": "exact_sharpen_pos129_tileTrue",
+    "operation": "sharpen",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse",
+        "position": [
+          128,
+          129
+        ],
+        "background": [
+          0.5,
+          0.5,
+          0.5,
+          0.5
+        ],
+        "value": [
+          0.5625,
+          0.5625,
+          0.5625,
+          0.5625
+        ]
+      }
+    ],
+    "tile": [
+      true,
+      true
+    ]
+  },
+  {
+    "name": "exact_sharpen_pos255_tileFalse",
+    "operation": "sharpen",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse",
+        "position": [
+          128,
+          255
+        ],
+        "background": [
+          0.5,
+          0.5,
+          0.5,
+          0.5
+        ],
+        "value": [
+          0.5625,
+          0.5625,
+          0.5625,
+          0.5625
+        ]
+      }
+    ],
+    "tile": [
+      false,
+      false
+    ]
+  },
+  {
+    "name": "exact_sharpen_pos255_tileTrue",
+    "operation": "sharpen",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse",
+        "position": [
+          128,
+          255
+        ],
+        "background": [
+          0.5,
+          0.5,
+          0.5,
+          0.5
+        ],
+        "value": [
+          0.5625,
+          0.5625,
+          0.5625,
+          0.5625
+        ]
+      }
+    ],
+    "tile": [
+      true,
+      true
+    ]
+  },
+  {
+    "name": "exact_precision_dot_u8_forceFalse",
+    "operation": "dot",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      }
+    ],
+    "format": "u8"
+  },
+  {
+    "name": "exact_precision_channels_shuffle_u8_forceFalse",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      }
+    ],
+    "format": "u8"
+  },
+  {
+    "name": "exact_precision_blur_u8_forceFalse",
+    "operation": "blur",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      }
+    ],
+    "format": "u8"
+  },
+  {
+    "name": "exact_precision_sharpen_u8_forceFalse",
+    "operation": "sharpen",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      }
+    ],
+    "format": "u8"
+  },
+  {
+    "name": "exact_precision_dot_u8_forceTrue",
+    "operation": "dot",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      }
+    ],
+    "format": "u8",
+    "input_format": "u8",
+    "node_format": "u8"
+  },
+  {
+    "name": "exact_precision_channels_shuffle_u8_forceTrue",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      }
+    ],
+    "format": "u8",
+    "input_format": "u8",
+    "node_format": "u8"
+  },
+  {
+    "name": "exact_precision_blur_u8_forceTrue",
+    "operation": "blur",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      }
+    ],
+    "format": "u8",
+    "input_format": "u8",
+    "node_format": "u8"
+  },
+  {
+    "name": "exact_precision_sharpen_u8_forceTrue",
+    "operation": "sharpen",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      }
+    ],
+    "format": "u8",
+    "input_format": "u8",
+    "node_format": "u8"
+  },
+  {
+    "name": "exact_precision_dot_u16_forceFalse",
+    "operation": "dot",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      }
+    ],
+    "format": "u16"
+  },
+  {
+    "name": "exact_precision_channels_shuffle_u16_forceFalse",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      }
+    ],
+    "format": "u16"
+  },
+  {
+    "name": "exact_precision_blur_u16_forceFalse",
+    "operation": "blur",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      }
+    ],
+    "format": "u16"
+  },
+  {
+    "name": "exact_precision_sharpen_u16_forceFalse",
+    "operation": "sharpen",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      }
+    ],
+    "format": "u16"
+  },
+  {
+    "name": "exact_precision_dot_u16_forceTrue",
+    "operation": "dot",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      }
+    ],
+    "format": "u16",
+    "input_format": "u16",
+    "node_format": "u16"
+  },
+  {
+    "name": "exact_precision_channels_shuffle_u16_forceTrue",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      }
+    ],
+    "format": "u16",
+    "input_format": "u16",
+    "node_format": "u16"
+  },
+  {
+    "name": "exact_precision_blur_u16_forceTrue",
+    "operation": "blur",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      }
+    ],
+    "format": "u16",
+    "input_format": "u16",
+    "node_format": "u16"
+  },
+  {
+    "name": "exact_precision_sharpen_u16_forceTrue",
+    "operation": "sharpen",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      }
+    ],
+    "format": "u16",
+    "input_format": "u16",
+    "node_format": "u16"
+  },
+  {
+    "name": "exact_precision_dot_f16_forceFalse",
+    "operation": "dot",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      }
+    ],
+    "format": "f16"
+  },
+  {
+    "name": "exact_precision_channels_shuffle_f16_forceFalse",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      }
+    ],
+    "format": "f16"
+  },
+  {
+    "name": "exact_precision_blur_f16_forceFalse",
+    "operation": "blur",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      }
+    ],
+    "format": "f16"
+  },
+  {
+    "name": "exact_precision_sharpen_f16_forceFalse",
+    "operation": "sharpen",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      }
+    ],
+    "format": "f16"
+  },
+  {
+    "name": "exact_precision_dot_f16_forceTrue",
+    "operation": "dot",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      }
+    ],
+    "format": "f16",
+    "input_format": "f16",
+    "node_format": "f16"
+  },
+  {
+    "name": "exact_precision_channels_shuffle_f16_forceTrue",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      }
+    ],
+    "format": "f16",
+    "input_format": "f16",
+    "node_format": "f16"
+  },
+  {
+    "name": "exact_precision_blur_f16_forceTrue",
+    "operation": "blur",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      }
+    ],
+    "format": "f16",
+    "input_format": "f16",
+    "node_format": "f16"
+  },
+  {
+    "name": "exact_precision_sharpen_f16_forceTrue",
+    "operation": "sharpen",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      }
+    ],
+    "format": "f16",
+    "input_format": "f16",
+    "node_format": "f16"
+  },
+  {
+    "name": "exact_precision_dot_f32_forceFalse",
+    "operation": "dot",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      }
+    ],
+    "format": "f32"
+  },
+  {
+    "name": "exact_precision_channels_shuffle_f32_forceFalse",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      }
+    ],
+    "format": "f32"
+  },
+  {
+    "name": "exact_precision_blur_f32_forceFalse",
+    "operation": "blur",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      }
+    ],
+    "format": "f32"
+  },
+  {
+    "name": "exact_precision_sharpen_f32_forceFalse",
+    "operation": "sharpen",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      }
+    ],
+    "format": "f32"
+  },
+  {
+    "name": "exact_precision_dot_f32_forceTrue",
+    "operation": "dot",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      }
+    ],
+    "format": "f32",
+    "input_format": "f32",
+    "node_format": "f32"
+  },
+  {
+    "name": "exact_precision_channels_shuffle_f32_forceTrue",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      }
+    ],
+    "format": "f32",
+    "input_format": "f32",
+    "node_format": "f32"
+  },
+  {
+    "name": "exact_precision_blur_f32_forceTrue",
+    "operation": "blur",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      }
+    ],
+    "format": "f32",
+    "input_format": "f32",
+    "node_format": "f32"
+  },
+  {
+    "name": "exact_precision_sharpen_f32_forceTrue",
+    "operation": "sharpen",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          -0.5,
+          0.5,
+          1.5,
+          0.75
+        ]
+      }
+    ],
+    "format": "f32",
+    "input_format": "f32",
+    "node_format": "f32"
+  },
+  {
+    "name": "exact_shuffle_enum-2",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 4294967294
+      },
+      "green": {
+        "t": "enum",
+        "v": 4294967294
+      },
+      "blue": {
+        "t": "enum",
+        "v": 4294967294
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 4294967294
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_enum-1",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 4294967295
+      },
+      "green": {
+        "t": "enum",
+        "v": 4294967295
+      },
+      "blue": {
+        "t": "enum",
+        "v": 4294967295
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 4294967295
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_enum0",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 0
+      },
+      "green": {
+        "t": "enum",
+        "v": 0
+      },
+      "blue": {
+        "t": "enum",
+        "v": 0
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 0
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_enum1",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 1
+      },
+      "green": {
+        "t": "enum",
+        "v": 1
+      },
+      "blue": {
+        "t": "enum",
+        "v": 1
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 1
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_enum2",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 2
+      },
+      "green": {
+        "t": "enum",
+        "v": 2
+      },
+      "blue": {
+        "t": "enum",
+        "v": 2
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 2
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_enum3",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 3
+      },
+      "green": {
+        "t": "enum",
+        "v": 3
+      },
+      "blue": {
+        "t": "enum",
+        "v": 3
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 3
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_enum4",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 4
+      },
+      "green": {
+        "t": "enum",
+        "v": 4
+      },
+      "blue": {
+        "t": "enum",
+        "v": 4
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 4
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_enum5",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 5
+      },
+      "green": {
+        "t": "enum",
+        "v": 5
+      },
+      "blue": {
+        "t": "enum",
+        "v": 5
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 5
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_enum6",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 6
+      },
+      "green": {
+        "t": "enum",
+        "v": 6
+      },
+      "blue": {
+        "t": "enum",
+        "v": 6
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 6
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_enum7",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 7
+      },
+      "green": {
+        "t": "enum",
+        "v": 7
+      },
+      "blue": {
+        "t": "enum",
+        "v": 7
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 7
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_enum8",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 8
+      },
+      "green": {
+        "t": "enum",
+        "v": 8
+      },
+      "blue": {
+        "t": "enum",
+        "v": 8
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 8
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_enum9",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 9
+      },
+      "green": {
+        "t": "enum",
+        "v": 9
+      },
+      "blue": {
+        "t": "enum",
+        "v": 9
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 9
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_enum10",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 10
+      },
+      "green": {
+        "t": "enum",
+        "v": 10
+      },
+      "blue": {
+        "t": "enum",
+        "v": 10
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 10
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_enum11",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 11
+      },
+      "green": {
+        "t": "enum",
+        "v": 11
+      },
+      "blue": {
+        "t": "enum",
+        "v": 11
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 11
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_enum16",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 16
+      },
+      "green": {
+        "t": "enum",
+        "v": 16
+      },
+      "blue": {
+        "t": "enum",
+        "v": 16
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 16
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_enum255",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 255
+      },
+      "green": {
+        "t": "enum",
+        "v": 255
+      },
+      "blue": {
+        "t": "enum",
+        "v": 255
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 255
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_4x4_0.1_catalog",
+    "operation": "sharpen",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "catalog"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 0.1
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_4x4_0.1_grid",
+    "operation": "sharpen",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 0.1
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_4x4_0.333_catalog",
+    "operation": "sharpen",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "catalog"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 0.333
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_4x4_0.333_grid",
+    "operation": "sharpen",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 0.333
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_4x4_1_catalog",
+    "operation": "sharpen",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "catalog"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 1
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_4x4_1_grid",
+    "operation": "sharpen",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 1
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_4x4_2.75_catalog",
+    "operation": "sharpen",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "catalog"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2.75
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_4x4_2.75_grid",
+    "operation": "sharpen",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2.75
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_4x4_10_catalog",
+    "operation": "sharpen",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "catalog"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_4x4_10_grid",
+    "operation": "sharpen",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_5x4_0.1_catalog",
+    "operation": "sharpen",
+    "size": [
+      5,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "catalog"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 0.1
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_5x4_0.1_grid",
+    "operation": "sharpen",
+    "size": [
+      5,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 0.1
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_5x4_0.333_catalog",
+    "operation": "sharpen",
+    "size": [
+      5,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "catalog"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 0.333
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_5x4_0.333_grid",
+    "operation": "sharpen",
+    "size": [
+      5,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 0.333
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_5x4_1_catalog",
+    "operation": "sharpen",
+    "size": [
+      5,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "catalog"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 1
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_5x4_1_grid",
+    "operation": "sharpen",
+    "size": [
+      5,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 1
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_5x4_2.75_catalog",
+    "operation": "sharpen",
+    "size": [
+      5,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "catalog"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2.75
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_5x4_2.75_grid",
+    "operation": "sharpen",
+    "size": [
+      5,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2.75
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_5x4_10_catalog",
+    "operation": "sharpen",
+    "size": [
+      5,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "catalog"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_5x4_10_grid",
+    "operation": "sharpen",
+    "size": [
+      5,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_4x5_0.1_catalog",
+    "operation": "sharpen",
+    "size": [
+      4,
+      5
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "catalog"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 0.1
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_4x5_0.1_grid",
+    "operation": "sharpen",
+    "size": [
+      4,
+      5
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 0.1
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_4x5_0.333_catalog",
+    "operation": "sharpen",
+    "size": [
+      4,
+      5
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "catalog"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 0.333
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_4x5_0.333_grid",
+    "operation": "sharpen",
+    "size": [
+      4,
+      5
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 0.333
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_4x5_1_catalog",
+    "operation": "sharpen",
+    "size": [
+      4,
+      5
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "catalog"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 1
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_4x5_1_grid",
+    "operation": "sharpen",
+    "size": [
+      4,
+      5
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 1
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_4x5_2.75_catalog",
+    "operation": "sharpen",
+    "size": [
+      4,
+      5
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "catalog"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2.75
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_4x5_2.75_grid",
+    "operation": "sharpen",
+    "size": [
+      4,
+      5
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2.75
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_4x5_10_catalog",
+    "operation": "sharpen",
+    "size": [
+      4,
+      5
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "catalog"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_4x5_10_grid",
+    "operation": "sharpen",
+    "size": [
+      4,
+      5
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_6x6_0.1_catalog",
+    "operation": "sharpen",
+    "size": [
+      6,
+      6
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "catalog"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 0.1
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_6x6_0.1_grid",
+    "operation": "sharpen",
+    "size": [
+      6,
+      6
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 0.1
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_6x6_0.333_catalog",
+    "operation": "sharpen",
+    "size": [
+      6,
+      6
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "catalog"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 0.333
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_6x6_0.333_grid",
+    "operation": "sharpen",
+    "size": [
+      6,
+      6
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 0.333
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_6x6_1_catalog",
+    "operation": "sharpen",
+    "size": [
+      6,
+      6
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "catalog"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 1
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_6x6_1_grid",
+    "operation": "sharpen",
+    "size": [
+      6,
+      6
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 1
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_6x6_2.75_catalog",
+    "operation": "sharpen",
+    "size": [
+      6,
+      6
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "catalog"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2.75
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_6x6_2.75_grid",
+    "operation": "sharpen",
+    "size": [
+      6,
+      6
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2.75
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_6x6_10_catalog",
+    "operation": "sharpen",
+    "size": [
+      6,
+      6
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "catalog"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10
+      }
+    }
+  },
+  {
+    "name": "exact_sharpen_math_6x6_10_grid",
+    "operation": "sharpen",
+    "size": [
+      6,
+      6
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": false,
+        "pattern": "grid"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.125_i0.625",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 0.625
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.125
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.125_i1.5",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 1.5
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.125
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.125_i2",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.125
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.125_i2.5",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2.5
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.125
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.125_i2.75",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2.75
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.125
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.125_i4",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 4
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.125
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.125_i10",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.125
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.25_i0.625",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 0.625
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.25
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.25_i1.5",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 1.5
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.25
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.25_i2",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.25
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.25_i2.5",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2.5
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.25
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.25_i2.75",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2.75
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.25
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.25_i4",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 4
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.25
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.25_i10",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.25
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.333_i0.625",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 0.625
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.333
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.333_i1.5",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 1.5
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.333
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.333_i2",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.333
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.333_i2.5",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2.5
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.333
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.333_i2.75",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2.75
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.333
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.333_i4",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 4
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.333
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.333_i10",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.333
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.05_i0.625",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 0.625
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.05
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.05_i1.5",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 1.5
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.05
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.05_i2",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.05
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.05_i2.5",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2.5
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.05
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.05_i2.75",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2.75
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.05
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.05_i4",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 4
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.05
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.05_i10",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.05
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.1_i0.625",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 0.625
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.1
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.1_i1.5",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 1.5
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.1
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.1_i2",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.1
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.1_i2.5",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2.5
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.1
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.1_i2.75",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2.75
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.1
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.1_i4",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 4
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.1
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.1_i10",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.1
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.2_i0.625",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 0.625
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.2
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.2_i1.5",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 1.5
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.2
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.2_i2",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.2
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.2_i2.5",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2.5
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.2
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.2_i2.75",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2.75
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.2
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.2_i4",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 4
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.2
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.2_i10",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.2
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.375_i0.625",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 0.625
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.375
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.375_i1.5",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 1.5
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.375
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.375_i2",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.375
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.375_i2.5",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2.5
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.375
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.375_i2.75",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2.75
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.375
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.375_i4",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 4
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.375
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.375_i10",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.375
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.5_i0.625",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 0.625
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.5
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.5_i1.5",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 1.5
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.5
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.5_i2",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.5
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.5_i2.5",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2.5
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.5
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.5_i2.75",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2.75
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.5
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.5_i4",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 4
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.5
+      }
+    }
+  },
+  {
+    "name": "exact_directional_phase_a0.5_i10",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse"
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 10
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.5
+      }
+    }
+  },
+  {
+    "name": "exact_directional_position_64_64",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse",
+        "position": [
+          64,
+          64
+        ]
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2.75
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.333
+      }
+    }
+  },
+  {
+    "name": "exact_directional_position_128_64",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse",
+        "position": [
+          128,
+          64
+        ]
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2.75
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.333
+      }
+    }
+  },
+  {
+    "name": "exact_directional_position_129_128",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse",
+        "position": [
+          129,
+          128
+        ]
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2.75
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.333
+      }
+    }
+  },
+  {
+    "name": "exact_directional_position_128_129",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse",
+        "position": [
+          128,
+          129
+        ]
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2.75
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.333
+      }
+    }
+  },
+  {
+    "name": "exact_directional_position_32_129",
+    "operation": "directional_blur",
+    "size": [
+      8,
+      8
+    ],
+    "inputs": [
+      {
+        "port": "input",
+        "gray": true,
+        "pattern": "impulse",
+        "position": [
+          32,
+          129
+        ]
+      }
+    ],
+    "params": {
+      "intensity": {
+        "t": "float",
+        "v": 2.75
+      },
+      "angle": {
+        "t": "float",
+        "v": 0.333
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray11_enum-2",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 4294967294
+      },
+      "green": {
+        "t": "enum",
+        "v": 4294967294
+      },
+      "blue": {
+        "t": "enum",
+        "v": 4294967294
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 4294967294
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray11_enum-1",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 4294967295
+      },
+      "green": {
+        "t": "enum",
+        "v": 4294967295
+      },
+      "blue": {
+        "t": "enum",
+        "v": 4294967295
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 4294967295
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray11_enum0",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 0
+      },
+      "green": {
+        "t": "enum",
+        "v": 0
+      },
+      "blue": {
+        "t": "enum",
+        "v": 0
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 0
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray11_enum1",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 1
+      },
+      "green": {
+        "t": "enum",
+        "v": 1
+      },
+      "blue": {
+        "t": "enum",
+        "v": 1
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 1
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray11_enum2",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 2
+      },
+      "green": {
+        "t": "enum",
+        "v": 2
+      },
+      "blue": {
+        "t": "enum",
+        "v": 2
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 2
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray11_enum3",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 3
+      },
+      "green": {
+        "t": "enum",
+        "v": 3
+      },
+      "blue": {
+        "t": "enum",
+        "v": 3
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 3
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray11_enum4",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 4
+      },
+      "green": {
+        "t": "enum",
+        "v": 4
+      },
+      "blue": {
+        "t": "enum",
+        "v": 4
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 4
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray11_enum5",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 5
+      },
+      "green": {
+        "t": "enum",
+        "v": 5
+      },
+      "blue": {
+        "t": "enum",
+        "v": 5
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 5
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray11_enum6",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 6
+      },
+      "green": {
+        "t": "enum",
+        "v": 6
+      },
+      "blue": {
+        "t": "enum",
+        "v": 6
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 6
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray11_enum7",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 7
+      },
+      "green": {
+        "t": "enum",
+        "v": 7
+      },
+      "blue": {
+        "t": "enum",
+        "v": 7
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 7
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray11_enum8",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 8
+      },
+      "green": {
+        "t": "enum",
+        "v": 8
+      },
+      "blue": {
+        "t": "enum",
+        "v": 8
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 8
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray11_enum9",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 9
+      },
+      "green": {
+        "t": "enum",
+        "v": 9
+      },
+      "blue": {
+        "t": "enum",
+        "v": 9
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 9
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray11_enum10",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 10
+      },
+      "green": {
+        "t": "enum",
+        "v": 10
+      },
+      "blue": {
+        "t": "enum",
+        "v": 10
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 10
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray11_enum11",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 11
+      },
+      "green": {
+        "t": "enum",
+        "v": 11
+      },
+      "blue": {
+        "t": "enum",
+        "v": 11
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 11
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray11_enum16",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 16
+      },
+      "green": {
+        "t": "enum",
+        "v": 16
+      },
+      "blue": {
+        "t": "enum",
+        "v": 16
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 16
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray11_enum255",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 255
+      },
+      "green": {
+        "t": "enum",
+        "v": 255
+      },
+      "blue": {
+        "t": "enum",
+        "v": 255
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 255
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray10_enum-2",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 4294967294
+      },
+      "green": {
+        "t": "enum",
+        "v": 4294967294
+      },
+      "blue": {
+        "t": "enum",
+        "v": 4294967294
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 4294967294
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray10_enum-1",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 4294967295
+      },
+      "green": {
+        "t": "enum",
+        "v": 4294967295
+      },
+      "blue": {
+        "t": "enum",
+        "v": 4294967295
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 4294967295
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray10_enum0",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 0
+      },
+      "green": {
+        "t": "enum",
+        "v": 0
+      },
+      "blue": {
+        "t": "enum",
+        "v": 0
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 0
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray10_enum1",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 1
+      },
+      "green": {
+        "t": "enum",
+        "v": 1
+      },
+      "blue": {
+        "t": "enum",
+        "v": 1
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 1
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray10_enum2",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 2
+      },
+      "green": {
+        "t": "enum",
+        "v": 2
+      },
+      "blue": {
+        "t": "enum",
+        "v": 2
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 2
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray10_enum3",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 3
+      },
+      "green": {
+        "t": "enum",
+        "v": 3
+      },
+      "blue": {
+        "t": "enum",
+        "v": 3
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 3
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray10_enum4",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 4
+      },
+      "green": {
+        "t": "enum",
+        "v": 4
+      },
+      "blue": {
+        "t": "enum",
+        "v": 4
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 4
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray10_enum5",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 5
+      },
+      "green": {
+        "t": "enum",
+        "v": 5
+      },
+      "blue": {
+        "t": "enum",
+        "v": 5
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 5
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray10_enum6",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 6
+      },
+      "green": {
+        "t": "enum",
+        "v": 6
+      },
+      "blue": {
+        "t": "enum",
+        "v": 6
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 6
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray10_enum7",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 7
+      },
+      "green": {
+        "t": "enum",
+        "v": 7
+      },
+      "blue": {
+        "t": "enum",
+        "v": 7
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 7
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray10_enum8",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 8
+      },
+      "green": {
+        "t": "enum",
+        "v": 8
+      },
+      "blue": {
+        "t": "enum",
+        "v": 8
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 8
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray10_enum9",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 9
+      },
+      "green": {
+        "t": "enum",
+        "v": 9
+      },
+      "blue": {
+        "t": "enum",
+        "v": 9
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 9
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray10_enum10",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 10
+      },
+      "green": {
+        "t": "enum",
+        "v": 10
+      },
+      "blue": {
+        "t": "enum",
+        "v": 10
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 10
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray10_enum11",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 11
+      },
+      "green": {
+        "t": "enum",
+        "v": 11
+      },
+      "blue": {
+        "t": "enum",
+        "v": 11
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 11
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray10_enum16",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 16
+      },
+      "green": {
+        "t": "enum",
+        "v": 16
+      },
+      "blue": {
+        "t": "enum",
+        "v": 16
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 16
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray10_enum255",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 255
+      },
+      "green": {
+        "t": "enum",
+        "v": 255
+      },
+      "blue": {
+        "t": "enum",
+        "v": 255
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 255
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray01_enum-2",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 4294967294
+      },
+      "green": {
+        "t": "enum",
+        "v": 4294967294
+      },
+      "blue": {
+        "t": "enum",
+        "v": 4294967294
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 4294967294
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray01_enum-1",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 4294967295
+      },
+      "green": {
+        "t": "enum",
+        "v": 4294967295
+      },
+      "blue": {
+        "t": "enum",
+        "v": 4294967295
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 4294967295
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray01_enum0",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 0
+      },
+      "green": {
+        "t": "enum",
+        "v": 0
+      },
+      "blue": {
+        "t": "enum",
+        "v": 0
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 0
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray01_enum1",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 1
+      },
+      "green": {
+        "t": "enum",
+        "v": 1
+      },
+      "blue": {
+        "t": "enum",
+        "v": 1
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 1
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray01_enum2",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 2
+      },
+      "green": {
+        "t": "enum",
+        "v": 2
+      },
+      "blue": {
+        "t": "enum",
+        "v": 2
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 2
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray01_enum3",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 3
+      },
+      "green": {
+        "t": "enum",
+        "v": 3
+      },
+      "blue": {
+        "t": "enum",
+        "v": 3
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 3
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray01_enum4",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 4
+      },
+      "green": {
+        "t": "enum",
+        "v": 4
+      },
+      "blue": {
+        "t": "enum",
+        "v": 4
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 4
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray01_enum5",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 5
+      },
+      "green": {
+        "t": "enum",
+        "v": 5
+      },
+      "blue": {
+        "t": "enum",
+        "v": 5
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 5
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray01_enum6",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 6
+      },
+      "green": {
+        "t": "enum",
+        "v": 6
+      },
+      "blue": {
+        "t": "enum",
+        "v": 6
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 6
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray01_enum7",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 7
+      },
+      "green": {
+        "t": "enum",
+        "v": 7
+      },
+      "blue": {
+        "t": "enum",
+        "v": 7
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 7
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray01_enum8",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 8
+      },
+      "green": {
+        "t": "enum",
+        "v": 8
+      },
+      "blue": {
+        "t": "enum",
+        "v": 8
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 8
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray01_enum9",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 9
+      },
+      "green": {
+        "t": "enum",
+        "v": 9
+      },
+      "blue": {
+        "t": "enum",
+        "v": 9
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 9
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray01_enum10",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 10
+      },
+      "green": {
+        "t": "enum",
+        "v": 10
+      },
+      "blue": {
+        "t": "enum",
+        "v": 10
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 10
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray01_enum11",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 11
+      },
+      "green": {
+        "t": "enum",
+        "v": 11
+      },
+      "blue": {
+        "t": "enum",
+        "v": 11
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 11
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray01_enum16",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 16
+      },
+      "green": {
+        "t": "enum",
+        "v": 16
+      },
+      "blue": {
+        "t": "enum",
+        "v": 16
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 16
+      }
+    }
+  },
+  {
+    "name": "exact_shuffle_gray01_enum255",
+    "operation": "channels_shuffle",
+    "size": [
+      4,
+      4
+    ],
+    "inputs": [
+      {
+        "port": "input1",
+        "gray": false,
+        "pattern": "constant",
+        "value": [
+          0.125,
+          0.25,
+          0.375,
+          0.5
+        ]
+      },
+      {
+        "port": "input2",
+        "gray": true,
+        "pattern": "constant",
+        "value": [
+          0.625,
+          0.75,
+          0.875,
+          1.0
+        ]
+      }
+    ],
+    "params": {
+      "red": {
+        "t": "enum",
+        "v": 255
+      },
+      "green": {
+        "t": "enum",
+        "v": 255
+      },
+      "blue": {
+        "t": "enum",
+        "v": 255
+      },
+      "alpha": {
+        "t": "enum",
+        "v": 255
+      }
+    }
+  }
+]

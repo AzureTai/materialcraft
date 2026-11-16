@@ -29,5 +29,6 @@ pub(super) fn cases() -> Result<Vec<ProbeCase>> {
     result.extend(super::control_cases::cases()?);
     result.extend(super::pattern_cases::cases()?);
     result.extend(super::supplemental_cases::cases()?);
+    result.extend(super::kernel_cases::cases()?);
     Ok(result)
 }

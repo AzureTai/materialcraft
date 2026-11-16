@@ -13,12 +13,16 @@ mod comparison;
 mod control_cases;
 #[path = "catalog_parity/function_cases.rs"]
 mod function_cases;
+#[path = "catalog_parity/kernel_cases.rs"]
+mod kernel_cases;
 #[path = "catalog_parity/measurement.rs"]
 mod measurement;
 #[path = "catalog_parity/pattern_cases.rs"]
 mod pattern_cases;
 #[path = "catalog_parity/processor_cases.rs"]
 mod processor_cases;
+#[path = "catalog_parity/recipe_cases.rs"]
+mod recipe_cases;
 #[path = "catalog_parity/reference_run.rs"]
 mod reference_run;
 #[path = "catalog_parity/supplemental_cases.rs"]
@@ -73,7 +77,8 @@ fn main() -> Result<()> {
     std::fs::write(directory.join("library-inventory.json"), serde_json::to_vec_pretty(&library_inventory)?)?;
     let tools = args.get(2).map(Path::new);
     let filter = args.get(3).map(String::as_str).unwrap_or("");
-    let cases: Vec<_> = cases::cases()?.into_iter().filter(|case| case.name.contains(filter)).collect();
+    let available = if let Some(path) = std::env::var_os("MC_PARITY_CASE_FILE") { recipe_cases::read(Path::new(&path))? } else { cases::cases()? };
+    let cases: Vec<_> = available.into_iter().filter(|case| case.name.contains(filter)).collect();
     let mut names = BTreeSet::new();
     for case in &cases {
         if !names.insert(&case.name) {

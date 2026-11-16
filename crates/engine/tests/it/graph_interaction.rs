@@ -276,9 +276,10 @@ fn processors_sample_dynamic_image_inputs_after_sbs_round_trip() {
 fn background_pins_preserve_connected_images_through_sbs() {
     let mut session = new_session();
     session.preview_size = Some(16);
-    let source = add(&mut session, "uniform");
-    execute(&mut session, "graph.node.param", &json!({"id": source.0, "param": "color", "value": [0.5, 0.5, 0.5, 1.0]})).unwrap();
     for definition in ["text", "svg"] {
+        let source = add(&mut session, "uniform");
+        execute(&mut session, "graph.node.param", &json!({"id": source.0, "param": "color", "value": [0.5, 0.5, 0.5, 1.0]})).unwrap();
+        execute(&mut session, "graph.node.param", &json!({"id": source.0, "param": "color_mode", "value": definition == "svg"})).unwrap();
         let target = add(&mut session, definition);
         if definition == "text" {
             execute(&mut session, "graph.node.param", &json!({"id": target.0, "param": "text", "value": ""})).unwrap();

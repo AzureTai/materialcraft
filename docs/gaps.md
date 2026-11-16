@@ -3,6 +3,11 @@
 The [native catalog audit](node-catalog-parity.md) records current measured differences and
 explicitly untested behavior, including all 954 loaded package functions. Prioritize its
 reproducible cases for primitive, processor, sampling, precision and map corrections.
+The [atomic corrections follow-up](atomic-parity-improvements.md) supersedes its Blur,
+Directional Blur, Sharpen, Channels Shuffle and empty Text/SVG background measurements;
+oblique sampling, precision, boundary behavior and the other recorded gaps remain open.
+The [second atomic pass](atomic-exact-parity.md) resolves Sharpen arithmetic and Shuffle
+selectors. Reference backend/thread differences prevent a blanket exact-parity claim.
 
 > The assessment below predates the 2026-11-05 primitive rewrite. Its old library counts and
 > compatibility claims are historical. See [atomic-workflow.md](atomic-workflow.md) and

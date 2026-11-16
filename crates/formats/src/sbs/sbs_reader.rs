@@ -610,6 +610,12 @@ impl<'text> SbsReader<'text, '_> {
         let Some(param_value) = child_element(param, "paramValue") else { return };
 
         if let Some(value) = sbs_constant(param_value) {
+            // Preserve selector bits until the cook can resolve them against connected image kinds
+            if node.def == "channels_shuffle" && matches!(id, "red" | "green" | "blue" | "alpha") {
+                node.params.insert(id.to_string(), Value::Enum(value.int(0) as u32));
+                return;
+            }
+
             match to_param_value(like, &value, options) {
                 Some(value) => {
                     node.params.insert(id.to_string(), value);

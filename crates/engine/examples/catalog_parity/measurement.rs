@@ -25,6 +25,7 @@ pub(super) fn measure(case: &ProbeCase, root: &Path, tools: Option<&Path>) -> Re
     let measured = super::reference_run::measure(case, &directory, tools, bytes)?;
     report["transport_header_version"] = super::reference_run::REFERENCE_FORMAT_VERSION.into();
     report["reference_engine"] = measured.engine.into();
+    report["reference_cpu_count"] = json!(measured.cpu_count);
     report["cached_reference"] = measured.cached.into();
     if measured.status != "measured" {
         report["status"] = measured.status.into();
@@ -36,6 +37,17 @@ pub(super) fn measure(case: &ProbeCase, root: &Path, tools: Option<&Path>) -> Re
         && let Some(local) = cooked.image(case.output, 0)
     {
         let (reference, reference_channels) = read_exr(&path)?;
+        if std::env::var_os("MC_PARITY_DUMP_PIXELS").is_some() {
+            std::fs::write(
+                directory.join("pixels.json"),
+                serde_json::to_vec(&json!({
+                    "inputs": case.inputs.iter().map(|(name, image)| (name, json!({"size": [image.w, image.h], "kind": format!("{:?}", image.kind), "pixels": &*image.data}))).collect::<std::collections::BTreeMap<_, _>>(),
+                    "local": {"size": [local.w, local.h], "kind": format!("{:?}", local.kind), "pixels": &*local.data},
+                    "reference": {"size": [reference.w, reference.h], "kind": format!("{:?}", reference.kind), "pixels": &*reference.data},
+                }))?,
+            )?;
+        }
+
         report["reference_channels"] = json!(reference_channels);
         report["local_size"] = json!([local.w, local.h]);
         report["reference_size"] = json!([reference.w, reference.h]);

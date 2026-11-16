@@ -1,11 +1,10 @@
 use super::ATOMIC;
-use crate::ops;
 use crate::{CookContext, CookResult, NodeDefinition, node};
 use materialcraft_image::{Image, Kind};
 
 pub(super) fn definition() -> NodeDefinition {
     node("sharpen", "Sharpen", ATOMIC)
-        .desc("Unsharp mask.")
+        .desc("Sharpens local contrast with a four-neighbor Laplacian.")
         .atomic()
         .any_in("input", "Input")
         .float("intensity", "Intensity", 1.0, 0.0, 10.0)
@@ -15,10 +14,26 @@ pub(super) fn definition() -> NodeDefinition {
 
 fn sharpen(context: &CookContext) -> CookResult {
     let img = context.any_or(0, Kind::Gray, [0.0; 4]);
-    let soft = ops::gaussian(&img, 1.0, context.tile);
-    let k = context.f("intensity");
+    let intensity = context.f("intensity");
+    let tile = context.tiling_axes();
+    let short_side = context.w.min(context.h) as f32;
+    let horizontal = intensity * short_side / context.w.max(1) as f32;
+    let vertical = intensity * short_side / context.h.max(1) as f32;
     Ok(vec![Image::generate(context.w, context.h, img.kind, |x, y| {
-        let (a, b) = (img.get(x as i64, y as i64, false), soft.get(x as i64, y as i64, false));
-        [a[0] + (a[0] - b[0]) * k, a[1] + (a[1] - b[1]) * k, a[2] + (a[2] - b[2]) * k, a[3]]
+        let (x, y) = (i64::from(x), i64::from(y));
+        let center = img.get(x, y, false);
+        let left = img.get_axes(x - 1, y, tile);
+        let right = img.get_axes(x + 1, y, tile);
+        let top = img.get_axes(x, y - 1, tile);
+        let bottom = img.get_axes(x, y + 1, tile);
+        std::array::from_fn(|channel| {
+            // Keep the axial differences separate to preserve Float32 cancellation order
+            let twice_center = 2.0 * center[channel];
+            let across = twice_center - (left[channel] + right[channel]);
+            let down = twice_center - (top[channel] + bottom[channel]);
+
+            // Float outputs retain HDR values but discard negative sharpening lobes
+            (center[channel] + (across * horizontal + down * vertical)).max(0.0)
+        })
     })])
 }

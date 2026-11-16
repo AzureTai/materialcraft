@@ -1,6 +1,6 @@
 # MaterialCraft roadmap
 
-**Current focus (2026-11-15):** measured native catalog behavior and interoperable save/load.
+**Current focus (2026-11-16):** measured native catalog behavior and interoperable save/load.
 
 The old Rust procedural library has been removed. The main catalog has 29 entries: 25 native
 primitives and four graph input/output items. Functions have 85 operations; pattern graphs have
@@ -22,6 +22,8 @@ records original probe measurements, and lists behavior that remains untested.
 
 | Date | What landed |
 |---|---|
+| 2026-11-16 | Corrected Sharpen Float32 arithmetic and Shuffle selector/save-load behavior; measured reference backend and thread differences. [Exact cases and remaining limits](docs/atomic-exact-parity.md) |
+| 2026-11-16 | Corrected six atomic nodes: blur/sharpen kernels, radius and rectangular scaling, independent filter tiling, gray channel alpha, and empty Text/SVG backgrounds. [Measured cases and remaining differences](docs/atomic-parity-improvements.md) |
 | 2026-11-15 | Native catalog audit: 29 main entries, 85 functions, four map kinds, 954 inventoried package functions; 1,615 original probes with per-case numerical/error results, narrow default/input/serialization corrections and explicit remaining differences |
 | 2026-11-08 | Explorer folder hierarchy and package/folder/graph context menus, native SBS empty folders and resource paths, undoable copy/move/rename/remove, and package reload/save-copy actions |
 | 2026-11-08 | Portable `sbs://` function instances in the Library, preserved package folders and missing references, and a converted library retaining all 171 supplied function bodies (2,334 nodes); external runtime equivalence and redistribution rights remain unverified |

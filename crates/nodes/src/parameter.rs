@@ -20,6 +20,11 @@ pub fn clamp_params(def: &NodeDefinition, params: &mut BTreeMap<String, Value>) 
     for p in &def.params {
         let Some(v) = params.get_mut(p.id) else { continue };
         if let Value::Enum(i) = v {
+            // Shuffle resolves out-of-range selectors against the connected image kinds
+            if def.id == "channels_shuffle" && matches!(p.id, "red" | "green" | "blue" | "alpha") {
+                continue;
+            }
+
             // (an enum without options has nothing to choose from: its default stands)
             *i = match (p.options.len().checked_sub(1), &p.default) {
                 (Some(last), _) => (*i).min(u32::try_from(last).unwrap_or(u32::MAX)),

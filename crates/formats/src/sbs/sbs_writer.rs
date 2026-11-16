@@ -345,7 +345,12 @@ impl SbsWriter {
                             continue;
                         }
 
-                        if filter.sbs == "text"
+                        if filter.sbs == "shuffle"
+                            && let Value::Enum(selector) = value
+                        {
+                            // SBS integers are signed; keep every selector bit through a save/load
+                            out.push_str(&param_xml(sbs_name, &Value::Int(*selector as i32)).unwrap_or_default());
+                        } else if filter.sbs == "text"
                             && *sbs_name == "fontdata"
                             && let Value::Text(name) = value
                             && let Some(resource) = package.resource(name)

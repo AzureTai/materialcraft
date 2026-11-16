@@ -1,5 +1,6 @@
 use super::ATOMIC;
 use crate::{CookContext, CookResult, NodeDefinition, node};
+use materialcraft_core::Value;
 use materialcraft_image::{Image, Kind};
 
 pub(super) fn definition() -> NodeDefinition {
@@ -17,19 +18,33 @@ pub(super) fn definition() -> NodeDefinition {
 }
 
 fn channels_shuffle(context: &CookContext) -> CookResult {
-    let a = context.any_or(0, Kind::Color, [0.0; 4]).to_color();
-    let b = context.any_or(1, Kind::Color, [0.0; 4]).to_color();
-    let src = [context.i("red"), context.i("green"), context.i("blue"), context.i("alpha")];
+    let a = context.any_or(0, Kind::Color, [0.0; 4]);
+    let b = context.any_or(1, Kind::Color, [0.0; 4]);
+    let src = ["red", "green", "blue", "alpha"].map(|id| match context.value(id) {
+        Some(Value::Enum(index)) => *index,
+        _ => 0,
+    });
     Ok(vec![Image::generate(context.w, context.h, Kind::Color, |x, y| {
         let (pa, pb) = (a.get(x as i64, y as i64, false), b.get(x as i64, y as i64, false));
-        src.map(|s| match s {
-            0..=3 => pa[s as usize],
-            4..=7 => pb[(s - 4) as usize],
-            9 => 1.0,
-            _ => 0.0,
+
+        src.map(|selector| {
+            // Gray selection precedes the packed color swizzle, including for file values above seven
+            if selector < 4 && a.is_gray() {
+                return pa[0];
+            }
+
+            if selector >= 4 && b.is_gray() {
+                return pb[0];
+            }
+
+            const CHANNEL_MASK: u32 = 0b111;
+            match selector & CHANNEL_MASK {
+                channel @ 0..=3 => pa[channel as usize],
+                channel => pb[(channel - 4) as usize],
+            }
         })
     })])
 }
 
 const CHANNEL_SOURCES: &[&str] =
-    &["Input 1 red", "Input 1 green", "Input 1 blue", "Input 1 alpha", "Input 2 red", "Input 2 green", "Input 2 blue", "Input 2 alpha", "Black", "White"];
+    &["Input 1 red", "Input 1 green", "Input 1 blue", "Input 1 alpha", "Input 2 red", "Input 2 green", "Input 2 blue", "Input 2 alpha"];

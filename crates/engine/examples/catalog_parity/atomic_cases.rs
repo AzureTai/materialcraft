@@ -43,7 +43,11 @@ pub(super) fn cases() -> Result<Vec<ProbeCase>> {
                 Value::Float4(_) => vec![Value::Float4([parameter.min; 4]), Value::Float4([parameter.max; 4])],
                 Value::Color(_) => vec![Value::Color([0.0; 4]), Value::Color([1.0; 4])],
                 Value::Bool(_) => vec![Value::Bool(false), Value::Bool(true)],
-                Value::Enum(_) => vec![Value::Enum(0), Value::Enum(parameter.options.len().saturating_sub(1) as u32)],
+                Value::Enum(_) => {
+                    // Retain the original selector-9 probe after removing unsupported catalog choices
+                    let upper = if definition.id == "channels_shuffle" { 9 } else { parameter.options.len().saturating_sub(1) as u32 };
+                    vec![Value::Enum(0), Value::Enum(upper)]
+                }
                 _ => Vec::new(),
             };
             for (index, value) in values.into_iter().enumerate() {

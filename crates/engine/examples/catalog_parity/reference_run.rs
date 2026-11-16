@@ -40,14 +40,23 @@ pub(super) struct ReferenceRun {
     pub stdout: Vec<u8>,
     pub cached: bool,
     pub engine: String,
+    pub cpu_count: Option<u32>,
 }
 
 pub(super) fn measure(case: &ProbeCase, directory: &Path, tools: &Path, bytes: Vec<u8>) -> Result<ReferenceRun> {
     let engine = std::env::var("MC_PARITY_REFERENCE_ENGINE").unwrap_or_else(|_| "sse2".into());
+    let cpu_count = std::env::var("MC_PARITY_REFERENCE_CPUS").ok().map(|value| value.parse::<u32>()).transpose()?;
+    if cpu_count == Some(0) {
+        return Err("reference CPU count must be positive".into());
+    }
+
     let mut digest = Sha256::new();
-    digest.update(b"original-probe-v2-rgba");
+    digest.update(b"original-probe-v3-native-channels");
     digest.update(&bytes);
     digest.update(engine.as_bytes());
+    if let Some(cpu_count) = &cpu_count {
+        digest.update(cpu_count.to_string().as_bytes());
+    }
     for (name, image) in &case.inputs {
         digest.update(name.as_bytes());
         digest.update(image.w.to_le_bytes());
@@ -63,7 +72,7 @@ pub(super) fn measure(case: &ProbeCase, directory: &Path, tools: &Path, bytes: V
         && let Ok(status) = std::fs::read_to_string(&status_path)
     {
         let stdout = std::fs::read(directory.join("render.stdout.txt")).unwrap_or_default();
-        return Ok(ReferenceRun { status, stdout, cached: true, engine });
+        return Ok(ReferenceRun { status, stdout, cached: true, engine, cpu_count });
     }
 
     // Native readers reject the application release in the SBS version header
@@ -100,14 +109,25 @@ pub(super) fn measure(case: &ProbeCase, directory: &Path, tools: &Path, bytes: V
             .arg(&engine)
             .arg("--set-value")
             .arg(format!("$outputsize@{},{}", case.graph.size[0], case.graph.size[1]));
+        if let Some(cpu_count) = &cpu_count {
+            render.arg("--cpu-count").arg(cpu_count.to_string());
+        }
         for (name, image) in &case.inputs {
             let path = directory.join(format!("{name}.exr"));
 
-            // Independent RGBA writer: the app's RGB-only exporter would drop alpha
-            exr::prelude::write_rgba_file(&path, image.w as usize, image.h as usize, |x, y| {
-                let [r, g, b, a] = image.get(x as i64, y as i64, false);
-                (r, g, b, a)
-            })?;
+            // Preserve gray channels to avoid introducing an extra RGB-to-gray conversion
+            if image.is_gray() {
+                use exr::prelude::*;
+                let channels = SpecificChannels::build()
+                    .with_channel("Y")
+                    .with_pixel_fn(|position: Vec2<usize>| (image.get_gray(position.x() as i64, position.y() as i64, false),));
+                exr::prelude::Image::from_channels((image.w as usize, image.h as usize), channels).write().to_file(&path)?;
+            } else {
+                exr::prelude::write_rgba_file(&path, image.w as usize, image.h as usize, |x, y| {
+                    let [r, g, b, a] = image.get(x as i64, y as i64, false);
+                    (r, g, b, a)
+                })?;
+            }
             render.arg("--set-entry").arg(format!("{name}@{}", path.display()));
         }
         let (success, stdout) = run(&mut render, directory, "render")?;
@@ -117,5 +137,5 @@ pub(super) fn measure(case: &ProbeCase, directory: &Path, tools: &Path, bytes: V
     };
     std::fs::write(key_path, key)?;
     std::fs::write(status_path, status)?;
-    Ok(ReferenceRun { status: status.into(), stdout, cached: false, engine })
+    Ok(ReferenceRun { status: status.into(), stdout, cached: false, engine, cpu_count })
 }

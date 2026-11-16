@@ -1,5 +1,11 @@
 # Native catalog measurements
 
+The [atomic corrections follow-up](atomic-parity-improvements.md) records subsequent filter
+and background fixes. It also corrects grayscale probe input encoding; the figures below
+retain the original run and must not be used as the before baseline for those fixes.
+The [second atomic pass](atomic-exact-parity.md) fixes Sharpen arithmetic and Shuffle
+selectors, and separates backend/thread-dependent differences from local defects.
+
 This is a clean-room audit of MaterialCraft's actual catalogs on 2026-11-15, based on
 `main` at `271890a`. Catalog coverage is not behavioral parity. Exact results apply only
 to the individual generated cases, reference runtime and backend recorded here.
