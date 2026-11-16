@@ -10,19 +10,32 @@ use materialcraft_image::{Image, Kind, MAX_SIDE, srgb_to_linear};
 
 /// Largest SVG file (unpacked when SVGZ).
 const MAX_BYTES: usize = 16 << 20;
-/// Nesting usvg may build, references followed. usvg recurses a few stack frames per level
-/// (about 15 kB), so 64 levels stay well inside a 2 MB worker stack.
-const MAX_TREE_DEPTH: usize = 64;
+/// Nesting usvg may build for the document itself, references followed.
+const MAX_TREE_DEPTH: usize = 32;
+/// Nesting usvg may build in all, the document and the SVG images embedded in it (and in those)
+/// together. usvg recurses about 15 kB of stack per level, so 64 levels (about 1 MB) stay inside
+/// a 2 MB worker stack whatever the embedding.
+const MAX_TOTAL_DEPTH: usize = 64;
 /// Bytes the RGBA buffers of one drawing may hold at once: the 8192² target plus its layers.
 const DRAW_BUDGET: u64 = 1 << 30;
 
+/// Limits for the document: its own nesting gets [`MAX_TREE_DEPTH`].
 fn limits() -> Limits {
     Limits { bytes: MAX_BYTES, depth: MAX_TREE_DEPTH, tree_depth: MAX_TREE_DEPTH, ..Limits::default() }
 }
 
+/// The embedded-image resolver. It counts the levels of every embedded SVG on top of the
+/// document's, seeded with the most the document may use, so the total stays within
+/// [`MAX_TOTAL_DEPTH`] however deep the document or the embedding chain is.
+fn image_resolver() -> ImageResolver {
+    let resolver = ImageResolver::new(Limits { tree_depth: MAX_TOTAL_DEPTH, depth: MAX_TOTAL_DEPTH, ..limits() });
+    resolver.set_document_depth(MAX_TREE_DEPTH);
+    resolver
+}
+
 pub(crate) fn decode(bytes: &[u8]) -> Result<Image> {
     let limits = limits();
-    let resolver = ImageResolver::new(limits);
+    let resolver = image_resolver();
     let options = usvg::Options { image_href_resolver: resolver.resolver(), ..usvg::Options::default() };
     let svg = tree::text(bytes, &limits).map_err(svg_error)?;
     resolver.check_document(&svg).map_err(svg_error)?;
@@ -89,6 +102,29 @@ mod tests {
         let huge = br#"<svg xmlns="http://www.w3.org/2000/svg" width="100000" height="1"/>"#;
         assert!(decode(huge).is_err());
         assert!(decode(b"<svg").is_err());
+    }
+
+    fn nested_groups(levels: usize, inner: &str) -> String {
+        format!("{}{inner}{}", "<g>".repeat(levels), "</g>".repeat(levels))
+    }
+
+    fn embedded(levels: usize) -> Vec<u8> {
+        use base64::Engine as _;
+        let inner = svg(&nested_groups(levels, r##"<rect width="4" height="2" fill="#ff0000"/>"##));
+        let data = base64::engine::general_purpose::STANDARD.encode(inner);
+        svg(&nested_groups(30, &format!(r#"<image href="data:image/svg+xml;base64,{data}" width="4" height="2"/>"#)))
+    }
+
+    /// The document and the SVG images it embeds share one nesting budget, so a deep document
+    /// cannot embed another deep one and double the stack usvg needs.
+    #[test]
+    fn embedded_svgs_share_the_nesting_budget() {
+        let shallow = decode(&embedded(2)).unwrap();
+        assert!(shallow.get(1, 1, false)[0] > 0.9, "{:?}", shallow.get(1, 1, false));
+        let deep = decode(&embedded(40)).unwrap();
+        assert_eq!(deep.get(1, 1, false)[3], 0.0);
+        // The document alone past its own budget is refused.
+        assert!(decode(&svg(&nested_groups(40, ""))).is_err());
     }
 
     #[test]
