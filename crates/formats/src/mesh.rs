@@ -106,7 +106,9 @@ fn non_finite(scene: &Scene) -> Option<&'static str> {
 }
 
 /// One triangle mesh of every placed mesh in the scene, in world space. Normals and UVs are kept
-/// only when every placed mesh has them; the first UV set is used.
+/// only when every placed mesh has them (otherwise [`load_mesh`] computes normals and projects
+/// UVs for the whole mesh); the first UV set is used. Normals go through the inverse transpose,
+/// and a mirrored placement has its winding reversed so its triangles keep facing out.
 fn scene_mesh(scene: &Scene, limits: &Limits) -> Result<Mesh> {
     if let Some(what) = non_finite(scene) {
         return Err(bad(format!("the mesh has non-finite (NaN or infinite) {what}")));
@@ -117,6 +119,7 @@ fn scene_mesh(scene: &Scene, limits: &Limits) -> Result<Mesh> {
     let mut uvs = Vec::new();
     let mut indices = Vec::new();
     let mut all_normals = true;
+    let mut all_uvs = true;
     for (index, world) in instances {
         let Some(mesh) = scene.meshes.get(index) else { continue };
         let unified = mesh.unified();
@@ -125,29 +128,30 @@ fn scene_mesh(scene: &Scene, limits: &Limits) -> Result<Mesh> {
         let Ok(base) = u32::try_from(positions.len()) else { return Err(bad("the mesh is too large")) };
         positions.extend(unified.positions.iter().map(|p| to_vec3(craft_mesh::transform_point(&world, *p))));
         if unified.normals.len() == n {
-            normals.extend(unified.normals.iter().map(|q| to_vec3(transform_vector(&world, *q)).normalize_or_zero()));
+            normals.extend(unified.normals.iter().map(|q| to_vec3(craft_mesh::transform_normal(&world, *q))));
         } else {
             all_normals = false;
         }
         if unified.uvs.len() == n {
             uvs.extend(unified.uvs.iter().map(|t| Vec2::from(*t)));
         } else {
-            uvs.extend(std::iter::repeat_n(Vec2::ZERO, n));
+            all_uvs = false;
         }
+        let mirror = craft_mesh::is_mirror(&world);
         for tri in unified.parts.iter().flatten() {
             if indices.len() / 3 >= MAX_TRIANGLES {
                 return Err(bad("the mesh is too large"));
             }
-            indices.extend(tri.iter().map(|i| i.saturating_add(base)));
+            let [a, b, c] = tri.map(|i| i.saturating_add(base));
+            indices.extend(if mirror { [a, c, b] } else { [a, b, c] });
         }
     }
     let normals = (all_normals && normals.len() == positions.len()).then_some(normals);
+    // Partial UVs would hide the gap from the projection fallback: drop them all instead.
+    if !all_uvs || uvs.len() != positions.len() {
+        uvs.clear();
+    }
     finish(positions, normals, uvs, indices)
-}
-
-/// The direction `v` turned and scaled by `m`, without its translation.
-fn transform_vector(m: &craft_mesh::Mat4, v: [f64; 3]) -> [f64; 3] {
-    [0, 1, 2].map(|r| m[r] * v[0] + m[4 + r] * v[1] + m[8 + r] * v[2])
 }
 
 fn to_vec3(p: [f64; 3]) -> Vec3 {
@@ -280,31 +284,77 @@ mod tests {
         assert!(load_mesh("x.obj", b"v 0 0 0\nv 1 0 0\nv nan 1 0\nf 1 2 3\n").is_err());
     }
 
-    #[test]
-    fn gltf_non_finite_normals_are_rejected() {
+    /// [`QUAD`] with the given vertex normals, placed by one node.
+    fn gltf_with_normals(normals: [[f32; 3]; 4]) -> Vec<u8> {
         use base64::Engine as _;
-        let gltf_with_normals = |normals: [[f32; 3]; 4]| {
-            let idx: [u16; 6] = [0, 1, 2, 0, 2, 3];
-            let mut buf: Vec<u8> = QUAD.iter().flatten().flat_map(|f| f.to_le_bytes()).collect();
-            buf.extend(normals.iter().flatten().flat_map(|f| f.to_le_bytes()));
-            buf.extend(idx.iter().flat_map(|i| i.to_le_bytes()));
-            let b64 = base64::engine::general_purpose::STANDARD.encode(&buf);
-            format!(
-                r#"{{"asset":{{"version":"2.0"}},"scene":0,"scenes":[{{"nodes":[0]}}],"nodes":[{{"mesh":0}}],
+        let idx: [u16; 6] = [0, 1, 2, 0, 2, 3];
+        let mut buf: Vec<u8> = QUAD.iter().flatten().flat_map(|f| f.to_le_bytes()).collect();
+        buf.extend(normals.iter().flatten().flat_map(|f| f.to_le_bytes()));
+        buf.extend(idx.iter().flat_map(|i| i.to_le_bytes()));
+        let b64 = base64::engine::general_purpose::STANDARD.encode(&buf);
+        format!(
+            r#"{{"asset":{{"version":"2.0"}},"scene":0,"scenes":[{{"nodes":[0]}}],"nodes":[{{"mesh":0}}],
 "meshes":[{{"primitives":[{{"attributes":{{"POSITION":0,"NORMAL":1}},"indices":2}}]}}],
 "accessors":[{{"bufferView":0,"componentType":5126,"count":4,"type":"VEC3","min":[-1e9,-1e9,-1e9],"max":[1e9,1e9,1e9]}},{{"bufferView":1,"componentType":5126,"count":4,"type":"VEC3"}},{{"bufferView":2,"componentType":5123,"count":6,"type":"SCALAR"}}],
 "bufferViews":[{{"buffer":0,"byteOffset":0,"byteLength":48}},{{"buffer":0,"byteOffset":48,"byteLength":48}},{{"buffer":0,"byteOffset":96,"byteLength":12}}],
 "buffers":[{{"byteLength":{},"uri":"data:application/octet-stream;base64,{b64}"}}]}}"#,
-                buf.len()
-            )
-            .into_bytes()
-        };
+            buf.len()
+        )
+        .into_bytes()
+    }
+
+    /// `gltf` with its one placing node replaced by `node`.
+    fn placed(gltf: Vec<u8>, node: &str) -> Vec<u8> {
+        let base = String::from_utf8(gltf).unwrap();
+        let out = base.replace(r#""nodes":[{"mesh":0}]"#, &format!(r#""nodes":[{node}]"#));
+        assert_ne!(base, out, "the node was not replaced");
+        out.into_bytes()
+    }
+
+    #[test]
+    fn gltf_non_finite_normals_are_rejected() {
         let mut nan_normals = [[0.0f32, 0.0, 1.0]; 4];
         nan_normals[2][0] = f32::NAN;
         assert!(load_mesh("x.gltf", &gltf_with_normals(nan_normals)).is_err());
         let mut inf_normals = [[0.0f32, 0.0, 1.0]; 4];
         inf_normals[1][2] = f32::INFINITY;
         assert!(load_mesh("x.gltf", &gltf_with_normals(inf_normals)).is_err());
+    }
+
+    #[test]
+    fn normals_follow_a_non_uniform_scale_by_the_inverse_transpose() {
+        // Stretched twice along x, a (1,1,0) normal leans towards y: (0.5,1,0), normalised.
+        let gltf = placed(gltf_with_normals([[1.0, 1.0, 0.0]; 4]), r#"{"mesh":0,"scale":[2,1,1]}"#);
+        let m = load_mesh("x.gltf", &gltf).unwrap();
+        let want = Vec3::new(0.5, 1.0, 0.0).normalize();
+        assert!(m.normals.iter().all(|n| n.distance(want) < 1e-5), "{:?}", m.normals);
+    }
+
+    #[test]
+    fn a_mirrored_placement_keeps_its_triangles_facing_out() {
+        let gltf = placed(gltf_with_normals([[0.0, 0.0, 1.0]; 4]), r#"{"mesh":0,"scale":[-1,1,1]}"#);
+        let m = load_mesh("x.gltf", &gltf).unwrap();
+        for tri in m.indices.chunks(3) {
+            let [a, b, c] = [0, 1, 2].map(|k| m.positions[tri[k] as usize]);
+            let face = (b - a).cross(c - a);
+            assert!(face.dot(m.normals[tri[0] as usize]) > 0.0, "triangle {tri:?} faces in");
+        }
+    }
+
+    #[test]
+    fn a_placed_mesh_without_uvs_still_gets_projected_ones() {
+        // Two meshes: one with varied UVs, one with none, side by side.
+        let uvs = [[0.0f32, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]];
+        let base = String::from_utf8(gltf_json(QUAD, Some(uvs), &[0, 1, 2, 0, 2, 3])).unwrap();
+        let with = r#""meshes":[{"primitives":[{"attributes":{"POSITION":0,"TEXCOORD_0":1},"indices":2}]}]"#;
+        assert!(base.contains(with));
+        let two = base
+            .replace(with, r#""meshes":[{"primitives":[{"attributes":{"POSITION":0,"TEXCOORD_0":1},"indices":2}]},{"primitives":[{"attributes":{"POSITION":0},"indices":2}]}]"#)
+            .replace(r#""scenes":[{"nodes":[0]}],"nodes":[{"mesh":0}]"#, r#""scenes":[{"nodes":[0,1]}],"nodes":[{"mesh":0},{"mesh":1,"translation":[2,0,0]}]"#);
+        let m = load_mesh("two.gltf", two.as_bytes()).unwrap();
+        assert_eq!(m.positions.len(), 8);
+        let second = &m.uvs[4..];
+        assert!(second.iter().any(|u| *u != second[0]), "the mesh without UVs got one constant UV: {second:?}");
     }
 
     #[test]
