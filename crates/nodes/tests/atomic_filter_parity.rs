@@ -47,6 +47,7 @@ fn shuffle_resolves_out_of_range_selectors_after_input_kind() {
         let output = cook("channels_shuffle", &inputs, &params, [3, 5], true);
 
         let expected = if kinds[1] == Kind::Gray { [0.625; 4] } else { [0.125, 0.125, 1.0, 0.875] };
+
         assert_eq!(output.get(1, 2, false), expected, "kinds {kinds:?}");
     }
 }
@@ -76,6 +77,15 @@ fn blur_uses_fractional_box_coverage() {
 }
 
 #[test]
+fn blur_preserves_finite_hdr_constant() {
+    let input = Image::filled(16, 16, Kind::Gray, [1.0e38; 4]);
+
+    let output = cook("blur", &[Some(input)], &[("intensity", Value::Float(64.0))], [16, 16], true);
+
+    assert!(output.data.iter().all(|value| value.is_finite() && (*value - 1.0e38).abs() < 1.0e32));
+}
+
+#[test]
 fn directional_blur_uses_full_radius_and_fractional_endpoints() {
     let input = Image::gray(256, 256, |x, y| f32::from(x == 128 && y == 128));
 
@@ -83,6 +93,7 @@ fn directional_blur_uses_full_radius_and_fractional_endpoints() {
 
     for offset in -4..=4 {
         let expected = if offset == -4 || offset == 4 { 0.0625 } else { 0.125 };
+
         assert_eq!(output.get_gray(128 + offset, 128, false), expected, "offset {offset}");
     }
     assert_eq!(output.get_gray(128, 129, false), 0.0);
@@ -106,12 +117,15 @@ fn empty_raster_preserves_transparent_rgb_and_rejects_mismatched_background_kind
         let gray = Some(Image::filled(16, 16, Kind::Gray, [0.25; 4]));
 
         let output = cook(id, std::slice::from_ref(&color), &[("color_mode", Value::Bool(true))], [16, 16], true);
+
         assert_eq!(output.get(0, 0, false), pixel, "{id} transparent color");
 
         let output = cook(id, &[color], &[("color_mode", Value::Bool(false))], [16, 16], true);
+
         assert_eq!(output.get_gray(0, 0, false), 0.0, "{id} color into gray");
 
         let output = cook(id, &[gray], &[("color_mode", Value::Bool(true))], [16, 16], true);
+
         assert_eq!(output.get(0, 0, false), [0.0; 4], "{id} gray into color");
     }
 }

@@ -208,22 +208,29 @@ fn terminal_outputs_cook_and_round_trip_without_source_pins() {
     execute(&mut session, "graph.node.param", &json!({"id": source.0, "param": "color", "value": [0.5, 0.5, 0.5, 1.0]})).unwrap();
     let output = add(&mut session, "output");
     execute(&mut session, "graph.connect", &json!({"from": source.0, "to": output.0})).unwrap();
+
     assert_eq!(session.input_ports(output), vec!["input"]);
     assert!(session.output_ports(output).is_empty());
+
     let before = session.pkg.clone();
+
     assert!(execute(&mut session, "graph.connect", &json!({"from": output.0, "to": source.0})).is_err());
     assert_eq!(session.pkg, before);
 
     let read = read_sbs(&write_sbs(&session.pkg).unwrap(), "terminal_output.sbs", &|_| None).unwrap();
+
     assert!(read.warnings.is_empty(), "{:?}", read.warnings);
+
     let mut loaded = Session::new(read.pkg);
     loaded.preview_size = Some(16);
     loaded.cook();
     let output = loaded.graph().unwrap().nodes.iter().find(|node| node.def == "output").unwrap().id;
+
     assert!(loaded.output_ports(output).is_empty());
     assert!(loaded.cooked.nodes[&output].error.is_none());
     assert!((loaded.cooked.image(output, 0).unwrap().mean()[0] - 0.5).abs() < 1e-5);
     execute(&mut loaded, "view.2d", &json!({"node": output.0})).unwrap();
+
     assert_eq!(loaded.view2d_image().unwrap().0, output);
 }
 
@@ -288,13 +295,16 @@ fn background_pins_preserve_connected_images_through_sbs() {
     }
 
     let read = read_sbs(&write_sbs(&session.pkg).unwrap(), "backgrounds.sbs", &|_| None).unwrap();
+
     assert!(read.warnings.is_empty(), "{:?}", read.warnings);
+
     let mut loaded = Session::new(read.pkg);
     loaded.preview_size = Some(16);
     loaded.cook();
     for node in loaded.graph().unwrap().nodes.iter().filter(|node| matches!(node.def.as_str(), "text" | "svg")) {
-        assert_eq!(loaded.input_ports(node.id), vec!["background"]);
         let image = loaded.cooked.image(node.id, 0).unwrap();
+
+        assert_eq!(loaded.input_ports(node.id), vec!["background"]);
         assert_eq!(image.is_gray(), node.def == "text");
         assert!((image.mean()[0] - 0.5).abs() < 1e-5);
         assert!(loaded.cooked.nodes[&node.id].error.is_none());

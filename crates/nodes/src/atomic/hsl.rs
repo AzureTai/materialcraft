@@ -20,6 +20,7 @@ fn hsl(context: &CookContext) -> CookResult {
 
     // The normalized slider spans one full turn in either direction from its midpoint
     let (hue_shift, saturation, lightness) = ((context.f("hue") - 0.5) * 2.0, context.f("saturation"), context.f("lightness"));
+
     Ok(vec![image.map(Kind::Color, |pixel| {
         let [h, s, l] = ops::rgb_to_hsl(pixel);
         let s = if saturation <= 0.5 { s * saturation * 2.0 } else { s + (1.0 - s) * (saturation - 0.5) * 2.0 };

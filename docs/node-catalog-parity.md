@@ -52,8 +52,6 @@ Local safety tests cover cycles, allocation limits and execution budgets.
 
 ## Validation limits
 
-Release suites for nodes, formats, eval and engine pass with the existing resource/font
-failure excluded. The known failure is
-`byte_only_sbs_import_resolves_library_resource_substitutes` at
-`crates/engine/tests/package_resources.rs:32`. Formatting, workspace Clippy, dependency
-layers and wasm checks pass. A fully green release suite is not claimed.
+Release suites for nodes, formats, eval and engine pass locally, including the
+SBS resource-substitution test. Formatting, workspace Clippy, dependency layers
+and wasm checks pass. Other targets and runtime environments remain unverified.

@@ -4,13 +4,16 @@ use crate::CookContext;
 
 pub(crate) fn composite(context: &CookContext, foreground: impl Fn(u32, u32) -> [f32; 4] + Sync) -> Image {
     let kind = if context.b("color_mode") { Kind::Color } else { Kind::Gray };
-    let background = match context.sized(0) {
-        Some(image) if image.kind == kind => image,
+    let background = match context.input(0) {
+        Some(image) if image.kind == kind => image.resize(context.w, context.h, context.tile),
+
         // An incompatible connection replaces the constant background with empty pixels
-        Some(_) => Image::filled(context.w, context.h, kind, [0.0; 4]),
-        None => Image::filled(context.w, context.h, Kind::Color, context.v4("background")),
+        Some(_) => Image::filled(1, 1, kind, [0.0; 4]),
+        None => Image::filled(1, 1, Kind::Color, context.v4("background")),
     };
     let gray_background = background.is_gray();
+
+    // Clamped sampling broadcasts constant backgrounds from one pixel
     Image::generate(context.w, context.h, kind, |x, y| {
         let foreground = foreground(x, y);
         let background = background.get(i64::from(x), i64::from(y), false);

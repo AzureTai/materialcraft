@@ -15,10 +15,14 @@ pub(super) fn definition() -> NodeDefinition {
 }
 
 fn gradient_dynamic(context: &CookContext) -> CookResult {
+    let Some(gradient) = context.input(1) else {
+        return Ok(vec![Image::filled(context.w, context.h, Kind::Gray, [0.0; 4])]);
+    };
+
     let input = context.gray_or(0, 0.0);
-    let gradient = context.input(1).cloned().unwrap_or_else(|| Image::filled(context.w, context.h, Kind::Gray, [0.0; 4]));
     let position = context.f("position");
     let vertical = context.i("orientation") == 1;
+
     Ok(vec![Image::generate(context.w, context.h, gradient.kind, |x, y| {
         let intensity = input.get_gray(i64::from(x), i64::from(y), false).clamp(0.0, 1.0);
         if vertical { gradient.sample(position, intensity, false) } else { gradient.sample(intensity, position, false) }

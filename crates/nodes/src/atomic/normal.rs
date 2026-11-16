@@ -15,8 +15,10 @@ pub(super) fn definition() -> NodeDefinition {
 }
 
 fn normal(context: &CookContext) -> CookResult {
+    const BASE_RESOLUTION: f32 = 256.0;
     let height_map = context.gray_or(0, 0.0);
-    let intensity = context.f("intensity") * context.w as f32 / 256.0;
+    let intensity = context.f("intensity") * context.w as f32 / BASE_RESOLUTION;
+
     Ok(vec![height_to_normal(&height_map, intensity, !context.b("opengl"), context.tile, context.b("height_alpha"))])
 }
 

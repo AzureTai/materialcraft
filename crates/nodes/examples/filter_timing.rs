@@ -37,5 +37,6 @@ fn main() -> Result<(), String> {
             println!("{operation} {side}x{side}: {:.3} ms/cook ({REPETITIONS} repetitions)", start.elapsed().as_secs_f64() * 1000.0 / f64::from(REPETITIONS));
         }
     }
+
     Ok(())
 }

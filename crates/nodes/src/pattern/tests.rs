@@ -8,6 +8,7 @@ fn cook(graph: PatternGraph) -> crate::CookResult {
 
 fn cook_with_variables(graph: PatternGraph, variables: &BTreeMap<String, Value>) -> crate::CookResult {
     let definition = find("fx_map").unwrap();
+
     // These traversal fixtures measure unattenuated grayscale stamps
     let parameters = resolve_params(
         definition,

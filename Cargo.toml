@@ -42,9 +42,15 @@ rust-version = "1.95"
 repository = "https://github.com/storytold/materialcraft"
 
 [workspace.dependencies]
+# Standard Base64 output; strict SBS decoding remains app-local
+craft-mime = { git = "https://github.com/storytold/craft-libs", rev = "ea24422ae9859dc5da398d0462bc87f8e02e0d10", version = "0.1.0" }
+craft-texture-dds = { package = "craft-texture", version = "0.1.0", git = "https://github.com/storytold/craft-libs", rev = "726ad0f8290bedb6ced60fa06200a6b574f9990d", features = ["dds"] }
+# Read 3D meshes through craft-mesh; keep mesh processing app-local
+craft-mesh = { version = "0.1.0", git = "https://github.com/storytold/craft-libs", rev = "57288edafdc45552e30481cc649021de446abfa0", default-features = false, features = ["obj", "gltf"] }
 # Shared XML escaping; SBS model and serialization policy stay app-local.
 craft-xml = { version = "0.1.0", git = "https://github.com/storytold/craft-libs", rev = "b6d9feed23ceae249b40593ed84a668343091627" }
-resvg = { version = "0.47", default-features = false }
+# Bound SVG parsing and drawing through craft-svg
+craft-svg = { version = "0.1.0", git = "https://github.com/storytold/craft-libs", rev = "57288edafdc45552e30481cc649021de446abfa0", features = ["tree-render"] }
 # internal
 materialcraft-core = { path = "crates/core" }
 materialcraft-image = { path = "crates/image" }
@@ -63,7 +69,6 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha2 = "0.10" # MIT OR Apache-2.0; stable content keys for persistent previews.
 glam = { version = "0.30", features = ["serde", "bytemuck"] }
-bytemuck = { version = "1", features = ["derive"] }
 rayon = "1"
 log = "0.4"
 image = { version = "0.25", default-features = false, features = ["png", "jpeg", "tga", "tiff", "exr", "hdr", "bmp", "webp", "gif", "pnm"] }
@@ -75,8 +80,6 @@ wgpu = "30"
 rfd = "0.17"
 rustix = { version = "1", default-features = false, features = ["std", "fs", "process"] }
 zip = { version = "2", default-features = false, features = ["deflate"] }
-gltf = { version = "1.4", default-features = false, features = ["import", "utils"] }
-tobj = { version = "4", default-features = false }
 mikktspace = { version = "0.3", default-features = false, features = ["glam"] }
 rmcp = { version = "3.5", default-features = false, features = ["server", "macros", "transport-io"] }
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "io-std", "sync", "net", "io-util", "time"] }

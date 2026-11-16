@@ -18,29 +18,32 @@ pub(super) fn definition() -> NodeDefinition {
 }
 
 fn channels_shuffle(context: &CookContext) -> CookResult {
-    let a = context.any_or(0, Kind::Color, [0.0; 4]);
-    let b = context.any_or(1, Kind::Color, [0.0; 4]);
-    let src = ["red", "green", "blue", "alpha"].map(|id| match context.value(id) {
+    // Sampling clamps the unconnected fallback to its single zero pixel
+    let first_input = context.sized(0).unwrap_or_else(|| Image::filled(1, 1, Kind::Color, [0.0; 4]));
+    let second_input = context.sized(1).unwrap_or_else(|| Image::filled(1, 1, Kind::Color, [0.0; 4]));
+    let channel_sources = ["red", "green", "blue", "alpha"].map(|id| match context.value(id) {
         Some(Value::Enum(index)) => *index,
         _ => 0,
     });
-    Ok(vec![Image::generate(context.w, context.h, Kind::Color, |x, y| {
-        let (pa, pb) = (a.get(x as i64, y as i64, false), b.get(x as i64, y as i64, false));
 
-        src.map(|selector| {
+    Ok(vec![Image::generate(context.w, context.h, Kind::Color, |x, y| {
+        let first_pixel = first_input.get(x as i64, y as i64, false);
+        let second_pixel = second_input.get(x as i64, y as i64, false);
+
+        channel_sources.map(|selector| {
             // Gray selection precedes the packed color swizzle, including for file values above seven
-            if selector < 4 && a.is_gray() {
-                return pa[0];
+            if selector < 4 && first_input.is_gray() {
+                return first_pixel[0];
             }
 
-            if selector >= 4 && b.is_gray() {
-                return pb[0];
+            if selector >= 4 && second_input.is_gray() {
+                return second_pixel[0];
             }
 
             const CHANNEL_MASK: u32 = 0b111;
             match selector & CHANNEL_MASK {
-                channel @ 0..=3 => pa[channel as usize],
-                channel => pb[(channel - 4) as usize],
+                channel @ 0..=3 => first_pixel[channel as usize],
+                channel => second_pixel[(channel - 4) as usize],
             }
         })
     })])

@@ -13,9 +13,10 @@ pub(super) fn definition() -> NodeDefinition {
 }
 
 fn blur(context: &CookContext) -> CookResult {
-    let img = context.any_or(0, Kind::Gray, [0.0; 4]);
+    let input = context.any_or(0, Kind::Gray, [0.0; 4]);
     const BASE_RESOLUTION: f32 = 256.0;
     let radius = context.f("intensity").max(0.0) * context.w.min(context.h) as f32 / BASE_RESOLUTION;
     let tile = context.tiling_axes();
-    Ok(vec![box_filter::axis(&box_filter::axis(&img, radius, true, tile[0]), radius, false, tile[1])])
+
+    Ok(vec![box_filter::axis(&box_filter::axis(&input, radius, true, tile[0]), radius, false, tile[1])])
 }

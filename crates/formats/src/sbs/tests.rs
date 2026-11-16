@@ -26,6 +26,7 @@ fn shuffle_roundtrip_preserves_signed_channel_selectors() {
 
         let saved = write_sbs(&loaded.pkg).unwrap();
         let reloaded = read_sbs(&saved, "original.sbs", &no_linked_files).unwrap();
+
         assert_eq!(reloaded.pkg.graphs[0].nodes[0].params.get("red"), node.params.get("red"), "saved selector {selector}");
     }
 }

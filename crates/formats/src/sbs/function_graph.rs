@@ -172,6 +172,7 @@ pub(super) fn write(graph: &FunctionGraph, writer: &mut SbsWriter) -> Result<Str
         super::canvas::write_items(&mut output, &graph.annotations.frames, &graph.annotations.comments, &graph.annotations.pins, writer);
     }
     output.push_str("</dynamicValue>");
+
     Ok(output)
 }
 

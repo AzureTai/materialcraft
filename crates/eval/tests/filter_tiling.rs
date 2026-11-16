@@ -32,7 +32,9 @@ fn atomic_filters_wrap_only_the_requested_axes_and_invalidate_cache() {
             assert!(!cooked.nodes[&filter].cached);
             assert_eq!(image.get_gray(15, 0, false) != 0.5, tiling[0], "{operation}, x, {tiling:?}");
             assert_eq!(image.get_gray(0, 15, false) != 0.5, tiling[1] && operation != "directional_blur", "{operation}, y, {tiling:?}");
+
             let cached = cook(&package, 0, &options, &cache);
+
             assert!(cached.nodes[&filter].cached);
         }
     }

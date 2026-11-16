@@ -46,14 +46,13 @@ limits are summarized in the [catalog status](node-catalog-parity.md).
 
 ## Validation
 
-Recorded release tests for nodes, formats, eval and engine pass with the known resource
-failure below excluded, including `every_node_cooks` and `panic_hunt`. Formatting,
+Recorded release tests for nodes, formats, eval and engine pass, including
+`every_node_cooks` and `panic_hunt`. Formatting,
 workspace Clippy with `--all-targets -- -D warnings`, dependency layers and all ten wasm
 checks pass.
 
-`byte_only_sbs_import_resolves_library_resource_substitutes` remains a known failure at
-`crates/engine/tests/package_resources.rs:32`, in the saved missing-font-path assertion.
-The complete release suite is not reported green.
+These checks cover the listed crates and targets; other build and runtime environments
+have not been validated by this local run.
 
 The optional `filter_timing` example benchmarks MaterialCraft's Blur, Directional Blur
 and Sharpen on generated images at 512 and 1024 pixels. It uses no external application:

@@ -14,10 +14,11 @@ pub(super) fn definition() -> NodeDefinition {
 }
 
 fn uniform(context: &CookContext) -> CookResult {
-    let c = context.v4("color");
+    let color = context.v4("color");
+
     Ok(vec![if !context.b("color_mode") {
-        Image::filled(context.w, context.h, Kind::Gray, [luminance(c); 4])
+        Image::filled(context.w, context.h, Kind::Gray, [luminance(color); 4])
     } else {
-        Image::filled(context.w, context.h, Kind::Color, c)
+        Image::filled(context.w, context.h, Kind::Color, color)
     }])
 }
