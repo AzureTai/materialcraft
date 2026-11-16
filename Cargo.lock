@@ -904,6 +904,16 @@ dependencies = [
 [[package]]
 name = "craft-texture"
 version = "0.1.0"
+source = "git+https://github.com/storytold/craft-libs?rev=726ad0f8290bedb6ced60fa06200a6b574f9990d#726ad0f8290bedb6ced60fa06200a6b574f9990d"
+dependencies = [
+ "bytemuck",
+ "dds",
+ "thiserror 2.0.21",
+]
+
+[[package]]
+name = "craft-texture"
+version = "0.1.0"
 source = "git+https://github.com/storytold/craft-libs?rev=92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d#92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d"
 dependencies = [
  "rayon",
@@ -2712,7 +2722,7 @@ dependencies = [
 name = "materialcraft-engine"
 version = "0.4.1"
 dependencies = [
- "craft-texture",
+ "craft-texture 0.1.0 (git+https://github.com/storytold/craft-libs?rev=92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d)",
  "materialcraft-core",
  "materialcraft-eval",
  "materialcraft-formats",
@@ -2728,7 +2738,7 @@ dependencies = [
 name = "materialcraft-eval"
 version = "0.4.1"
 dependencies = [
- "craft-texture",
+ "craft-texture 0.1.0 (git+https://github.com/storytold/craft-libs?rev=92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d)",
  "half",
  "materialcraft-core",
  "materialcraft-nodes",
@@ -2741,10 +2751,10 @@ name = "materialcraft-formats"
 version = "0.4.1"
 dependencies = [
  "base64 0.22.1",
- "bytemuck",
  "craft-fonts-build",
  "craft-mcmat",
- "craft-texture",
+ "craft-texture 0.1.0 (git+https://github.com/storytold/craft-libs?rev=726ad0f8290bedb6ced60fa06200a6b574f9990d)",
+ "craft-texture 0.1.0 (git+https://github.com/storytold/craft-libs?rev=92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d)",
  "craft-xml",
  "dds",
  "flate2",
@@ -2778,7 +2788,7 @@ dependencies = [
 name = "materialcraft-nodes"
 version = "0.4.1"
 dependencies = [
- "craft-texture",
+ "craft-texture 0.1.0 (git+https://github.com/storytold/craft-libs?rev=92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d)",
  "materialcraft-core",
  "rayon",
 ]
@@ -2787,7 +2797,7 @@ dependencies = [
 name = "materialcraft-render"
 version = "0.4.1"
 dependencies = [
- "craft-texture",
+ "craft-texture 0.1.0 (git+https://github.com/storytold/craft-libs?rev=92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d)",
  "materialcraft-core",
  "materialcraft-geom",
  "rayon",
