@@ -10,6 +10,7 @@ workspace = true
 
 [dependencies]
 craft-mime = { workspace = true }
+craft-xml = { workspace = true }
 craft-mcmat = { workspace = true }
 materialcraft-core = { workspace = true }
 materialcraft-image = { workspace = true }
@@ -18,8 +19,7 @@ materialcraft-nodes = { workspace = true }
 gltf = { workspace = true }
 tobj = { workspace = true }
 image = { workspace = true }
-dds = { workspace = true }
-bytemuck = { workspace = true }
+craft-texture-dds = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
@@ -33,3 +33,6 @@ resvg = { workspace = true }
 flate2 = { workspace = true }
 craft-fonts-build = { workspace = true }
 sha2 = { workspace = true }
+
+[dev-dependencies]
+dds = { workspace = true }
