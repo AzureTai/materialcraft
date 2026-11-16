@@ -1,9 +1,9 @@
 use materialcraft_core::{Graph, Package, Value};
 
 #[test]
-fn grayscale_image_defaults_are_scalar_in_native_sbs() {
-    let mut package = Package::new("Original grayscale defaults probe");
-    let mut graph = Graph::new("probe");
+fn grayscale_image_defaults_are_scalar_in_sbs() {
+    let mut package = Package::new("Grayscale defaults");
+    let mut graph = Graph::new("defaults");
     graph.add_node("input_grayscale", [0.0, 0.0]);
     let colored = graph.add_node("input_grayscale", [0.0, 100.0]);
     graph.node_mut(colored).unwrap().params.insert("default".into(), Value::Color([0.25, 0.5, 0.75, 0.125]));

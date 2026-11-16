@@ -1,12 +1,10 @@
 # Parity with the reference workflow
 
-The [2026-11-15 catalog audit](node-catalog-parity.md) inventories 29 main-graph entries,
-85 function operations, four map kinds and 954 loaded package functions. Original probe
-results establish only the recorded cases; full numerical parity remains unestablished.
-The [atomic corrections follow-up](atomic-parity-improvements.md) covers six corrected nodes,
-with a corrected input transport, reproducible regressions and explicit remaining differences.
-The [second atomic pass](atomic-exact-parity.md) records further Sharpen and Shuffle fixes,
-with separate measurements for reference backend and CPU-count differences.
+The [catalog status](node-catalog-parity.md) covers 29 main-graph entries, 85 function
+operations, four map kinds and 954 loaded package functions. The
+[atomic corrections](atomic-parity-improvements.md) describe filter, channel-selection
+and background fixes with local regression coverage. Full numerical parity remains
+unestablished.
 
 > The assessment below predates the 2026-11-05 primitive rewrite. Its old library counts and
 > compatibility claims are historical. See [atomic-workflow.md](atomic-workflow.md) and

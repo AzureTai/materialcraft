@@ -66,10 +66,9 @@ cargo +1.96.0 run -p materialcraft-engine --release --example atomic_sample -- e
 | FX-Map graph | Quadrant (`paramset`), Switch (`markov2`), Iterate (`addnode`), Dot (`passthrough`) |
 
 The former count of 26 primitives included `motion_blur`, removed in commit `a0032d6`.
-It was a MaterialCraft wrapper around Directional Blur, without a separate counterpart in the
-enumerated reference atomic catalog. The count of 25 includes Dot/reroute.
-The [catalog audit](node-catalog-parity.md) records the current 25 primitives plus four
-input/output entries; it did not remove a node.
+It was a MaterialCraft wrapper around Directional Blur. The count of 25 includes Dot/reroute.
+The [catalog status](node-catalog-parity.md) records the current 25 primitives plus four
+input/output entries.
 
 Image primitives have individual files in `crates/nodes/src/atomic/`. Function evaluation and
 pattern traversal have separate modules. Document types each live in their own file under
@@ -88,10 +87,9 @@ SBS library reference resolution is outside this change.
 
 ## Current limits
 
-- The reference rejects the generated SBS version header; the [catalog audit](node-catalog-parity.md)
-  explains the separate header-normalized comparison and remaining interoperability gap
-- Native IDs, ports and types are mapped. The [catalog audit](node-catalog-parity.md) records
-  measured numerical cases and remaining differences; broad rendering parity is unestablished
+- SBS version-header compatibility remains unresolved
+- Node IDs, ports and types are mapped. The [catalog status](node-catalog-parity.md) records
+  remaining numerical and interoperability gaps; broad rendering parity is unestablished
 - Text renders the original built-in stroke font; external font references produce an explicit
   error. SVG supports vector geometry, without external images or font loading
 - Some native parameter variants and package/editor metadata remain unsupported; import reports

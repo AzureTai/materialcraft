@@ -5,7 +5,7 @@
 const MAX_EXPANDED_NODES: usize = 131_072;
 const MAX_CALL_DEPTH: usize = 16;
 
-// Fresh loop nodes use the measured iteration limit
+// Keep absent loop limits aligned with fresh-node defaults
 const DEFAULT_LOOP_LIMIT: i32 = 32;
 
 mod arithmetic;

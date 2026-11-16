@@ -1,13 +1,13 @@
 use materialcraft_core::{FunctionGraph, Graph, Package, Value};
 
 #[test]
-fn function_loop_limit_uses_native_scalar_integer_data() {
+fn function_loop_limit_uses_scalar_integer_data() {
     let mut function = FunctionGraph::default();
     let initial = function.add_constant(Value::Float(0.25));
     let condition = function.add_constant(Value::Bool(true));
     let body = function.add_constant(Value::Float(0.75));
     function.output = Some(function.add("while", &[initial, condition, body], Some(Value::Int(3))));
-    let mut graph = Graph::new("Original loop probe");
+    let mut graph = Graph::new("Loop serialization");
     graph.function = Some(function);
     let mut package = Package::new("Original function data");
     package.graphs.push(graph);

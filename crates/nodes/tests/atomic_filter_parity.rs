@@ -52,12 +52,12 @@ fn shuffle_resolves_out_of_range_selectors_after_input_kind() {
 }
 
 #[test]
-fn sharpen_preserves_the_measured_float_order_on_ramps() {
+fn sharpen_preserves_float_order_on_ramps() {
     let input = Image::gray(16, 16, |x, _| x as f32 / 15.0);
 
     let output = cook("sharpen", &[Some(input)], &[("intensity", Value::Float(1.0))], [16, 16], true);
 
-    // Original Float32 ramp probes distinguish the Laplacian's arithmetic order
+    // Float32 ramps distinguish the Laplacian's arithmetic order
     for (x, bits) in [(1, 0x3d88_8889), (3, 0x3e4c_cccb), (7, 0x3eee_eeed), (13, 0x3f5d_ddde)] {
         assert_eq!(output.get_gray(x, 7, false).to_bits(), bits, "column {x}");
     }
@@ -89,7 +89,7 @@ fn directional_blur_uses_full_radius_and_fractional_endpoints() {
 }
 
 #[test]
-fn sharpen_has_measured_center_gain_and_clamps_negative_lobes() {
+fn sharpen_has_center_gain_and_clamps_negative_lobes() {
     let input = Image::gray(16, 16, |x, y| f32::from(x == 8 && y == 8));
 
     let output = cook("sharpen", &[Some(input)], &[("intensity", Value::Float(1.0))], [16, 16], true);

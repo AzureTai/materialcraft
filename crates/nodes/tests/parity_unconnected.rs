@@ -4,7 +4,7 @@ use materialcraft_nodes::{CookContext, find, resolve_params};
 use std::collections::BTreeMap;
 
 #[test]
-fn absent_textures_match_measured_zero_pixels_and_kinds() {
+fn absent_textures_have_zero_pixels_and_expected_kinds() {
     for (id, kind, pixel) in [
         ("channels_shuffle", Kind::Color, [0.0; 4]),
         ("hsl", Kind::Color, [0.0; 4]),
@@ -30,7 +30,7 @@ fn absent_textures_match_measured_zero_pixels_and_kinds() {
 }
 
 #[test]
-fn fresh_catalog_defaults_match_runtime_inspection() {
+fn fresh_catalog_defaults_have_expected_values() {
     for (id, parameter, expected) in [
         ("uniform", "color", Value::Color([0.0, 0.0, 0.0, 1.0])),
         ("blur", "intensity", Value::Float(10.0)),
