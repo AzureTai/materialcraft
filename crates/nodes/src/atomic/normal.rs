@@ -8,8 +8,8 @@ pub(super) fn definition() -> NodeDefinition {
         .atomic()
         .gray_in("input", "Input")
         .float("intensity", "Intensity", 1.0, 0.0, 10.0)
-        .boolean("opengl", "OpenGL normals", true)
-        .boolean("height_alpha", "Height in alpha", false)
+        .boolean("opengl", "OpenGL normals", false)
+        .boolean("height_alpha", "Height in alpha", true)
         .color_out()
         .cook(normal)
 }

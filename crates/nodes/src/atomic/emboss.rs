@@ -10,15 +10,15 @@ pub(super) fn definition() -> NodeDefinition {
         .any_in("input", "Input")
         .gray_in("height", "Intensity input")
         .float("intensity", "Intensity", 5.0, 0.0, 32.0)
-        .angle("light_angle", "Light angle", 0.375)
+        .angle("light_angle", "Light angle", 0.0)
         .color("highlight", "Highlight color", [1.0, 1.0, 1.0, 1.0])
-        .color("shadow", "Shadow color", [0.0, 0.0, 0.0, 1.0])
+        .color("shadow", "Shadow color", [0.0; 4])
         .any_out()
         .cook(emboss)
 }
 
 fn emboss(context: &CookContext) -> CookResult {
-    let img = context.any_or(0, Kind::Color, [0.5, 0.5, 0.5, 1.0]);
+    let img = context.any_or(0, Kind::Gray, [0.0; 4]);
     let hmap = context.gray_or(1, 0.0);
     let (lx, ly) = direction(context.f("light_angle"));
     let k = context.f("intensity") * context.w as f32 / 64.0;

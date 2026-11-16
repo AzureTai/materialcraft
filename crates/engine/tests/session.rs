@@ -265,7 +265,11 @@ fn dynamic_parameters_follow_graph_inputs() {
 
     let mut session = sample_session();
     run(&mut session, "file.new", json!({"template": "empty"}));
-    let owner = NodeId(run(&mut session, "graph.node.add", json!({"def": "uniform", "params": {"color_mode": false}}))["id"].as_u64().unwrap());
+    let owner = NodeId(
+        run(&mut session, "graph.node.add", json!({"def": "uniform", "params": {"color_mode": false, "color": Value::Color([0.5, 0.5, 0.5, 1.0])}}))["id"]
+            .as_u64()
+            .unwrap(),
+    );
     run(&mut session, "graph.exposed.add", json!({"id": "level", "default": Value::Float4([0.25; 4])}));
     let function = FunctionGraph::input("level", ValueType::Float4);
     run(&mut session, "graph.node.function", json!({"id": owner, "param": "color", "function": function}));

@@ -1,5 +1,9 @@
 # Gaps
 
+The [native catalog audit](node-catalog-parity.md) records current measured differences and
+explicitly untested behavior, including all 954 loaded package functions. Prioritize its
+reproducible cases for primitive, processor, sampling, precision and map corrections.
+
 > The assessment below predates the 2026-11-05 primitive rewrite. Its old library counts and
 > compatibility claims are historical. See [atomic-workflow.md](atomic-workflow.md) and
 > [ROADMAP.md](../ROADMAP.md) for the current scope and remaining validation.

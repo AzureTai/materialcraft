@@ -181,6 +181,16 @@ impl SbsWriter {
             let fallback = if node.def == "input_value" { Value::Float(0.0) } else { Value::Color([0.5, 0.5, 0.5, 1.0]) };
 
             let value = node.params.get("default").unwrap_or(&fallback);
+
+            // A color constant on a grayscale image input is rejected by native readers
+            // Retain legacy color authoring values by writing their first channel as a scalar
+            let gray_default;
+            let value = if node.def == "input_grayscale" {
+                gray_default = Value::Float(value.as_vec4().map_or(0.0, |color| color[0]));
+                &gray_default
+            } else {
+                value
+            };
             let default = constant_xml(value).unwrap_or_default();
             let code = match node.def.as_str() {
                 "input_value" => exposed_type_code(value),

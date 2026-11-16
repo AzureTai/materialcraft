@@ -16,7 +16,7 @@ pub(super) fn definition() -> NodeDefinition {
 }
 
 fn hsl(context: &CookContext) -> CookResult {
-    let image = context.any_or(0, Kind::Color, [0.5, 0.5, 0.5, 1.0]).to_color();
+    let image = context.any_or(0, Kind::Color, [0.0; 4]).to_color();
 
     // The normalized slider spans one full turn in either direction from its midpoint
     let (hue_shift, saturation, lightness) = ((context.f("hue") - 0.5) * 2.0, context.f("saturation"), context.f("lightness"));

@@ -88,11 +88,18 @@ fn compile_nested(graph: &FunctionGraph, seed: u32, depth: usize, remaining: &mu
             };
             let mut connected = connected.into_iter();
             let mut inputs = Vec::with_capacity(ports.len());
-            for (name, input) in &ports {
+            for (slot, (name, input)) in ports.iter().enumerate() {
                 let index = match input {
                     Some(_) => connected.next().ok_or("unresolved function input")?,
                     None => {
-                        let (definition, value) = unconnected(name, sibling.unwrap_or(node.type_code))?;
+                        let other = ports
+                            .get(if slot == 0 { 1 } else { 0 })
+                            .and_then(|(_, input)| **input)
+                            .and_then(|id| indices.get(&id))
+                            .and_then(|index| instructions.get(*index))
+                            .map(|instruction| instruction.type_code);
+                        let kind = super::unconnected_input::value_type(&node.op, name, sibling.unwrap_or(node.type_code), other);
+                        let (definition, value) = unconnected(kind)?;
                         let type_code = super::value_type::type_code(&value);
                         instructions.push(Instruction {
                             id: 0,
@@ -173,11 +180,10 @@ fn loop_members(instructions: &[Instruction], index: usize) -> Vec<usize> {
     member.iter().enumerate().filter(|(_, member)| **member).map(|(index, _)| index).collect()
 }
 
-/// The constant an unconnected input `name` reads: false for a condition, otherwise zero of the type its node works with
-fn unconnected(name: &str, type_code: u32) -> Result<(&'static super::FunctionDefinition, materialcraft_core::Value), String> {
+/// The constant an unconnected input reads: false or zero of the operand type
+fn unconnected(value_type: materialcraft_core::ValueType) -> Result<(&'static super::FunctionDefinition, materialcraft_core::Value), String> {
     use materialcraft_core::ValueType;
 
-    let value_type = if matches!(name, "cond" | "condition") { ValueType::Boolean } else { ValueType::from_code(type_code).unwrap_or(ValueType::Float) };
     let operation = match value_type {
         ValueType::Boolean => "const_bool",
         ValueType::Integer => "const_int1",

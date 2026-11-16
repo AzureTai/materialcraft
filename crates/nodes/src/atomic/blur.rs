@@ -4,7 +4,7 @@ use crate::{CookContext, CookResult, NodeDefinition, node};
 use materialcraft_image::Kind;
 
 pub(super) fn definition() -> NodeDefinition {
-    node("blur", "Blur", ATOMIC).desc("Gaussian blur.").atomic().any_in("input", "Input").float("intensity", "Intensity", 2.0, 0.0, 32.0).any_out().cook(blur)
+    node("blur", "Blur", ATOMIC).desc("Gaussian blur.").atomic().any_in("input", "Input").float("intensity", "Intensity", 10.0, 0.0, 32.0).any_out().cook(blur)
 }
 
 fn blur(context: &CookContext) -> CookResult {

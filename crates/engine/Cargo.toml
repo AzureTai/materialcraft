@@ -19,3 +19,7 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 sha2 = { workspace = true }
 thiserror = { workspace = true }
+
+[dev-dependencies]
+# BSD-3-Clause; read raw scalar as well as RGBA EXR channels in numerical probes
+exr = "1.74"

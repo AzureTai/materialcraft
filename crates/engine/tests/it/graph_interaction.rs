@@ -131,6 +131,7 @@ fn fx_map_starts_with_a_quadrant_and_grows_image_inputs_as_connected() {
     let mut session = new_session();
     session.preview_size = Some(16);
     let source = add(&mut session, "uniform");
+    execute(&mut session, "graph.node.param", &json!({"id": source.0, "param": "color", "value": [0.5, 0.5, 0.5, 1.0]})).unwrap();
     execute(&mut session, "graph.node.param", &json!({"id": source.0, "param": "color_mode", "value": false})).unwrap();
     let owner = add(&mut session, "fx_map");
     let Value::PatternGraph(pattern) = &session.graph().unwrap().node(owner).unwrap().params["pattern"] else { panic!("missing default pattern") };
@@ -204,6 +205,7 @@ fn terminal_outputs_cook_and_round_trip_without_source_pins() {
     let mut session = new_session();
     session.preview_size = Some(16);
     let source = add(&mut session, "uniform");
+    execute(&mut session, "graph.node.param", &json!({"id": source.0, "param": "color", "value": [0.5, 0.5, 0.5, 1.0]})).unwrap();
     let output = add(&mut session, "output");
     execute(&mut session, "graph.connect", &json!({"from": source.0, "to": output.0})).unwrap();
     assert_eq!(session.input_ports(output), vec!["input"]);
@@ -234,6 +236,7 @@ fn processors_sample_dynamic_image_inputs_after_sbs_round_trip() {
         session.graph_mut().unwrap().format = materialcraft_engine::core::OutputFormat::F32;
         session.preview_size = Some(16);
         let source = add(&mut session, "uniform");
+        execute(&mut session, "graph.node.param", &json!({"id": source.0, "param": "color", "value": [0.5, 0.5, 0.5, 1.0]})).unwrap();
         let processor = add(&mut session, definition);
         for index in 0..6 {
             execute(&mut session, "graph.connect", &json!({"from": source.0, "to": processor.0, "toPort": format!("input{index}")})).unwrap();
@@ -274,6 +277,7 @@ fn background_pins_preserve_connected_images_through_sbs() {
     let mut session = new_session();
     session.preview_size = Some(16);
     let source = add(&mut session, "uniform");
+    execute(&mut session, "graph.node.param", &json!({"id": source.0, "param": "color", "value": [0.5, 0.5, 0.5, 1.0]})).unwrap();
     for definition in ["text", "svg"] {
         let target = add(&mut session, definition);
         if definition == "text" {

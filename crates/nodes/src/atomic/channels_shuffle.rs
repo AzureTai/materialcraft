@@ -17,8 +17,8 @@ pub(super) fn definition() -> NodeDefinition {
 }
 
 fn channels_shuffle(context: &CookContext) -> CookResult {
-    let a = context.any_or(0, Kind::Color, [0.0, 0.0, 0.0, 1.0]).to_color();
-    let b = context.any_or(1, Kind::Color, [0.0, 0.0, 0.0, 1.0]).to_color();
+    let a = context.any_or(0, Kind::Color, [0.0; 4]).to_color();
+    let b = context.any_or(1, Kind::Color, [0.0; 4]).to_color();
     let src = [context.i("red"), context.i("green"), context.i("blue"), context.i("alpha")];
     Ok(vec![Image::generate(context.w, context.h, Kind::Color, |x, y| {
         let (pa, pb) = (a.get(x as i64, y as i64, false), b.get(x as i64, y as i64, false));

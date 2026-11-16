@@ -7,7 +7,7 @@ pub(super) fn definition() -> NodeDefinition {
         .desc("A single color or gray value.")
         .atomic()
         .generator()
-        .color("color", "Color", [0.5, 0.5, 0.5, 1.0])
+        .color("color", "Color", [0.0, 0.0, 0.0, 1.0])
         .boolean("color_mode", "Color output", true)
         .any_out()
         .cook(uniform)
