@@ -65,6 +65,16 @@ fn sharpen_preserves_float_order_on_ramps() {
 }
 
 #[test]
+fn sharpen_preserves_finite_hdr_constant() {
+    let constant = 2.0e38;
+    let input = Image::filled(16, 16, Kind::Gray, [constant; 4]);
+
+    let output = cook("sharpen", &[Some(input)], &[("intensity", Value::Float(1.0))], [16, 16], true);
+
+    assert!(output.data.iter().all(|value| value.to_bits() == constant.to_bits()));
+}
+
+#[test]
 fn blur_uses_fractional_box_coverage() {
     let input = Image::gray(16, 16, |x, y| f32::from(x == 8 && y == 8));
 

@@ -30,11 +30,21 @@ fn sharpen(context: &CookContext) -> CookResult {
         std::array::from_fn(|channel| {
             // Keep the axial differences separate to preserve Float32 cancellation order
             let twice_center = 2.0 * center[channel];
-            let across = twice_center - (left[channel] + right[channel]);
-            let down = twice_center - (top[channel] + bottom[channel]);
+            let across = axial_difference(center[channel], twice_center, left[channel], right[channel]);
+            let down = axial_difference(center[channel], twice_center, top[channel], bottom[channel]);
 
             // Float outputs retain HDR values but discard negative sharpening lobes
             (center[channel] + (across * horizontal + down * vertical)).max(0.0)
         })
     })])
+}
+
+fn axial_difference(center: f32, twice_center: f32, first: f32, second: f32) -> f32 {
+    let difference = twice_center - (first + second);
+    if difference.is_finite() || ![center, first, second].iter().all(|value| value.is_finite()) {
+        return difference;
+    }
+
+    // Finite HDR inputs can overflow both Float32 sums and turn their difference into NaN
+    (2.0 * f64::from(center) - (f64::from(first) + f64::from(second))) as f32
 }
