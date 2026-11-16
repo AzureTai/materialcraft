@@ -9,6 +9,7 @@ license.workspace = true
 workspace = true
 
 [dependencies]
+craft-xml = { workspace = true }
 craft-mcmat = { workspace = true }
 materialcraft-core = { workspace = true }
 materialcraft-image = { workspace = true }
