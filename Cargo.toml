@@ -88,25 +88,25 @@ getrandom = "0.3"
 # Shared Craft egui components (widget palette, icon buttons, panel docking): storytold/craft-libs,
 # MIT OR Apache-2.0, with each dependency pinned to its reviewed revision
 egui_kittest = "0.37"
-craft-mcmat = { git = "https://github.com/storytold/craft-libs", rev = "92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d" }
-craft-ui = { git = "https://github.com/storytold/craft-libs", rev = "92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d", features = ["serde"] }
+craft-mcmat = { git = "https://github.com/storytold/craft-libs", rev = "a341e86b6d0b31ec5113a4b3e4f07f717a6cf5bf" }
+craft-ui = { git = "https://github.com/storytold/craft-libs", rev = "a341e86b6d0b31ec5113a4b3e4f07f717a6cf5bf", features = ["serde"] }
 # Keyboard bindings (chords, dispatch and display text): storytold/craft-libs, MIT OR Apache-2.0.
-craft-keymap = { git = "https://github.com/storytold/craft-libs", rev = "92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d", features = ["egui"] }
+craft-keymap = { git = "https://github.com/storytold/craft-libs", rev = "a341e86b6d0b31ec5113a4b3e4f07f717a6cf5bf", features = ["egui"] }
 # Native dialogs that do not block the event loop: storytold/craft-libs, MIT OR Apache-2.0.
-craft-dialogs = { git = "https://github.com/storytold/craft-libs", rev = "92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d" }
+craft-dialogs = { git = "https://github.com/storytold/craft-libs", rev = "a341e86b6d0b31ec5113a4b3e4f07f717a6cf5bf" }
 # The platform quit and the macOS Quit menu item: storytold/craft-libs, MIT OR Apache-2.0.
-craft-quit = { git = "https://github.com/storytold/craft-libs", rev = "92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d", features = ["egui"] }
-craft-menu = { git = "https://github.com/storytold/craft-libs", rev = "92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d" }
+craft-quit = { git = "https://github.com/storytold/craft-libs", rev = "a341e86b6d0b31ec5113a4b3e4f07f717a6cf5bf", features = ["egui"] }
+craft-menu = { git = "https://github.com/storytold/craft-libs", rev = "a341e86b6d0b31ec5113a4b3e4f07f717a6cf5bf" }
 # Who draws the window frame, and an app-drawn strip as the title bar: storytold/craft-libs, MIT OR Apache-2.0.
-craft-window = { git = "https://github.com/storytold/craft-libs", rev = "92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d", features = ["egui"] }
+craft-window = { git = "https://github.com/storytold/craft-libs", rev = "a341e86b6d0b31ec5113a4b3e4f07f717a6cf5bf", features = ["egui"] }
 # Release checks and self-updates for the desktop app: storytold/craft-libs, MIT OR Apache-2.0.
-craft-update = { git = "https://github.com/storytold/craft-libs", rev = "92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d", features = ["egui"] }
+craft-update = { git = "https://github.com/storytold/craft-libs", rev = "a341e86b6d0b31ec5113a4b3e4f07f717a6cf5bf", features = ["egui"] }
 # Atomic persistence, at the suite's current revision.
-craft-atomic = { git = "https://github.com/storytold/craft-libs", rev = "92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d" }
+craft-atomic = { git = "https://github.com/storytold/craft-libs", rev = "a341e86b6d0b31ec5113a4b3e4f07f717a6cf5bf" }
 # Parse the optional shared font catalog at build time; the font repository is not a dependency.
-craft-fonts-build = { git = "https://github.com/storytold/craft-libs", rev = "92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d" }
+craft-fonts-build = { git = "https://github.com/storytold/craft-libs", rev = "a341e86b6d0b31ec5113a4b3e4f07f717a6cf5bf" }
 # Float image planes and texture sampling for node cooking: storytold/craft-libs, MIT OR Apache-2.0.
-craft-texture = { git = "https://github.com/storytold/craft-libs", rev = "92fb3fa8ac2981c4c31961cfce7f7fdfbb03540d", features = ["parallel"] }
+craft-texture = { git = "https://github.com/storytold/craft-libs", rev = "a341e86b6d0b31ec5113a4b3e4f07f717a6cf5bf", features = ["parallel"] }
 
 # egui 0.37 and winit: the suite's forks (storytold/egui, storytold/winit), as craft-libs pins them.
 [patch.crates-io]
