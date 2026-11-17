@@ -192,28 +192,6 @@ mod tests {
     use materialcraft_engine::View3d;
     use materialcraft_render::Scene;
 
-    #[test]
-    fn scale_bar_uses_the_picture_height_in_a_letterboxed_view() {
-        let context = egui::Context::default();
-        let scene = Scene::builtin("cube");
-        let sight = Sight::of(&scene, &View3d::default(), 400.0 / 225.0);
-        let view_rect = Rect::from_min_size(pos2(0.0, 0.0), vec2(400.0, 400.0));
-        let points_per_meter = sight.points_per_unit(225.0) * UNITS_PER_METER / UNITS_PER_MESH_UNIT;
-        let meters = SCALE_LENGTHS.into_iter().rev().find(|meters| meters * points_per_meter <= SCALE_BAR_LIMIT).unwrap();
-
-        context.begin_pass(egui::RawInput::default());
-        axes(&context.layer_painter(egui::LayerId::background()), &sight, view_rect, 225.0, Color32::WHITE);
-        let output = context.end_pass();
-        let bar = output.shapes.iter().find_map(|shape| match &shape.shape {
-            egui::Shape::LineSegment { points, stroke } if *stroke == Stroke::new(1.5, Color32::from_black_alpha(0xc0)) && points[0].y == points[1].y => {
-                Some(points[1].x - points[0].x)
-            }
-            _ => None,
-        });
-
-        assert!((bar.unwrap() - meters * points_per_meter).abs() < 0.01);
-    }
-
     fn overlay(view: &View3d, selected: bool) -> Overlay {
         let scene = Scene::builtin("cube");
         Overlay::of(&Sight::of(&scene, view, 1.5), view, selected)

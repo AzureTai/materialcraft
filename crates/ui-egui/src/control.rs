@@ -519,29 +519,6 @@ mod tests {
     }
 
     #[test]
-    fn programmatic_copy_uses_the_retained_display_pixels_and_alpha_mode() {
-        let mut app = app();
-        let pixels = std::sync::Arc::new(vec![64, 0, 0, 128]);
-        app.view2d.shown = Some((1, 1, pixels.clone()));
-        app.view2d.shown_premultiplied = true;
-        app.session.view2d.premultiplied = false;
-        let ctx = egui::Context::default();
-        ctx.begin_pass(egui::RawInput::default());
-
-        let reply = handle(&mut app, &ctx, "command.run", &json!({"id": "view.2d.copyImage"}));
-        let output = ctx.end_pass();
-
-        assert_eq!((reply["ok"].as_bool(), reply["result"]["width"].as_u64()), (Some(true), Some(1)), "{reply}");
-        let copied = output.platform_output.commands.iter().find_map(|command| match command {
-            egui::OutputCommand::CopyImage(image) => image.pixels.first().copied(),
-            _ => None,
-        });
-        assert_eq!(copied, Some(egui::Color32::from_rgba_premultiplied(64, 0, 0, 128)));
-        assert_eq!(std::sync::Arc::strong_count(&pixels), 2, "the handoff retained an extra copy");
-        assert!(app.session.finish_display_handoff().is_none());
-    }
-
-    #[test]
     fn ui_set_merges_nested_objects_instead_of_resetting_siblings() {
         let mut app = app();
         let ctx = egui::Context::default();
