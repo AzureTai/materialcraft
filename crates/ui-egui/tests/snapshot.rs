@@ -40,7 +40,7 @@ mod view2d;
 #[path = "snapshot/view3d.rs"]
 mod view3d;
 
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 
 use egui::vec2;
 use egui_kittest::{
@@ -68,7 +68,7 @@ fn settle(h: &mut Harness<'static, MaterialCraftApp>, frames: usize) {
     }
 }
 
-fn wait_for_3d_frame(h: &mut Harness<'static, MaterialCraftApp>, previous: Option<&[u8]>) -> (u32, u32, Vec<u8>) {
+fn wait_for_3d_frame(h: &mut Harness<'static, MaterialCraftApp>, previous: Option<&[u8]>) -> (u32, u32, Arc<Vec<u8>>) {
     for _ in 0..120 {
         if let Some(frame) = h.state().view3d.shown.as_ref()
             && previous.is_none_or(|pixels| frame.2.as_slice() != pixels)
