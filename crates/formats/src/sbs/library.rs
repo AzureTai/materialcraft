@@ -52,6 +52,7 @@ pub fn resolve(owner: &str, reference: &str) -> Result<String, String> {
 
     let uri = format!("sbs://{}", parts.join("/"));
     relative_path(&uri)?;
+
     Ok(uri)
 }
 
@@ -132,6 +133,7 @@ pub fn install(relative: &str, bytes: Vec<u8>) -> Result<(), String> {
     }
 
     DOWNLOADED.write().unwrap_or_else(std::sync::PoisonError::into_inner).insert(relative.into(), bytes);
+
     Ok(())
 }
 
@@ -153,6 +155,7 @@ fn read_embedded(relative: &str) -> Result<Vec<u8>, String> {
     let Ok(index) = EMBEDDED_ASSETS.binary_search_by_key(&relative, |(name, _, _)| *name) else {
         return read_downloaded(relative);
     };
+
     let (_, compressed, size) = EMBEDDED_ASSETS.get(index).ok_or("invalid bundled asset index")?;
     if *size > MAX_ASSET_BYTES {
         return Err("bundled asset exceeds 256 MiB".into());
@@ -252,6 +255,7 @@ mod tests {
         }
         let mut unique = files.clone();
         unique.dedup();
+
         assert_eq!(unique, files);
         assert!(files.iter().all(|file| relative_path(file).is_ok() && file.ends_with(".sbs")));
     }

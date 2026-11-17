@@ -57,8 +57,8 @@ fn main() -> Result<()> {
     let mut files = Vec::new();
     scan(&root, Path::new(""), &mut files)?;
 
-    // Web hosts cap single files (Cloudflare Pages at 25 MiB) and the bitmaps would push the wasm past it
-    // The browser build downloads `resources/` from beside the wasm instead
+    // Keep already-compressed bitmaps out of the size-capped wasm
+    // The browser downloads them from beside the wasm
     let browser = std::env::var("CARGO_CFG_TARGET_ARCH").is_ok_and(|arch| arch == "wasm32");
     let (downloaded, files): (Vec<_>, Vec<_>) = files.into_iter().partition(|relative| browser && relative.starts_with("resources"));
     let mut external = Vec::new();
@@ -95,5 +95,6 @@ fn main() -> Result<()> {
     }
     downloads.push_str("];\n");
     std::fs::write(out.join("sbs_assets.rs"), format!("{assets}{packages}{downloads}"))?;
+
     Ok(())
 }

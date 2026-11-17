@@ -23,6 +23,7 @@ pub fn start() {
             log::error!("no document");
             return;
         };
+
         let result = match document.get_element_by_id(CANVAS_ID).and_then(|e| e.dyn_into::<web_sys::HtmlCanvasElement>().ok()) {
             Some(canvas) => run(canvas).await,
             None => Err(format!("the page has no <canvas id=\"{CANVAS_ID}\">")),
@@ -42,7 +43,7 @@ pub fn start() {
 }
 
 async fn run(canvas: web_sys::HtmlCanvasElement) -> Result<(), String> {
-    // The WebAssembly has downloaded and compiled when this runs.
+    // The WebAssembly has downloaded and compiled when this runs
     step(0.3, "Downloading the material library…").await;
     download_library().await;
     step(0.5, "Preparing a new package…").await;
@@ -60,7 +61,8 @@ async fn run(canvas: web_sys::HtmlCanvasElement) -> Result<(), String> {
             options,
             Box::new(|cc| {
                 let mut app = MaterialCraftApp::new(cc, session);
-                // One thread cooks in the browser: keep previews small.
+
+                // One thread cooks in the browser, so keep previews small
                 app.ui.prefs.preview_size = app.ui.prefs.preview_size.clamp(128, 256);
                 Ok(Box::new(app))
             }),
@@ -86,7 +88,7 @@ async fn download_library() {
         .as_ref()
         .and_then(|abort| window.set_timeout_with_callback_and_timeout_and_arguments_0(abort.as_ref().unchecked_ref(), LIBRARY_DOWNLOAD_TIMEOUT_MS).ok());
 
-    // Every request starts before the first is awaited, so they download in parallel
+    // Start every fetch before awaiting its response
     let requests: Vec<_> = library::external_assets()
         .iter()
         .map(|relative| {
@@ -115,6 +117,7 @@ async fn fetch_bytes(request: wasm_bindgen_futures::JsFuture) -> Result<Vec<u8>,
 
     let buffer = response.array_buffer().map_err(|e| format!("{e:?}"))?;
     let buffer = wasm_bindgen_futures::JsFuture::from(buffer).await.map_err(|e| format!("{e:?}"))?;
+
     Ok(js_sys::Uint8Array::new(&buffer).to_vec())
 }
 
@@ -128,8 +131,8 @@ async fn step(progress: f32, status: &str) {
     if let Some(el) = document.get_element_by_id(PROGRESS_ID) {
         let _ = el.set_attribute("value", &progress.to_string());
     }
-    // A timer longer than a frame lets the browser paint the step before work resumes. Not
-    // `requestAnimationFrame`: it never fires in a background tab, which would stall startup.
+
+    // A timer lets background tabs resume even without animation frames
     let promise = js_sys::Promise::new(&mut |resolve, _| {
         if let Some(w) = web_sys::window() {
             let _ = w.set_timeout_with_callback_and_timeout_and_arguments_0(&resolve, 20);
@@ -157,7 +160,8 @@ fn capture_app_shortcuts() {
     if let Err(e) = window.add_event_listener_with_callback_and_add_event_listener_options("keydown", on_key.as_ref().unchecked_ref(), &options) {
         log::warn!("couldn't take over the browser's shortcuts: {e:?}");
     }
-    // The listener lives as long as the page.
+
+    // The listener lives as long as the page
     on_key.forget();
 }
 
