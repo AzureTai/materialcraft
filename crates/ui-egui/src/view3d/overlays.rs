@@ -32,7 +32,7 @@ const SCALE_LENGTHS: [f32; 13] = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.
 pub(super) fn paint(app: &mut MaterialCraftApp, ui: &Ui, view_rect: Rect, area: Rect) {
     let scene = super::frame::shown_scene(app);
     let view = &app.session.view3d;
-    let sight = Sight::of(&scene, view, area.width() / area.height().max(1.0));
+    let sight = Sight::of(&scene, super::frame::shown_view(app), area.width() / area.height().max(1.0));
     let painter = ui.painter_at(view_rect.intersect(area));
     let place = |at: [f32; 2]| pos2(area.left() + at[0] * area.width(), area.top() + at[1] * area.height());
 
@@ -40,7 +40,14 @@ pub(super) fn paint(app: &mut MaterialCraftApp, ui: &Ui, view_rect: Rect, area: 
         let key = overlay_key(app, &scene, sight.aspect);
         let overlay = match &app.view3d.overlay {
             Some((cached, overlay)) if *cached == key => overlay.clone(),
-            _ => Arc::new(Overlay::of(&sight, view, app.view3d.selected)),
+            _ => {
+                let mut overlay_view = super::frame::shown_view(app).clone();
+                overlay_view.show_grid = view.show_grid;
+                overlay_view.bounding_box = view.bounding_box;
+                overlay_view.light_helpers = view.light_helpers;
+                overlay_view.vertex_tangent_space = view.vertex_tangent_space;
+                Arc::new(Overlay::of(&sight, &overlay_view, app.view3d.selected))
+            }
         };
 
         for line in &overlay.lines {
@@ -67,7 +74,11 @@ pub(super) fn paint(app: &mut MaterialCraftApp, ui: &Ui, view_rect: Rect, area: 
         }
     }
     if view.show_resolution {
-        let (width, height) = super::frame::frame_pixels(view, view_rect, ui.ctx().pixels_per_point());
+        let (width, height) = app
+            .view3d
+            .shown
+            .as_ref()
+            .map_or_else(|| super::frame::frame_pixels(view, view_rect, ui.ctx().pixels_per_point()), |(width, height, _)| (*width, *height));
         write(
             &painter,
             view_rect.right_bottom() - vec2(MARGIN, MARGIN),
@@ -100,6 +111,7 @@ fn overlay_key(app: &MaterialCraftApp, scene: &Arc<materialcraft_render::Scene>,
     let view = &app.session.view3d;
     let mut hasher = DefaultHasher::new();
     (Arc::as_ptr(scene) as usize, view.show_grid, view.bounding_box, view.light_helpers, view.vertex_tangent_space, app.view3d.selected).hash(&mut hasher);
+    let view = super::frame::shown_view(app);
     (view.projection.id(), view.lights.map(|light| light.enabled)).hash(&mut hasher);
 
     let lights = view.lights.iter().flat_map(|light| [light.yaw, light.pitch, light.distance]);
@@ -134,6 +146,7 @@ fn axes(painter: &egui::Painter, sight: &Sight, view_rect: Rect, text: Color32) 
 
     let start = pos2(center.x + AXIS_ARM + 18.0, view_rect.bottom() - MARGIN - 4.0);
     let end = start + vec2(meters * points_per_meter, 0.0);
+
     // A dark line under the light one keeps the bar readable on a bright picture
     for (offset, stroke) in [(1.0, Stroke::new(1.5, Color32::from_black_alpha(0xc0))), (0.0, Stroke::new(1.5, text))] {
         let shift = vec2(offset, offset);

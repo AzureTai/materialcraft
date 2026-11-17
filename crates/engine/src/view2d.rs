@@ -91,13 +91,15 @@ impl View2d {
             if !Self::CHANNELS.contains(&channel) {
                 return Err(bad(COMMAND, "`channel` is rgba, r, g, b or a"));
             }
+
             view.channel = channel.into();
         }
         if let Some(channel) = strp(params, "histogramChannel") {
             view.histogram_channel =
                 HistogramChannel::from_id(channel).ok_or_else(|| bad(COMMAND, "`histogramChannel` is luminance, red, green, blue, rgb or alpha"))?;
         }
-        if let Some(bits) = u64p(params, "histogramBits") {
+        if let Some(bits) = params.get("histogramBits") {
+            let bits = bits.as_u64().ok_or_else(|| bad(COMMAND, "`histogramBits` is 8, 16 or 32, or 0 to follow the image"))?;
             view.histogram_bits = Self::HISTOGRAM_BITS
                 .into_iter()
                 .find(|allowed| u64::from(*allowed) == bits)

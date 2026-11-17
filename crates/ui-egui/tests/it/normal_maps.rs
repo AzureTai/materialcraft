@@ -2,7 +2,7 @@ use egui::vec2;
 use egui_kittest::{Harness, kittest::Queryable};
 use materialcraft_ui_egui::{MaterialCraftApp, UiState};
 use serde_json::json;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 fn app() -> MaterialCraftApp {
     let mut app = MaterialCraftApp::headless(materialcraft_engine::new_session(), UiState::default());
@@ -11,14 +11,18 @@ fn app() -> MaterialCraftApp {
     app
 }
 
-fn settle(h: &mut Harness<'static, MaterialCraftApp>, after: u64) {
-    for _ in 0..300 {
-        h.step();
-        let app = h.state();
+fn settle(harness: &mut Harness<'static, MaterialCraftApp>, after: u64) {
+    const RENDER_TIMEOUT: Duration = Duration::from_secs(10);
+    const POLL_INTERVAL: Duration = Duration::from_millis(10);
+    let deadline = Instant::now() + RENDER_TIMEOUT;
+    while Instant::now() < deadline {
+        harness.step();
+        let app = harness.state();
         if app.view3d.renders > after && !app.session.dirty && !app.cooker.busy() && !app.view3d.busy() {
             return;
         }
-        std::thread::sleep(Duration::from_millis(10));
+
+        std::thread::sleep(POLL_INTERVAL);
     }
     panic!("the normal-map preview did not finish rendering");
 }
@@ -50,14 +54,14 @@ fn display_toggle_updates_the_session_and_rerenders_the_normal_map() {
     let rendered = h.state().view3d.renders;
     open_material_properties(&mut h);
     toggle(&mut h);
-    assert!(h.state().session.view3d.normal_y_flip);
+    assert!(!h.state().session.view3d.normal_y_flip);
     settle(&mut h, rendered);
     assert!(before.2 != h.state().view3d.shown.as_ref().unwrap().2, "the flipped normal map renders differently");
 
-    // The same check box restores the OpenGL setting
+    // The same check box restores the DirectX setting
     let rendered = h.state().view3d.renders;
     toggle(&mut h);
-    assert!(!h.state().session.view3d.normal_y_flip);
+    assert!(h.state().session.view3d.normal_y_flip);
     settle(&mut h, rendered);
     assert!(before.2 == h.state().view3d.shown.as_ref().unwrap().2, "the first picture is back");
 }
@@ -65,20 +69,20 @@ fn display_toggle_updates_the_session_and_rerenders_the_normal_map() {
 #[test]
 #[ignore = "requires an offscreen GPU; run explicitly with --ignored"]
 fn normal_convention_snapshot() {
-    let mut h = Harness::builder().with_size(vec2(1400.0, 860.0)).wgpu().build_ui_state(
+    let mut harness = Harness::builder().with_size(vec2(1400.0, 860.0)).wgpu().build_ui_state(
         |ui, app: &mut MaterialCraftApp| {
             app.step(&ui.ctx().clone());
             app.draw(ui);
         },
         app(),
     );
-    settle(&mut h, 0);
-    let rendered = h.state().view3d.renders;
-    open_material_properties(&mut h);
-    toggle(&mut h);
-    settle(&mut h, rendered);
-    assert!(h.state().session.view3d.normal_y_flip);
+    settle(&mut harness, 0);
+    let rendered = harness.state().view3d.renders;
+    open_material_properties(&mut harness);
+    toggle(&mut harness);
+    settle(&mut harness, rendered);
+    assert!(!harness.state().session.view3d.normal_y_flip);
     let dir = std::path::PathBuf::from(std::env::var_os("MC_SNAPSHOT_DIR").expect("MC_SNAPSHOT_DIR"));
     std::fs::create_dir_all(&dir).unwrap();
-    h.render().unwrap().save(dir.join("normal-convention.png")).unwrap();
+    harness.render().unwrap().save(dir.join("normal-convention.png")).unwrap();
 }

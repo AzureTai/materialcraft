@@ -72,7 +72,8 @@ fn zoom_controls(app: &mut MaterialCraftApp, ui: &mut Ui) {
     }
     let mut percent = app.ui.image_camera.zoom * 100.0;
     let (lowest, highest) = (ImageCamera::ZOOM.0 * 100.0, ImageCamera::ZOOM.1 * 100.0);
-    let field = ui.add_sized([ZOOM_FIELD_WIDTH, BUTTON_SIDE], egui::DragValue::new(&mut percent).range(lowest..=highest).max_decimals(2).suffix("%"));
+    let displayed_range = lowest.min(percent)..=highest.max(percent);
+    let field = ui.add_sized([ZOOM_FIELD_WIDTH, BUTTON_SIDE], egui::DragValue::new(&mut percent).range(displayed_range).max_decimals(2).suffix("%"));
     crate::widgets::name(&field, egui::Role::SpinButton, "Zoom");
     if field.changed() {
         app.ui.image_camera = ImageCamera { zoom: percent / 100.0, fit: false, ..app.ui.image_camera }.sanitized();

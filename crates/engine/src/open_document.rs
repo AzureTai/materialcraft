@@ -128,6 +128,7 @@ impl OpenDocument {
             embedded_clipboard,
             history
         );
+
         // A worker from the previous document must never publish into this one
         session.cook_epoch = session.cook_epoch.wrapping_add(1);
         session.clear_preview_results();

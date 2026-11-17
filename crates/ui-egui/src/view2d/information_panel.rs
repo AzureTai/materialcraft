@@ -28,14 +28,13 @@ pub(super) fn show(app: &mut MaterialCraftApp, ui: &mut Ui, shown: &Shown) {
 
     let mut remove_sampler = false;
     egui::ScrollArea::vertical().id_salt("view2d-information").auto_shrink([false, false]).show(ui, |ui| {
-        // Each row has its own id and the pointer's row a fixed height, so the sampler's row
-        // stays where it is while the pointer comes and goes
+        // Keep the sampler row fixed while pointer hover changes
         let line_height = ui.ctx().fonts_mut(|fonts| fonts.row_height(&FontId::monospace(TEXT_SIZE))) + LINE_SPACING;
         ui.push_id("pointer", |ui| {
             ui.set_min_height(line_height * READOUT_LINES);
             match app.view2d.hover {
                 Some(position) => {
-                    row(ui, &PixelReadout::at(&shown.image, position), shown.levels, false);
+                    row(ui, &PixelReadout::at(&shown.image, position), shown.levels, false, &app.session.view2d);
                 }
                 None => {
                     ui.label(RichText::new(tr("Move the pointer over the image to read its pixels")).size(TEXT_SIZE).color(Tokens::get(ui.ctx()).text_dim));
@@ -46,7 +45,7 @@ pub(super) fn show(app: &mut MaterialCraftApp, ui: &mut Ui, shown: &Shown) {
         if let Some(sampler) = app.session.view2d.sampler {
             ui.separator();
             ui.push_id("sampler", |ui| {
-                remove_sampler = row(ui, &PixelReadout::at_fraction(&shown.image, sampler), shown.levels, true);
+                remove_sampler = row(ui, &PixelReadout::at_fraction(&shown.image, sampler), shown.levels, true, &app.session.view2d);
             });
         }
     });
@@ -60,7 +59,7 @@ pub(super) fn show(app: &mut MaterialCraftApp, ui: &mut Ui, shown: &Shown) {
 }
 
 /// One readout: its color, its columns and, for the sampler, a button that removes it. True when that button was clicked
-fn row(ui: &mut Ui, readout: &PixelReadout, levels: Option<u32>, sampler: bool) -> bool {
+fn row(ui: &mut Ui, readout: &PixelReadout, levels: Option<u32>, sampler: bool, view: &materialcraft_engine::View2d) -> bool {
     let tokens = Tokens::get(ui.ctx());
     let font = FontId::monospace(TEXT_SIZE);
     let mut remove = false;
@@ -68,7 +67,7 @@ fn row(ui: &mut Ui, readout: &PixelReadout, levels: Option<u32>, sampler: bool) 
     ui.horizontal_top(|ui| {
         ui.vertical(|ui| {
             let (swatch, response) = ui.allocate_exact_size(vec2(SWATCH_SIDE, SWATCH_SIDE), Sense::hover());
-            ui.painter().rect(swatch, 2.0, readout.swatch(), Stroke::new(1.0, tokens.field_border), egui::StrokeKind::Inside);
+            ui.painter().rect(swatch, 2.0, readout.swatch(view), Stroke::new(1.0, tokens.field_border), egui::StrokeKind::Inside);
             response.on_hover_text(if sampler { tr("The pixel under the color sampler") } else { tr("The pixel under the pointer") });
 
             if sampler {

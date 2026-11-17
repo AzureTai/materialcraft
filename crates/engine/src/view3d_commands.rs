@@ -1,8 +1,10 @@
 //! Commands of the 3D view's menus beyond `view.3d`: viewpoints, framing, resets and state files.
 
-use serde_json::{Value as J, json};
+use serde_json::Value as J;
+#[cfg(not(target_arch = "wasm32"))]
+use serde_json::json;
 
-use crate::commands::{CommandSpec, always, bad, boolp, strp};
+use crate::commands::{CommandSpec, always, bad, boolp, f32p, strp};
 use crate::{Result, Session, Viewpoint, cmd};
 
 pub(crate) fn specs() -> Vec<CommandSpec> {
@@ -16,11 +18,19 @@ pub(crate) fn specs() -> Vec<CommandSpec> {
             always,
             viewpoint
         ),
-        cmd!("view.3d.frame", "Frame", [], None, "{} centers the mesh and moves the camera to where all of it is in view", always, |session, _| {
-            session.view3d.target = [0.0; 3];
-            session.view3d.distance = session.view3d.framing_distance();
-            Ok(view(session))
-        }),
+        cmd!(
+            "view.3d.frame",
+            "Frame",
+            [],
+            None,
+            "{aspect? (viewport width / height, default 1)} centers the mesh and moves the camera to where all of it is in view",
+            always,
+            |session, parameters| {
+                session.view3d.target = [0.0; 3];
+                session.view3d.distance = session.view3d.framing_distance_for_aspect(f32p(parameters, "aspect").unwrap_or(1.0));
+                Ok(view(session))
+            }
+        ),
         cmd!(
             "view.3d.resetCamera",
             "Reset Position",
@@ -114,6 +124,11 @@ fn load_state(session: &mut Session, parameters: &J) -> Result<J> {
     let path = strp(parameters, "path").ok_or_else(|| bad(COMMAND, "`path` is required"))?;
     let failed = |reason: String| bad(COMMAND, format!("{path}: {reason}"));
 
+    // Opening a named pipe may wait indefinitely for a writer
+    if !std::fs::metadata(path).map_err(|error| failed(error.to_string()))?.is_file() {
+        return Err(failed("not a regular file".into()));
+    }
+
     // Read no more than a state can be, so a wrong file cannot fill the memory
     let mut text = String::new();
     let file = std::fs::File::open(path).map_err(|error| failed(error.to_string()))?;
@@ -121,6 +136,7 @@ fn load_state(session: &mut Session, parameters: &J) -> Result<J> {
     if text.len() as u64 > View3dStateFile::MAX_BYTES {
         return Err(failed("too large for a 3D view state".into()));
     }
+
     let state = View3dStateFile::parse(&text).map_err(failed)?;
 
     // The mesh changes only when asked for, and only to one this session can show

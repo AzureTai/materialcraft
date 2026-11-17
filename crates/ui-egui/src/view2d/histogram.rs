@@ -19,11 +19,11 @@ pub(super) struct Histogram {
 impl Histogram {
     /// Count `channel` of every pixel; a gray image only has its luminance
     pub(super) fn of(image: &Image, channel: HistogramChannel) -> Histogram {
-        let channel = if image.kind == Kind::Gray { HistogramChannel::Luminance } else { channel };
+        let channel = if image.kind() == Kind::Gray { HistogramChannel::Luminance } else { channel };
         let series_count = if channel == HistogramChannel::Rgb { 3 } else { 1 };
         let mut histogram = Histogram { series: vec![[0; BINS]; series_count], pixels: 0, used: [f32::INFINITY, f32::NEG_INFINITY] };
 
-        for pixel in image.data.chunks_exact(image.channels()) {
+        for pixel in image.data().chunks_exact(image.channels()) {
             histogram.pixels += 1;
             match (channel, pixel) {
                 (HistogramChannel::Luminance, &[red, green, blue, alpha]) => histogram.count(0, luminance([red, green, blue, alpha])),

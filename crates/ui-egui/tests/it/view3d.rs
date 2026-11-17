@@ -9,8 +9,12 @@ use serde_json::{Value, json};
 
 /// The 3D view above the Properties panel, as one small window
 fn harness() -> Harness<'static, MaterialCraftApp> {
+    harness_with_width(900.0)
+}
+
+fn harness_with_width(width: f32) -> Harness<'static, MaterialCraftApp> {
     let app = MaterialCraftApp::headless(materialcraft_engine::sample_session(), UiState::default());
-    let mut harness = Harness::builder().with_context_setup(materialcraft_ui_egui::theme::install).with_size(vec2(900.0, 900.0)).build_ui_state(
+    let mut harness = Harness::builder().with_context_setup(materialcraft_ui_egui::theme::install).with_size(vec2(width, 900.0)).build_ui_state(
         |ui, app: &mut MaterialCraftApp| {
             let whole = ui.available_rect_before_wrap();
             let (view, panel) = whole.split_top_bottom_at_y(whole.top() + 420.0);
@@ -21,6 +25,19 @@ fn harness() -> Harness<'static, MaterialCraftApp> {
     );
     harness.run_steps(6);
     harness
+}
+
+#[test]
+fn frame_key_fits_a_portrait_viewport() {
+    let mut harness = harness_with_width(300.0);
+    let area = picture(&harness);
+    assert!(area.width() < area.height());
+
+    harness.hover_at(area.center());
+    harness.key_press(Key::F);
+    harness.run_steps(2);
+
+    assert!(view(&harness).distance > view(&harness).framing_distance());
 }
 
 fn view<'harness>(harness: &'harness Harness<'static, MaterialCraftApp>) -> &'harness View3d {
@@ -201,6 +218,22 @@ fn the_properties_panel_edits_the_part_the_view_asks_for() {
     harness.state_mut().session.selection = vec![node];
     harness.run_steps(4);
     assert_eq!(harness.query_all_by_label("Enable physical size from graph").count(), 0);
+}
+
+#[test]
+fn typed_uv_repeats_can_exceed_the_slider_track_limit() {
+    let mut harness = harness();
+    choose(&mut harness, &["Materials", "Default", "Edit properties"]);
+
+    let input = harness.get_by_role_and_label(Role::TextInput, "Tiling");
+    input.click();
+    harness.run_steps(2);
+    harness.key_press_modifiers(Modifiers::COMMAND, Key::A);
+    harness.run_steps(2);
+    harness.event(Event::Text("32".into()));
+    harness.run_steps(4);
+
+    assert_eq!(view(&harness).tiling, 32.0);
 }
 
 #[test]

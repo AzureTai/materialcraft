@@ -10,6 +10,7 @@
 mod display_bar;
 mod frame;
 mod frame_job;
+mod frame_scene;
 mod menus;
 mod navigation;
 mod output;
@@ -57,6 +58,7 @@ pub fn scene_label(app: &MaterialCraftApp) -> String {
     {
         return name.clone();
     }
+
     SCENES.iter().find(|(scene, _)| scene == id).map_or(id.as_str(), |(_, label)| label).to_string()
 }
 
@@ -67,6 +69,7 @@ fn panel_context(app: &MaterialCraftApp) -> u64 {
     (session.document_id, session.graph, &session.selection, app.graph.inspected_node, &app.inspected_folder).hash(&mut hasher);
     format!("{:?} {:?}", app.inspected_graph, session.annotation_selection).hash(&mut hasher);
     (app.function_editor.is_some(), app.pattern_editor.is_some()).hash(&mut hasher);
+    app.function_editor.as_ref().map(|editor| (&editor.selection, editor.inspected_node)).hash(&mut hasher);
     hasher.finish()
 }
 
@@ -80,6 +83,23 @@ pub(crate) fn inspect(app: &mut MaterialCraftApp, subject: Subject) {
 pub(crate) fn inspected(app: &MaterialCraftApp) -> Option<Subject> {
     let (subject, context) = app.view3d.inspected?;
     (context == panel_context(app)).then_some(subject)
+}
+
+pub(crate) fn clear_stale_inspection(app: &mut MaterialCraftApp) {
+    if app.view3d.inspected.is_some_and(|(_, context)| context != panel_context(app)) {
+        app.view3d.inspected = None;
+    }
+}
+
+pub(super) fn frame_view(app: &mut MaterialCraftApp) {
+    let view = &app.session.view3d;
+    let [width, height] = if view.override_resolution && !view.viewport_resolution {
+        view.render_resolution
+    } else {
+        app.view3d.size.map_or([1, 1], |(width, height)| [width, height])
+    };
+    let aspect = width as f32 / height.max(1) as f32;
+    app.run("view.3d.frame", json!({"aspect": aspect}));
 }
 
 /// Make the current view the one a reset and a new document start from, now and after a restart
@@ -158,5 +178,24 @@ fn viewport(app: &mut MaterialCraftApp, ui: &mut Ui, rect: Rect) {
             egui::FontId::proportional(13.0),
             tokens.viewport_text,
         );
+    }
+}
+
+#[cfg(test)]
+mod inspection_tests {
+    use super::*;
+    use materialcraft_engine::core::NodeId;
+
+    #[test]
+    fn another_selection_discards_the_previous_3d_inspection() {
+        let mut app = MaterialCraftApp::headless(materialcraft_engine::sample_session(), crate::UiState::default());
+        inspect(&mut app, Subject::Camera);
+
+        let previous = app.session.selection.clone();
+        app.session.selection = vec![NodeId(u64::MAX)];
+        app.reconcile_editors();
+        app.session.selection = previous;
+
+        assert_eq!(inspected(&app), None);
     }
 }

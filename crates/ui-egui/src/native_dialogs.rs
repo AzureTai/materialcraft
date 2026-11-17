@@ -194,6 +194,7 @@ fn chosen(app: &mut MaterialCraftApp, then: Then, path: &std::path::Path) {
                 not_applied(app);
                 return;
             }
+
             parameters["path"] = json!(picked);
             app.run("graph.input.bind", parameters);
         }
@@ -210,10 +211,12 @@ fn save_to(app: &mut MaterialCraftApp, document: u64, copy: bool, picked: &str) 
     if app.session.document_id != document && app.run("package.activate", json!({"document": document})).is_none() {
         return false;
     }
+
     let path = materialcraft_engine::file_cmds::package_path(picked);
     if app.run(if copy { "file.saveCopyAs" } else { "file.save" }, json!({"path": path})).is_none() {
         return false;
     }
+
     if !copy {
         app.ui.add_recent(&path);
     }

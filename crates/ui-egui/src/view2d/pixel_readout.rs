@@ -1,4 +1,5 @@
 use egui::Color32;
+use materialcraft_engine::View2d;
 use materialcraft_engine::image::{Image, linear_to_srgb};
 
 /// The hue is listed in degrees around the color wheel
@@ -23,9 +24,9 @@ pub(super) struct PixelReadout {
 impl PixelReadout {
     /// The pixel `position` of `image`, held inside the image
     pub(super) fn at(image: &Image, position: [u32; 2]) -> PixelReadout {
-        let position = [position[0].min(image.w.saturating_sub(1)), position[1].min(image.h.saturating_sub(1))];
+        let position = [position[0].min(image.width().saturating_sub(1)), position[1].min(image.height().saturating_sub(1))];
         let color = image.get(i64::from(position[0]), i64::from(position[1]), false);
-        let fraction = [position[0] as f32 / image.w.max(1) as f32, position[1] as f32 / image.h.max(1) as f32];
+        let fraction = [position[0] as f32 / image.width().max(1) as f32, position[1] as f32 / image.height().max(1) as f32];
 
         PixelReadout { position, fraction, color, hsv: hsv(color), gray: image.is_gray() }
     }
@@ -33,14 +34,22 @@ impl PixelReadout {
     /// The pixel under a position given as fractions of the image
     pub(super) fn at_fraction(image: &Image, fraction: [f32; 2]) -> PixelReadout {
         let pixel = |fraction: f32, side: u32| (fraction.clamp(0.0, 1.0) * side as f32) as u32;
-        Self::at(image, [pixel(fraction[0], image.w), pixel(fraction[1], image.h)])
+        Self::at(image, [pixel(fraction[0], image.width()), pixel(fraction[1], image.height())])
     }
 
-    /// The color as the view draws it
-    pub(super) fn swatch(&self) -> Color32 {
+    /// The opaque sample with the view's display encoding and channel choice
+    pub(super) fn swatch(&self, view: &View2d) -> Color32 {
         let level = |value: f32| (value.clamp(0.0, 1.0) * 255.0 + 0.5) as u8;
         let shown = |value: f32| if self.gray { level(value) } else { level(linear_to_srgb(value)) };
-        Color32::from_rgb(shown(self.color[0]), shown(self.color[1]), shown(self.color[2]))
+        let mut rgb = [shown(self.color[0]), shown(self.color[1]), shown(self.color[2])];
+        if !view.srgb {
+            rgb = rgb.map(|value| level(linear_to_srgb(f32::from(value) / 255.0)));
+        }
+        if let Some(channel) = super::display::isolated_channel(&view.channel).filter(|_| !self.gray) {
+            let value = if channel == 3 { level(self.color[3]) } else { rgb[channel] };
+            rgb = [value; 3];
+        }
+        Color32::from_rgb(rgb[0], rgb[1], rgb[2])
     }
 
     /// The readout in three columns: the stored channels, then hue, saturation and value, then
@@ -123,9 +132,25 @@ mod tests {
     #[test]
     fn the_swatch_shows_what_the_view_draws() {
         let gray = Image::filled(1, 1, Kind::Gray, [0.5, 0.0, 0.0, 0.0]);
-        assert_eq!(PixelReadout::at(&gray, [0, 0]).swatch(), Color32::from_rgb(128, 128, 128));
+        assert_eq!(PixelReadout::at(&gray, [0, 0]).swatch(&View2d::default()), Color32::from_rgb(128, 128, 128));
 
         let color = Image::filled(1, 1, Kind::Color, [0.5, 0.0, 1.0, 1.0]);
-        assert_eq!(PixelReadout::at(&color, [0, 0]).swatch(), Color32::from_rgb(188, 0, 255));
+        assert_eq!(PixelReadout::at(&color, [0, 0]).swatch(&View2d::default()), Color32::from_rgb(188, 0, 255));
+    }
+
+    #[test]
+    fn the_swatch_matches_a_linear_light_display_setting() {
+        let image = Image::filled(1, 1, Kind::Gray, [0.5, 0.0, 0.0, 0.0]);
+        let view = materialcraft_engine::View2d { srgb: false, ..materialcraft_engine::View2d::default() };
+        let pixel = super::super::display::display_pixels(&image, &view);
+
+        assert_eq!(PixelReadout::at(&image, [0, 0]).swatch(&view), Color32::from_rgb(pixel[0], pixel[1], pixel[2]));
+
+        let color = Image::filled(1, 1, Kind::Color, [0.5, 0.25, 0.75, 0.4]);
+        for channel in ["rgba", "r", "g", "b", "a"] {
+            let view = materialcraft_engine::View2d { channel: channel.into(), ..view.clone() };
+            let pixel = super::super::display::display_pixels(&color, &view);
+            assert_eq!(PixelReadout::at(&color, [0, 0]).swatch(&view), Color32::from_rgb(pixel[0], pixel[1], pixel[2]), "{channel}");
+        }
     }
 }

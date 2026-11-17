@@ -9,6 +9,29 @@ fn no_linked_files(_: &str) -> Option<Vec<u8>> {
 }
 
 #[test]
+fn shuffle_roundtrip_preserves_signed_channel_selectors() {
+    for selector in [-2_i32, -1, 8, 9, 16, 255] {
+        let xml = format!(
+            r#"<package><content><graph><identifier v="Original"/><compNodes>
+          <compNode><uid v="1"/><compImplementation><compFilter><filter v="shuffle"/><parameters>
+            <parameter><name v="channelred"/><paramValue><constantValueInt32 v="{selector}"/></paramValue></parameter>
+          </parameters></compFilter></compImplementation></compNode>
+        </compNodes></graph></content></package>"#
+        );
+
+        let loaded = read_sbs(xml.as_bytes(), "original.sbs", &no_linked_files).unwrap();
+        let node = &loaded.pkg.graphs[0].nodes[0];
+
+        assert_eq!(node.params.get("red"), Some(&Value::Enum(selector as u32)), "selector {selector}");
+
+        let saved = write_sbs(&loaded.pkg).unwrap();
+        let reloaded = read_sbs(&saved, "original.sbs", &no_linked_files).unwrap();
+
+        assert_eq!(reloaded.pkg.graphs[0].nodes[0].params.get("red"), node.params.get("red"), "saved selector {selector}");
+    }
+}
+
+#[test]
 fn saved_dot_outputs_load_as_incomplete_functions() {
     let xml = r#"<package><identifier v="Dots"/><content><function><identifier v="Incomplete"/>
       <paramValue><dynamicValue><rootnode v="2"/><paramNodes>
@@ -59,7 +82,7 @@ fn sample_package() -> Package {
     });
     pkg.graphs.push(graph);
 
-    let orange = materialcraft_image::Image::filled(4, 4, materialcraft_image::Kind::Color, [1.0, 0.5, 0.0, 1.0]);
+    let orange = craft_texture::Image::filled(4, 4, craft_texture::Kind::Color, [1.0, 0.5, 0.0, 1.0]);
     let png = crate::encode(&orange, "png", crate::Depth::U8, true).unwrap();
     pkg.resources.push(Resource::new("tex", "tex.png", ResourceBytes::new(png)));
     pkg
@@ -77,16 +100,37 @@ fn sniffs_sbs() {
 }
 
 #[test]
-fn saving_refreshes_the_writer_version_without_changing_the_schema_version() {
-    let old = br#"<package><identifier v="Older file"/><formatVersion v="1.1.0.202401"/><updaterVersion v="0.0.1"/><content/></package>"#;
-    let reopened = read_sbs(old, "older.sbs", &no_linked_files).unwrap();
-    for package in [Package::new("New file"), reopened.pkg] {
+fn first_sbs_save_assigns_the_workspace_version_to_both_fields() {
+    let unversioned = read_sbs(b"<package><content/></package>", "unversioned.sbs", &no_linked_files).unwrap().pkg;
+    for package in [Package::new("New file"), unversioned] {
+        assert!(package.format_version.is_none());
+
         let text = String::from_utf8(write_sbs(&package).unwrap()).unwrap();
         let document = roxmltree::Document::parse(&text).unwrap();
-        let root = document.root_element();
-        assert_eq!(super::xml::child_value(root, "updaterVersion"), Some(env!("CARGO_PKG_VERSION")));
-        assert_eq!(super::xml::child_value(root, "formatVersion"), Some(super::constant::FORMAT_VERSION));
-        assert!(!text.contains("0.0.1"));
+        for field in ["formatVersion", "updaterVersion"] {
+            assert_eq!(super::xml::child_value(document.root_element(), field), Some(env!("CARGO_PKG_VERSION")));
+        }
+    }
+}
+
+#[test]
+fn later_sbs_saves_keep_the_original_format_version_and_refresh_the_updater() {
+    for baseline in ["0.0.7", "1.1.0.202401"] {
+        let old = format!(r#"<package><identifier v="Older file"/><formatVersion v="{baseline}"/><updaterVersion v="0.0.1"/><content/></package>"#);
+        let mut package = read_sbs(old.as_bytes(), "older.sbs", &no_linked_files).unwrap().pkg;
+        for _ in 0..3 {
+            assert_eq!(package.format_version.as_deref(), Some(baseline));
+
+            // Snapshot/restore and subsequent saves must retain the baseline too
+            package = serde_json::from_slice(&serde_json::to_vec(&package).unwrap()).unwrap();
+            let bytes = write_sbs(&package).unwrap();
+            let document = roxmltree::Document::parse(std::str::from_utf8(&bytes).unwrap()).unwrap();
+
+            assert_eq!(super::xml::child_value(document.root_element(), "formatVersion"), Some(baseline));
+            assert_eq!(super::xml::child_value(document.root_element(), "updaterVersion"), Some(env!("CARGO_PKG_VERSION")));
+
+            package = read_sbs(&bytes, "saved.sbs", &no_linked_files).unwrap().pkg;
+        }
     }
 }
 

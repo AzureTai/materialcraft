@@ -112,7 +112,8 @@ pub fn cube(size: f32) -> Mesh {
 
 fn rounded_box_into(b: &mut Builder, center: Vec3, half: Vec3, bevel: f32, r: UvRect) {
     let bevel = bevel.clamp(0.0, half.min_element() * 0.95);
-    // (normal, U = right, V = down) per face, seen from outside.
+
+    // (normal, U = right, V = down) per face, seen from outside
     let faces = [
         (Vec3::Z, Vec3::X, -Vec3::Y),
         (Vec3::X, -Vec3::Z, -Vec3::Y),
@@ -122,7 +123,8 @@ fn rounded_box_into(b: &mut Builder, center: Vec3, half: Vec3, bevel: f32, r: Uv
         (-Vec3::Y, Vec3::X, -Vec3::Z),
     ];
     let (kb, kc) = if bevel > 0.0 { (6usize, 10usize) } else { (0, 12) };
-    // Coordinates along one face axis from -h to h, dense in the bevels.
+
+    // Coordinates along one face axis from -h to h, dense in the bevels
     let coords = |h: f32| -> Vec<f32> {
         let inner = h - bevel;
         let mut v = Vec::new();
@@ -161,6 +163,7 @@ fn lathe_into(b: &mut Builder, center: Vec3, profile: &[(f32, f32)], segs: usize
     if profile.len() < 2 {
         return;
     }
+
     let mut len = vec![0.0f32];
     for w in profile.windows(2) {
         let d = Vec2::new(w[1].0 - w[0].0, w[1].1 - w[0].1).length();
@@ -170,7 +173,7 @@ fn lathe_into(b: &mut Builder, center: Vec3, profile: &[(f32, f32)], segs: usize
     let rows = profile.len() - 1;
     b.grid(rows, segs, |i, j| {
         let (rad, y) = profile[i];
-        // Profile tangent (downwards) → outward normal in the (r, y) plane.
+        // Profile tangent (downwards) → outward normal in the (r, y) plane
         let prev = profile[i.saturating_sub(1)];
         let next = profile[(i + 1).min(rows)];
         let t = Vec2::new(next.0 - prev.0, next.1 - prev.1).try_normalize().unwrap_or(Vec2::NEG_Y);
@@ -190,18 +193,19 @@ fn disk_into(b: &mut Builder, center: Vec3, radius: f32, up: bool, segs: usize, 
     let c = b.vert(center, n, r.map(0.5, 0.5));
     let first = b.p.len() as u32;
     for j in 0..segs {
-        let a = j as f32 / segs as f32 * TAU;
+        // Match the lathe's first vertex and clockwise path around the rim
+        let a = PI * 0.5 - j as f32 / segs as f32 * TAU;
         let (x, z) = (a.cos(), a.sin());
-        // Top view: +X right, +Z down the texture; bottom view mirrors X.
+        // Top view: +X right, +Z down the texture; bottom view mirrors X
         let uv = if up { r.map(0.5 + x * 0.5, 0.5 + z * 0.5) } else { r.map(0.5 + x * 0.5, 0.5 - z * 0.5) };
         b.vert(center + Vec3::new(x, 0.0, z) * radius, n, uv);
     }
     for j in 0..segs as u32 {
         let (a, bb) = (first + j, first + (j + 1) % segs as u32);
         if up {
-            b.idx.extend_from_slice(&[c, bb, a]);
-        } else {
             b.idx.extend_from_slice(&[c, a, bb]);
+        } else {
+            b.idx.extend_from_slice(&[c, bb, a]);
         }
     }
 }
@@ -274,7 +278,8 @@ pub fn material_ball() -> Mesh {
     let mut base = Builder::default();
     let (r, top, bot, bev) = (1.05f32, 0.32f32, 0.0f32, 0.07f32);
     let mut profile = vec![(0.42, top + 0.06), (0.62, top + 0.06)];
-    // Collar bevel and the ring the ball sits on, then the beveled drum.
+
+    // Collar bevel and the ring the ball sits on, then the beveled drum
     for k in 1..=6 {
         let a = k as f32 / 6.0 * PI * 0.5;
         profile.push((0.62 + 0.06 * a.sin(), top + 0.06 * a.cos()));
@@ -343,10 +348,11 @@ pub fn sphere_two_tiles() -> Mesh {
 pub fn hollow_box(size: f32) -> Mesh {
     let mut mesh = cube(size);
 
-    for triangle in mesh.indices.chunks_exact_mut(3) {
+    for triangle in mesh.indices.as_chunks_mut::<3>().0 {
         triangle.swap(1, 2);
     }
     mesh.normals.iter_mut().for_each(|normal| *normal = -*normal);
+
     // Seen from inside, the texture would read mirrored
     mesh.uvs.iter_mut().for_each(|uv| uv.x = 1.0 - uv.x);
     mesh.compute_tangents();
@@ -393,6 +399,7 @@ pub fn cloth(size: f32) -> Mesh {
         let (x, z) = (u * 2.0 - 1.0, v * 2.0 - 1.0);
         let reach = (x * x + z * z).sqrt();
         let hang = smooth_step(0.25, 1.3, reach);
+
         // The folds deepen as the cloth leaves the dome and pull the hanging part inward
         let fold = (z.atan2(x) * CLOTH_FOLDS).sin() * hang;
         let gather = 1.0 - 0.28 * hang + 0.07 * fold;
@@ -476,6 +483,7 @@ mod tests {
             if face.length() < 1e-9 {
                 continue;
             }
+
             let n = m.normals[a] + m.normals[b] + m.normals[c];
             if face.dot(n) <= 0.0 {
                 bad += 1;
@@ -525,6 +533,22 @@ mod tests {
         let height_at = |row: usize, column: usize| cloth.positions[row * (CLOTH_SUBDIVISIONS + 1) + column].y;
         let middle = CLOTH_SUBDIVISIONS / 2;
         assert!(height_at(middle, middle) > height_at(middle, 0) && height_at(middle, 0) > height_at(0, 0));
+    }
+
+    #[test]
+    fn rounded_cylinder_caps_meet_the_rim_with_seven_segments() {
+        let segments = 7;
+        let mesh = rounded_cylinder(1.0, 2.0, 0.2, segments);
+        let lathe_vertices = (ROUNDED_EDGE_STEPS * 2 + 2) * (segments + 1);
+        let top_cap = lathe_vertices + 1;
+        let bottom_cap = top_cap + segments + 1;
+        let bottom_rim = lathe_vertices - segments - 1;
+
+        for (cap, rim) in [(top_cap, 0), (bottom_cap, bottom_rim)] {
+            for cap_position in &mesh.positions[cap..cap + segments] {
+                assert!(mesh.positions[rim..rim + segments].iter().any(|rim_position| (*cap_position - *rim_position).length() < 1e-5));
+            }
+        }
     }
 
     #[test]

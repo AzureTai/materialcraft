@@ -1,6 +1,6 @@
 //! Every setting of the 3D view changes the rendered picture the way its name says.
+use craft_texture::{Image, Kind, linear_to_srgb};
 use materialcraft_geom::view::{Background, ColorSpace, HeightTechnique, MaterialValue, MeshInfo, Projection, Shader, View3d, ViewChannels};
-use materialcraft_image::{Image, Kind, linear_to_srgb};
 use materialcraft_render::{Lighting, Maps, Scene, Settings, render};
 
 const WIDTH: u32 = 64;
@@ -108,6 +108,7 @@ fn clip_planes_cut_away_what_lies_outside_them() {
     assert_eq!(clipped(1.0, 10_000.0), whole);
     assert_eq!(clipped(600.0, 10_000.0), 0, "the near plane lies behind the sphere");
     assert_eq!(clipped(1.0, 100.0), 0, "the far plane lies in front of it");
+
     // Cut through the middle, the far half is seen from inside once its back faces are drawn
     let sliced = covered(&frame("sphere", &Maps::default(), &View3d { auto_clip: false, near_clip: 277.0, backface_culling: false, ..plain() }));
     assert!(sliced > 0 && sliced < whole, "{sliced} of {whole}");
@@ -178,6 +179,19 @@ fn wireframe_draws_the_edges_and_leaves_the_faces_open() {
     let solid = shown(&above);
     let wire = shown(&View3d { wireframe: true, ..above });
     assert!(wire > 20 && wire * 3 < solid, "{wire} edge pixels of {solid}");
+}
+
+#[test]
+fn wireframe_width_does_not_change_when_the_near_plane_moves_before_the_mesh() {
+    let view = View3d { pitch: 89.0, yaw: 0.0, wireframe: true, ..plain() };
+    let clipped = View3d { auto_clip: false, near_clip: 100.0, far_clip: 500.0, ..view.clone() };
+    let plane = Scene::new(materialcraft_geom::primitives::plane(2.0, 1));
+
+    let whole = render(&plane, &Maps::default(), &Lighting::new("studio"), &Settings::for_view(&view), 256, 256);
+    let near_clipped = render(&plane, &Maps::default(), &Lighting::new("studio"), &Settings::for_view(&clipped), 256, 256);
+
+    let changed_pixels = near_clipped.as_chunks::<4>().0.iter().zip(whole.as_chunks::<4>().0.iter()).filter(|(near, uncut)| near != uncut).count();
+    assert_eq!(changed_pixels, 0, "moving a near plane before the mesh must keep wire widths");
 }
 
 #[test]
@@ -297,4 +311,31 @@ fn tiling_uv_scale_and_parallax_move_the_texture() {
     let moved = frame("plane", &relief, &slanted);
     let still = frame("plane", &relief, &View3d { technique: HeightTechnique::Tessellation, displacement: false, ..slanted });
     assert!(moved != still, "parallax leaves the picture as it is");
+}
+
+#[test]
+fn parallax_respects_displacement_and_height_channel_switches() {
+    let color = Image::gray(64, 64, |x, _| if x < 32 { 0.0 } else { 1.0 }).to_color();
+    let with_height = Maps { base_color: Some(color.clone()), height: Some(Image::filled(8, 8, Kind::Gray, [1.0; 4])), ..Maps::default() };
+    let without_height = Maps { base_color: Some(color), ..Maps::default() };
+    let view = View3d { shader: Shader::OpenPbr, technique: HeightTechnique::Parallax, height_scale: 0.3, pitch: 35.0, yaw: 60.0, ..plain() };
+
+    assert_ne!(frame("plane", &with_height, &view), frame("plane", &without_height, &view));
+    for disabled_view in [View3d { displacement: false, ..view.clone() }, View3d { disabled: ["height".to_string()].into(), ..view.clone() }] {
+        assert!(
+            frame("plane", &with_height, &disabled_view) == frame("plane", &without_height, &disabled_view),
+            "disabled displacement or height must prevent parallax"
+        );
+    }
+}
+
+#[test]
+fn equivalent_uv_repeats_have_the_same_parallax_offset() {
+    let color = Image::gray(64, 64, |x, _| x as f32 / 63.0).to_color();
+    let maps = Maps { base_color: Some(color), height: Some(Image::filled(8, 8, Kind::Gray, [1.0; 4])), ..Maps::default() };
+    let view = View3d { shader: Shader::OpenPbr, technique: HeightTechnique::Parallax, height_scale: 0.3, pitch: 35.0, yaw: 60.0, ..plain() };
+
+    let tiling = View3d { tiling: 2.0, ..view.clone() };
+    let uv_scale = View3d { uv_scale: [2.0, 2.0], ..view };
+    assert_eq!(frame("plane", &maps, &tiling), frame("plane", &maps, &uv_scale));
 }

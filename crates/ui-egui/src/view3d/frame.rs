@@ -15,7 +15,10 @@ use egui::{ColorImage, Rect, TextureOptions, vec2};
 use materialcraft_engine::View3d;
 use materialcraft_render::{Lighting, Maps, Scene, Settings};
 
+#[cfg(not(target_arch = "wasm32"))]
 use super::frame_job::FrameJob;
+use super::frame_scene::FrameScene;
+#[cfg(not(target_arch = "wasm32"))]
 use super::relief_job::ReliefJob;
 use crate::MaterialCraftApp;
 
@@ -41,6 +44,7 @@ fn next_move_level(level: usize, ms: f32) -> usize {
     if ms > MOVE_BUDGET_MS {
         return level.saturating_sub(1);
     }
+
     if level + 1 < MOVE_LEVELS.len() && ms * move_cost(level + 1) / move_cost(level) < MOVE_BUDGET_MS * 0.9 { level + 1 } else { level }
 }
 
@@ -59,6 +63,7 @@ pub(super) struct Frame {
     height: u32,
     pixels: Vec<u8>,
     milliseconds: f32,
+    scene: FrameScene,
 }
 
 /// The view's size in whole points: part of the content key and of `tex_size`.
@@ -87,19 +92,27 @@ fn fixed_resolution(view: &View3d) -> bool {
 /// Where a frame of the view's own resolution goes in `rect`: as large as fits, centred, with bars
 /// around it. A view that renders at its size on screen fills `rect`
 pub(super) fn frame_area(view: &View3d, rect: Rect) -> Rect {
-    let [width, height] = view.render_resolution.map(|side| side.max(1) as f32);
     if !fixed_resolution(view) || rect.width() <= 0.0 || rect.height() <= 0.0 {
         return rect;
     }
 
+    fitted_frame_area(rect, (view.render_resolution[0], view.render_resolution[1]))
+}
+
+fn fitted_frame_area(rect: Rect, (width, height): (u32, u32)) -> Rect {
+    let (width, height) = (width.max(1) as f32, height.max(1) as f32);
     let scale = (rect.width() / width).min(rect.height() / height);
     Rect::from_center_size(rect.center(), vec2(width * scale, height * scale))
 }
 
 /// Where the texture is drawn in `rect`, and so where the camera's picture is on screen
 pub(super) fn shown_rect(app: &MaterialCraftApp, rect: Rect) -> Rect {
-    let view = &app.session.view3d;
-    if fixed_resolution(view) { frame_area(view, rect) } else { frame_rect(rect, app.view3d.tex_size) }
+    let view = shown_view(app);
+    if fixed_resolution(view) {
+        app.view3d.shown.as_ref().map_or_else(|| frame_area(view, rect), |(width, height, _)| fitted_frame_area(rect, (*width, *height)))
+    } else {
+        frame_rect(rect, app.view3d.tex_size)
+    }
 }
 
 /// The pixels of a resting frame of a view that takes `rect` on screen
@@ -135,7 +148,7 @@ fn content_key(app: &MaterialCraftApp, size: (u32, u32), pixels: (u32, u32), rel
     use std::hash::{DefaultHasher, Hash, Hasher};
 
     let mut hasher = DefaultHasher::new();
-    (size, pixels, app.session.custom_mesh.as_ref().map(|(name, _)| name), relief_shown).hash(&mut hasher);
+    (size, pixels, app.session.custom_mesh.as_ref().map(|(name, _)| (name, app.session.custom_mesh_generation)), relief_shown).hash(&mut hasher);
     serde_json::to_string(&rendered_part(&app.session.rendered_view3d())).unwrap_or_default().hash(&mut hasher);
     app.session.material_key().hash(&mut hasher);
     hasher.finish()
@@ -157,6 +170,7 @@ pub(super) fn render(app: &mut MaterialCraftApp, ctx: &egui::Context, rect: Rect
     if app.view3d.key == Some((key, true)) || (moving && app.view3d.key == Some((key, false))) {
         return;
     }
+
     if moving {
         // As large as keeps the camera following the pointer, with 2×2 rays so edges are not stair-stepped
         let level = app.view3d.move_level.min(MOVE_LEVELS.len() - 1);
@@ -176,9 +190,11 @@ pub(super) fn render(app: &mut MaterialCraftApp, ctx: &egui::Context, rect: Rect
         ctx.request_repaint_after(Duration::from_secs_f64(wait.min(SETTLE)));
         return;
     }
+
     if app.view3d.job.as_ref().is_some_and(|job| job.key == key) {
         return;
     }
+
     start_full(app, ctx, rect, key, size);
 }
 
@@ -189,6 +205,7 @@ fn collect(app: &mut MaterialCraftApp, ctx: &egui::Context, key: u64) {
     if job.key != key {
         return;
     }
+
     match job.rx.try_recv() {
         Ok(Some(frame)) => show_frame(app, ctx, frame, key, true, job.size),
         Ok(None) | Err(TryRecvError::Disconnected) => {}
@@ -200,7 +217,7 @@ fn collect(app: &mut MaterialCraftApp, ctx: &egui::Context, key: u64) {
 pub(super) fn base_scene(app: &mut MaterialCraftApp) -> (String, Arc<Scene>) {
     let view = &app.session.view3d;
     let scene_key = match (&*view.scene, &app.session.custom_mesh) {
-        ("custom", Some((name, _))) => format!("custom:{name}"),
+        ("custom", Some((name, _))) => format!("custom:{name}:{}", app.session.custom_mesh_generation),
         _ => view.scene.clone(),
     };
 
@@ -248,11 +265,16 @@ fn update_relief(app: &mut MaterialCraftApp, ctx: &egui::Context) -> Option<u64>
     let maps = Maps::from_usages(app.session.material_maps());
     let wanted = relief_key(app, &scene_key, &maps);
 
+    // The plain scene shows while a different relief builds, so the old mesh can be released
+    if app.view3d.displaced.as_ref().is_some_and(|(key, _)| Some(*key) != wanted) {
+        app.view3d.displaced = None;
+    }
+
     if let Some(job) = app.view3d.relief_job.take() {
         match job.rx.try_recv() {
             Ok(Some(scene)) if Some(job.key) == wanted => app.view3d.displaced = Some((job.key, scene)),
             Ok(_) | Err(TryRecvError::Disconnected) => {}
-            // The active build finishes first: dropping its receiver cannot cancel it, and rapid edits must not pile up workers
+            // Keep one worker until it finishes; dropping the receiver cannot cancel it
             Err(TryRecvError::Empty) => app.view3d.relief_job = Some(job),
         }
     }
@@ -262,6 +284,7 @@ fn update_relief(app: &mut MaterialCraftApp, ctx: &egui::Context) -> Option<u64>
     if app.view3d.displaced.as_ref().is_some_and(|(key, _)| *key == wanted) {
         return Some(wanted);
     }
+
     if app.view3d.relief_job.is_none() {
         let view = app.session.rendered_view3d();
         start_relief(app, ctx, wanted, base, maps, view);
@@ -295,8 +318,8 @@ fn start_relief(app: &mut MaterialCraftApp, _ctx: &egui::Context, key: u64, base
     app.view3d.displaced = materialcraft_render::raised(&base, &maps, &view, relief_triangles(&view)).map(|scene| (key, Arc::new(scene)));
 }
 
-/// The scene the view shows: the displaced one when it is current, else the plain one
-pub(super) fn shown_scene(app: &mut MaterialCraftApp) -> Arc<Scene> {
+/// The geometry to render next: current relief when available, otherwise the base mesh
+fn requested_scene(app: &mut MaterialCraftApp) -> Arc<Scene> {
     let (scene_key, base) = base_scene(app);
     let maps = Maps::from_usages(app.session.material_maps());
     let wanted = relief_key(app, &scene_key, &maps);
@@ -307,10 +330,27 @@ pub(super) fn shown_scene(app: &mut MaterialCraftApp) -> Arc<Scene> {
     }
 }
 
+/// Export and picking follow the uploaded frame while replacement work is pending
+pub(super) fn shown_scene(app: &mut MaterialCraftApp) -> Arc<Scene> {
+    match &app.view3d.shown_scene {
+        Some(frame) => frame.scene.clone(),
+        None => requested_scene(app),
+    }
+}
+
+/// The camera and render settings used for the uploaded frame
+pub(super) fn shown_view(app: &MaterialCraftApp) -> &View3d {
+    app.view3d.shown_scene.as_ref().map_or(&app.session.view3d, |frame| &frame.view)
+}
+
+pub(super) fn shown_label(app: &MaterialCraftApp) -> String {
+    app.view3d.shown_scene.as_ref().map_or_else(|| super::scene_label(app), |frame| frame.label.clone())
+}
+
 /// The scene, lighting, maps and settings of the current view. A frame drawn while the camera
 /// moves (`resting` false) leaves out the ambient occlusion rays
-fn inputs(app: &mut MaterialCraftApp, supersample: u32, resting: bool) -> Option<(Arc<Scene>, Arc<Lighting>, Maps, Settings)> {
-    let scene = shown_scene(app);
+fn inputs(app: &mut MaterialCraftApp, supersample: u32, resting: bool) -> Option<(FrameScene, Arc<Lighting>, Maps, Settings)> {
+    let scene = requested_scene(app);
     let view = app.session.rendered_view3d();
     if app.view3d.light.as_ref().is_none_or(|light| light.name != view.environment) {
         app.view3d.light = Some(Arc::new(Lighting::new(&view.environment)));
@@ -322,7 +362,7 @@ fn inputs(app: &mut MaterialCraftApp, supersample: u32, resting: bool) -> Option
     }
     let maps = Maps::from_usages(app.session.material_maps());
     let light = app.view3d.light.clone()?;
-    Some((scene, light, maps, settings))
+    Some((FrameScene { scene, view, label: super::scene_label(app) }, light, maps, settings))
 }
 
 /// The pixels of a frame drawn while the camera moves: `scale` of the view's pixels on screen, in
@@ -340,8 +380,8 @@ fn moving_pixels(view: &View3d, rect: Rect, pixels_per_point: f32, scale: f32) -
 fn render_now(app: &mut MaterialCraftApp, (width, height): (u32, u32), supersample: u32, resting: bool) -> Option<Frame> {
     let (scene, light, maps, settings) = inputs(app, supersample, resting)?;
     let started = crate::now_ms();
-    let pixels = materialcraft_render::render(&scene, &maps, &light, &settings, width, height);
-    Some(Frame { width, height, pixels, milliseconds: (crate::now_ms() - started) as f32 })
+    let pixels = materialcraft_render::render(&scene.scene, &maps, &light, &settings, width, height);
+    Some(Frame { width, height, pixels, milliseconds: (crate::now_ms() - started) as f32, scene })
 }
 
 /// Rays per pixel along each side of the view's resting frame
@@ -360,8 +400,8 @@ fn start_full(app: &mut MaterialCraftApp, ctx: &egui::Context, rect: Rect, key: 
     let (stop, repaint, viewport) = (cancel.clone(), ctx.clone(), ctx.viewport_id());
     let spawned = std::thread::Builder::new().name("materialcraft-view3d".into()).spawn(move || {
         let started = crate::now_ms();
-        let rendered = materialcraft_render::render_cancellable(&scene, &maps, &light, &settings, width, height, &stop);
-        let _ = tx.send(rendered.map(|pixels| Frame { width, height, pixels, milliseconds: (crate::now_ms() - started) as f32 }));
+        let rendered = materialcraft_render::render_cancellable(&scene.scene, &maps, &light, &settings, width, height, &stop);
+        let _ = tx.send(rendered.map(|pixels| Frame { width, height, pixels, milliseconds: (crate::now_ms() - started) as f32, scene }));
         repaint.request_repaint_of(viewport);
     });
 
@@ -398,6 +438,7 @@ fn show_frame(app: &mut MaterialCraftApp, ctx: &egui::Context, frame: Frame, key
     state.render_ms = frame.milliseconds;
     state.renders += 1;
     state.shown = Some((frame.width, frame.height, frame.pixels));
+    state.shown_scene = Some(frame.scene);
     state.key = Some((key, full));
     state.tex_size = Some(size);
 }
@@ -406,6 +447,29 @@ fn show_frame(app: &mut MaterialCraftApp, ctx: &egui::Context, frame: Frame, key
 mod tests {
     use super::*;
     use egui::pos2;
+
+    #[test]
+    fn reloading_a_custom_mesh_with_the_same_name_invalidates_scene_and_frame() {
+        let mut app = MaterialCraftApp::headless(materialcraft_engine::sample_session(), crate::UiState::default());
+        let first_mesh = b"v 0 0 0\nv 1 0 0\nv 0 1 0\nf 1 2 3\n";
+        let second_mesh = b"v 0 0 0\nv 2 0 0\nv 0 1 0\nf 1 2 3\n";
+        let size = (64, 48);
+
+        app.session.load_mesh_bytes("same.obj", first_mesh).unwrap();
+        let (first_scene_key, first_scene) = base_scene(&mut app);
+        let first_scene_weak = Arc::downgrade(&first_scene);
+        let first_frame_key = content_key(&app, size, size, None);
+        app.session.load_mesh_bytes("same.obj", second_mesh).unwrap();
+        let (second_scene_key, second_scene) = base_scene(&mut app);
+        let second_frame_key = content_key(&app, size, size, None);
+
+        assert_ne!(first_scene_key, second_scene_key);
+        assert_ne!(first_frame_key, second_frame_key);
+        assert!(!Arc::ptr_eq(&first_scene, &second_scene));
+        assert_ne!(first_scene.mesh.positions, second_scene.mesh.positions);
+        drop(first_scene);
+        assert!(first_scene_weak.upgrade().is_none());
+    }
 
     #[test]
     fn relief_tracks_assigned_height_while_another_graph_is_open() {
@@ -450,13 +514,122 @@ mod tests {
     }
 
     #[test]
+    fn a_pending_relief_change_keeps_the_scene_of_the_displayed_frame() {
+        let mut app = MaterialCraftApp::headless(materialcraft_engine::sample_session(), crate::UiState::default());
+        app.session.preview_size = Some(16);
+        app.session.cook();
+        let (scene_key, _) = base_scene(&mut app);
+        let maps = Maps::from_usages(app.session.material_maps());
+        let old_key = relief_key(&app, &scene_key, &maps).unwrap();
+        let displayed_scene = Arc::new(Scene::builtin("sphere"));
+        let displayed_camera = app.session.view3d.yaw;
+        let displayed_label = super::super::scene_label(&app);
+        app.view3d.displaced = Some((old_key, displayed_scene.clone()));
+        let context = egui::Context::default();
+        let frame = render_now(&mut app, (16, 16), 1, false).unwrap();
+        show_frame(&mut app, &context, frame, 0, true, (16, 16));
+        let (_sender, receiver) = std::sync::mpsc::channel();
+        app.view3d.relief_job = Some(ReliefJob { key: old_key, rx: receiver });
+
+        app.session.view3d.height_scale += 0.001;
+        app.session.view3d.yaw += 90.0;
+        app.session.view3d.scene = "rounded_cube".into();
+        update_relief(&mut app, &context);
+
+        assert!(Arc::ptr_eq(&shown_scene(&mut app), &displayed_scene), "export and picking must use the mesh still visible on screen");
+        assert_eq!(shown_view(&app).yaw, displayed_camera, "picking and overlays must use the displayed camera");
+        assert_eq!(shown_label(&app), displayed_label, "export filenames must describe the displayed mesh");
+    }
+
+    #[test]
+    fn replacing_displayed_frames_releases_each_previous_scene() {
+        let mut app = MaterialCraftApp::headless(materialcraft_engine::sample_session(), crate::UiState::default());
+        app.session.preview_size = Some(16);
+        app.session.cook();
+        let context = egui::Context::default();
+        let mut previous = None;
+        let mut peak_displayed_vertex_bytes = 0;
+        let mut peak_frame_transition_vertex_bytes = 0;
+
+        for index in 0..8 {
+            let (scene_key, _) = base_scene(&mut app);
+            let maps = Maps::from_usages(app.session.material_maps());
+            let key = relief_key(&app, &scene_key, &maps).unwrap();
+            let scene = Arc::new(Scene::builtin(if index % 2 == 0 { "sphere" } else { "rounded_cube" }));
+            let current = Arc::downgrade(&scene);
+            let vertex_bytes = scene.mesh.positions.capacity() * std::mem::size_of::<materialcraft_engine::geom::glam::Vec3>();
+            peak_displayed_vertex_bytes = peak_displayed_vertex_bytes.max(vertex_bytes);
+            app.view3d.displaced = Some((key, scene));
+            let frame = render_now(&mut app, (16, 16), 1, false).unwrap();
+            let previous_vertex_bytes = app
+                .view3d
+                .shown_scene
+                .as_ref()
+                .map_or(0, |frame| frame.scene.mesh.positions.capacity() * std::mem::size_of::<materialcraft_engine::geom::glam::Vec3>());
+            peak_frame_transition_vertex_bytes = peak_frame_transition_vertex_bytes.max(previous_vertex_bytes + vertex_bytes);
+            show_frame(&mut app, &context, frame, key, true, (16, 16));
+
+            app.view3d.displaced = None;
+            app.session.view3d.height_scale += 0.001;
+
+            assert!(current.upgrade().is_some(), "visible geometry must survive until the next uploaded frame");
+            if let Some(old) = previous.replace(current) {
+                assert!(old.upgrade().is_none(), "replacing a displayed frame must release its old geometry");
+            }
+        }
+
+        drop(app);
+        assert!(previous.unwrap().upgrade().is_none(), "view shutdown must release the final displayed scene");
+        println!(
+            "distinct displayed scenes: 8; peak displayed vertex capacity: {peak_displayed_vertex_bytes} bytes; peak displayed plus replacement vertex capacity: {peak_frame_transition_vertex_bytes} bytes; previous scene bytes retained after upload: 0; final scene bytes retained after shutdown: 0"
+        );
+    }
+
+    #[test]
+    fn a_new_relief_key_releases_the_old_displaced_scene_while_the_worker_is_busy() {
+        let mut app = MaterialCraftApp::headless(materialcraft_engine::sample_session(), crate::UiState::default());
+        app.session.cook();
+        let (scene_key, _) = base_scene(&mut app);
+        let maps = Maps::from_usages(app.session.material_maps());
+        let mut senders = Vec::new();
+        let mut largest_old_vertex_buffer = 0;
+        let mut peak_retained_vertex_bytes = 0;
+
+        for index in 0..8 {
+            let old_key = relief_key(&app, &scene_key, &maps).unwrap();
+            let scene = if index % 2 == 0 { "sphere" } else { "rounded_cube" };
+            let old_scene = Arc::new(Scene::builtin(scene));
+            let old_scene_weak = Arc::downgrade(&old_scene);
+            let old_vertex_bytes = old_scene.mesh.positions.capacity() * old_scene.mesh.positions.first().map_or(0, std::mem::size_of_val);
+            largest_old_vertex_buffer = largest_old_vertex_buffer.max(old_vertex_bytes);
+            app.view3d.displaced = Some((old_key, old_scene));
+
+            let (sender, receiver) = std::sync::mpsc::channel();
+            senders.push(sender);
+            app.view3d.relief_job = Some(ReliefJob { key: old_key, rx: receiver });
+            app.session.view3d.height_scale += 0.001;
+            assert_eq!(update_relief(&mut app, &egui::Context::default()), None);
+            assert!(old_scene_weak.upgrade().is_none(), "old relief retained at least {old_vertex_bytes} vertex bytes while the next builds");
+            let current_scene = &app.view3d.scene.as_ref().unwrap().1;
+            let current_vertex_bytes = current_scene.mesh.positions.capacity() * current_scene.mesh.positions.first().map_or(0, std::mem::size_of_val);
+            peak_retained_vertex_bytes = peak_retained_vertex_bytes.max(current_vertex_bytes);
+        }
+
+        println!(
+            "distinct relief scenes: 8; largest old vertex buffer: {largest_old_vertex_buffer} bytes; retained old scene vertex bytes after each new key: 0; peak retained current-scene vertex bytes: {peak_retained_vertex_bytes}"
+        );
+    }
+
+    #[test]
     fn a_frame_for_another_size_keeps_its_proportions() {
         let rect = Rect::from_min_size(pos2(10.0, 20.0), vec2(400.0, 200.0));
         assert_eq!(frame_rect(rect, None), rect);
         assert_eq!(frame_rect(rect, Some((400, 200))), rect);
+
         // Rendered narrower (the view was widened): full height, centred, bars at the sides
         let narrower = frame_rect(rect, Some((300, 200)));
         assert_eq!((narrower.width(), narrower.height(), narrower.center()), (300.0, 200.0, rect.center()));
+
         // A degenerate size never divides by zero
         assert_eq!(frame_rect(rect, Some((300, 0))), rect);
     }
@@ -488,6 +661,26 @@ mod resolution_tests {
         // A frame drawn while the camera moves is no larger than the view shows it
         assert_eq!(moving_pixels(&fixed, rect, 1.0, 0.5), (200, 112));
         assert_eq!(moving_pixels(&View3d::default(), rect, 1.0, 0.5), (200, 200));
+    }
+
+    #[test]
+    fn a_retained_fixed_resolution_frame_keeps_its_uploaded_aspect() {
+        let mut app = MaterialCraftApp::headless(materialcraft_engine::sample_session(), crate::UiState::default());
+        let rect = Rect::from_min_size(pos2(0.0, 0.0), vec2(400.0, 400.0));
+        app.session.view3d.override_resolution = true;
+        app.session.view3d.viewport_resolution = false;
+        app.session.view3d.render_resolution = [1080, 1920];
+        let context = egui::Context::default();
+        let scene = FrameScene { scene: Arc::new(Scene::builtin("rounded_cube")), view: app.session.view3d.clone(), label: "Rounded cube".into() };
+        show_frame(&mut app, &context, Frame { width: 16, height: 9, pixels: vec![0; 16 * 9 * 4], milliseconds: 0.0, scene }, 1, true, (400, 400));
+
+        let retained = shown_rect(&app, rect);
+        assert_eq!((retained.width(), retained.height()), (400.0, 225.0));
+
+        let scene = FrameScene { scene: Arc::new(Scene::builtin("rounded_cube")), view: app.session.view3d.clone(), label: "Rounded cube".into() };
+        show_frame(&mut app, &context, Frame { width: 9, height: 16, pixels: vec![0; 9 * 16 * 4], milliseconds: 0.0, scene }, 2, true, (400, 400));
+        let replacement = shown_rect(&app, rect);
+        assert_eq!((replacement.width(), replacement.height()), (225.0, 400.0));
     }
 
     #[test]

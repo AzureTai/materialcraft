@@ -17,7 +17,7 @@ pub(super) fn edges(app: &mut MaterialCraftApp) -> Arc<Vec<[Pos2; 2]>> {
     let scene = app.session.view3d.scene.clone();
     let custom = app.session.custom_mesh.as_ref().filter(|_| scene == "custom");
     let key = match custom {
-        Some((name, mesh)) => format!("custom:{name}:{}", mesh.indices.len()),
+        Some((name, _)) => format!("custom:{name}:{}", app.session.custom_mesh_generation),
         None => scene.clone(),
     };
     if let Some((cached, edges)) = &app.view2d.uv_edges
@@ -45,7 +45,7 @@ fn triangle_edges(uv: impl Fn(usize) -> Option<[f32; 2]>, indices: &[u32]) -> Ve
     let mut seen = HashSet::new();
     let mut edges = Vec::new();
 
-    for triangle in indices.chunks_exact(3).step_by(stride) {
+    for triangle in indices.as_chunks::<3>().0.iter().step_by(stride) {
         for (from, to) in [(triangle[0], triangle[1]), (triangle[1], triangle[2]), (triangle[2], triangle[0])] {
             let (Some(start), Some(end)) = (corner(from), corner(to)) else { continue };
 
@@ -72,6 +72,24 @@ pub(super) fn paint(painter: &Painter, edges: &[[Pos2; 2]], tile: Rect, clip: Re
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn reloading_a_mesh_with_new_uvs_rebuilds_the_overlay() {
+        let mut app = MaterialCraftApp::headless(materialcraft_engine::new_session(), crate::UiState::default());
+        let first = b"v 0 0 0\nv 1 0 0\nv 0 1 0\nvt 0 0\nvt 1 0\nvt 0 1\nf 1/1 2/2 3/3\n";
+        let second = b"v 0 0 0\nv 1 0 0\nv 0 1 0\nvt 0 0\nvt 0.5 0\nvt 0 0.5\nf 1/1 2/2 3/3\n";
+
+        app.session.load_mesh_bytes("same.obj", first).unwrap();
+        let old_edges = edges(&mut app);
+        let old_edges_weak = Arc::downgrade(&old_edges);
+        app.session.load_mesh_bytes("same.obj", second).unwrap();
+        let new_edges = edges(&mut app);
+
+        assert!(!Arc::ptr_eq(&old_edges, &new_edges));
+        assert_ne!(*old_edges, *new_edges);
+        drop(old_edges);
+        assert!(old_edges_weak.upgrade().is_none());
+    }
 
     #[test]
     fn a_shared_edge_is_listed_once_and_bad_corners_are_left_out() {

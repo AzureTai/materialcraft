@@ -282,16 +282,20 @@ fn material(app: &mut MaterialCraftApp, ui: &mut Ui) {
     ui.add_space(4.0);
 
     section(ui, "view3d-uvs", tr("UVs"), |ui| {
-        slider(app, ui, "Tiling", "tiling", view.tiling, *View3d::REPEATS.start()..=TILING_SLIDER_LIMIT.max(view.tiling), 2);
+        let mut tiling = view.tiling;
+        let track = *View3d::REPEATS.start()..=TILING_SLIDER_LIMIT.max(tiling);
+        if crate::widgets::slider_with_numeric_range(ui, tr("Tiling"), &mut tiling, track, View3d::REPEATS, 2).changed() {
+            set(app, "tiling", tiling);
+        }
         checkbox(app, ui, "Enable physical size from graph", "physicalSize", view.physical_size);
 
         let [across, down] = view.uv_scale;
         let range = |value: f32| *View3d::REPEATS.start()..=TILING_SLIDER_LIMIT.max(value);
         let (mut new_across, mut new_down) = (across, down);
-        if crate::widgets::slider(ui, tr("UV scale U"), &mut new_across, range(across), 2).changed() {
+        if crate::widgets::slider_with_numeric_range(ui, tr("UV scale U"), &mut new_across, range(across), View3d::REPEATS, 2).changed() {
             set(app, "uvScale", json!([new_across, down]));
         }
-        if crate::widgets::slider(ui, tr("UV scale V"), &mut new_down, range(down), 2).changed() {
+        if crate::widgets::slider_with_numeric_range(ui, tr("UV scale V"), &mut new_down, range(down), View3d::REPEATS, 2).changed() {
             set(app, "uvScale", json!([across, new_down]));
         }
     });

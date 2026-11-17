@@ -77,7 +77,9 @@ impl MaterialCraftApp {
         #[cfg(not(target_arch = "wasm32"))]
         {
             app.dialogs = crate::native_dialogs::attached(&cc.egui_ctx);
+            app.thumbs.enable_persistence(app.ui.prefs.library_cache);
         }
+
         app
     }
 
@@ -122,7 +124,7 @@ impl MaterialCraftApp {
             #[cfg(not(target_arch = "wasm32"))]
             window_layout: None,
             keymap: menus::keymap(craft_keymap::Platform::current()),
-            // The desktop sends Copy, Cut and Paste events in place of their key presses and the web sends both: the option lets them run their commands
+            // Accept clipboard events without duplicating web key commands
             dispatcher: craft_keymap::egui::Dispatcher::new().with_repeat(true).with_clipboard_events(true),
             system_clipboard: None,
             fonts: fonts::UiFonts::default(),
@@ -143,6 +145,11 @@ impl MaterialCraftApp {
 
     /// Push application preferences into the session
     pub fn apply_prefs(&mut self) {
+        self.ui.prefs.library_cache = self.ui.prefs.library_cache.sanitized();
+        if self.session.library_cache_prefs != self.ui.prefs.library_cache {
+            let _ = materialcraft_engine::execute(&mut self.session, "library.cache.configure", &serde_json::json!(self.ui.prefs.library_cache));
+        }
+        self.thumbs.configure_cache(self.ui.prefs.library_cache, self.session.library_cache_clear_epoch);
         self.ui.prefs.history = self.ui.prefs.history.sanitized();
         if self.session.history_prefs != self.ui.prefs.history {
             let _ = materialcraft_engine::execute(&mut self.session, "session.history", &serde_json::json!(self.ui.prefs.history));
@@ -153,7 +160,11 @@ impl MaterialCraftApp {
         }
 
         // A saved default is a file like any other: its numbers are put in range before use
-        let default_view = self.ui.prefs.default_view3d.clone().map(materialcraft_engine::View3d::sanitized);
+        let default_view = self.ui.prefs.default_view3d.clone().map(|view| {
+            let mut view = view.sanitized();
+            view.target = self.session.camera.clamp_target(view.target);
+            view
+        });
         if self.session.default_view3d != default_view {
             self.session.default_view3d = default_view;
         }
@@ -180,6 +191,7 @@ impl MaterialCraftApp {
                 }
             }
         }
+
         if id.starts_with("file.")
             || id.starts_with("package.")
             || matches!(id, "graph.open" | "graph.delete" | "graph.duplicate" | "folder.remove" | "explorer.paste" | "edit.undo" | "edit.redo")
@@ -225,6 +237,7 @@ impl MaterialCraftApp {
                 {
                     self.system_clipboard = Some(clip.to_string());
                 }
+
                 if matches!(id, "graph.pin.add" | "library.add")
                     && let Some(materialcraft_engine::AnnotationSelection::Pin(pin)) = self.session.annotation_selection
                 {
@@ -233,12 +246,20 @@ impl MaterialCraftApp {
                     self.inspected_graph = None;
                     self.ui.dock.focus(docking::Panel::Properties);
                 }
+
                 if id == "view.previewSize" {
                     self.ui.prefs.preview_size = self.session.preview_size.unwrap_or(0);
+                }
+                if id == "view.3d.saveDefault" {
+                    self.ui.prefs.default_view3d = self.session.default_view3d.clone();
+                }
+                if id == "library.cache.configure" {
+                    self.ui.prefs.library_cache = self.session.library_cache_prefs;
                 }
                 if id == "session.history" {
                     self.ui.prefs.history = self.session.history_prefs;
                 }
+
                 self.close_subgraph_after(id);
                 if id == "graph.node.function.edit"
                     && let Ok(target) = serde_json::from_value::<materialcraft_engine::FunctionGraphTarget>(v["target"].clone())
@@ -252,9 +273,11 @@ impl MaterialCraftApp {
                         crate::graph::subgraph_navigation::open_function(self, node, target);
                     }
                 }
+
                 if matches!(id, "view.3d.assign" | "view.3d.outputs") {
                     self.ui.dock.focus(docking::Panel::View3d);
                 }
+
                 Some(v)
             }
             Err(e) => {
@@ -307,6 +330,7 @@ impl MaterialCraftApp {
         if self.pattern_editor.as_ref().is_some_and(|editor| editor.current(self).is_none()) {
             self.pattern_editor = None;
         }
+        crate::view3d::clear_stale_inspection(self);
     }
 
     pub fn toast(&mut self, text: impl Into<String>, error: bool) {
@@ -397,6 +421,7 @@ impl MaterialCraftApp {
             ctx.request_repaint();
             return;
         }
+
         i18n::set_language(&self.ui.prefs.language);
         self.fonts.update(ctx, &self.ui.prefs.language, self.ui.windows.preferences);
         let now = ctx.input(|i| i.time);
@@ -410,13 +435,16 @@ impl MaterialCraftApp {
             theme::apply(ctx, style.0, style.1);
             self.styled = Some(style);
         }
+
         let scale = self.ui.prefs.ui_scale.clamp(0.5, 3.0);
         if (ctx.zoom_factor() - scale).abs() > 1e-3 && !ctx.input(|input| input.pointer.any_down()) {
             ctx.set_zoom_factor(scale);
         }
+
         if ctx.input(|input| input.pointer.any_pressed()) {
             self.session.finish_edit();
         }
+
         crate::unsaved::handle_close(self, ctx);
         control::poll(self, ctx);
         web_files::poll(self);
@@ -427,6 +455,7 @@ impl MaterialCraftApp {
                 web_files::dropped(self, ctx, &f);
             }
         }
+
         self.apply_prefs();
         cook::drive(self, ctx);
         #[cfg(not(target_arch = "wasm32"))]
@@ -456,8 +485,10 @@ impl MaterialCraftApp {
             self.fonts_ready = true;
             return;
         }
+
         let ctx = ui.ctx().clone();
         let t0 = now_ms();
+
         // Tab can focus a menu or toolbar button while drawing; preserve keyboard ownership
         self.graph.keyboard_was_focused = ctx.egui_wants_keyboard_input();
         menus::menu_bar(self, ui);
@@ -470,6 +501,7 @@ impl MaterialCraftApp {
         if self.window_layout.is_some() {
             crate::window_controls::resize_zones(ui);
         }
+
         let gesture_active = ctx.input(|input| input.pointer.any_down()) || ctx.egui_wants_keyboard_input();
         if !gesture_active && (self.ui_gesture_active || ctx.input(|input| input.pointer.any_released())) {
             self.session.finish_edit();

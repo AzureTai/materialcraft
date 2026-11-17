@@ -8,7 +8,8 @@ fn rejected_2d_settings_leave_the_view_unchanged() {
     let b = execute(&mut s, "graph.node.add", &json!({"def": "channels_shuffle"})).unwrap()["id"].as_u64().unwrap();
     execute(&mut s, "view.2d", &json!({"node": a, "port": 1, "channel": "g"})).unwrap();
     let before = s.view2d.clone();
-    // A bad channel used to leave all the preceding fields changed despite returning an error.
+
+    // A bad channel used to leave all the preceding fields changed despite returning an error
     assert!(execute(&mut s, "view.2d", &json!({"node": b, "port": 2, "tiled": true, "histogram": true, "channel": "invalid"})).is_err());
     assert_eq!(s.view2d, before);
     assert!(execute(&mut s, "view.2d", &json!({"node": u64::MAX, "channel": "b", "tiled": true})).is_err());
@@ -21,7 +22,8 @@ fn rejected_3d_settings_leave_the_view_unchanged() {
     let mut s = new_session();
     execute(&mut s, "view.3d", &json!({"scene": "sphere", "environment": "sunset", "yaw": 70})).unwrap();
     let before = s.view3d.clone();
-    // A valid scene must not be applied when another setting in the request is rejected.
+
+    // A valid scene must not be applied when another setting in the request is rejected
     for params in [
         json!({"scene": "cube", "environment": "invalid", "yaw": 10}),
         json!({"scene": "invalid", "environment": "studio"}),
@@ -111,6 +113,7 @@ fn a_rejected_2d_display_setting_changes_nothing() {
     for rejected in [
         json!({"srgb": false, "histogramChannel": "cyan"}),
         json!({"tiled": true, "histogramBits": 12}),
+        json!({"tiled": true, "histogramBits": "16"}),
         json!({"uv": true, "sampler": [0.5]}),
         json!({"uv": true, "sampler": "center"}),
         json!({"uv": true, "sampler": [0.5, "half"]}),
@@ -236,8 +239,12 @@ fn a_rejected_3d_view_setting_changes_nothing() {
         json!({"wireframe": true, "colorSpace": "rec2020"}),
         json!({"wireframe": true, "renderScale": 75}),
         json!({"wireframe": true, "backgroundColor": [0.1, 0.2]}),
+        json!({"wireframe": true, "backgroundColor": [0.1, "invalid", 0.2, 0.3]}),
+        json!({"wireframe": true, "target": [1.0, "invalid", 2.0, 3.0]}),
         json!({"wireframe": true, "uvScale": "double"}),
+        json!({"wireframe": true, "uvScale": [2.0, "invalid", 3.0]}),
         json!({"wireframe": true, "renderResolution": [1920]}),
+        json!({"wireframe": true, "renderResolution": [1920, "invalid", 1080]}),
         json!({"wireframe": true, "ambient": true}),
         json!({"wireframe": true, "light1": {"color": [1.0]}}),
         json!({"wireframe": true, "material": {"noSuchParameter": 1.0}}),
@@ -265,6 +272,10 @@ fn the_camera_commands_turn_frame_and_reset_the_camera() {
     let framed = execute(&mut session, "view.3d.frame", &json!({})).unwrap()["distance"].as_f64().unwrap();
     execute(&mut session, "view.3d", &json!({"focalLength": 35.0})).unwrap();
     assert!(execute(&mut session, "view.3d.frame", &json!({})).unwrap()["distance"].as_f64().unwrap() < framed);
+
+    let square_distance = session.view3d.distance;
+    let portrait_distance = execute(&mut session, "view.3d.frame", &json!({"aspect": 0.5})).unwrap()["distance"].as_f64().unwrap();
+    assert!(portrait_distance > f64::from(square_distance), "a narrow viewport needs more distance to fit the mesh");
 
     execute(&mut session, "view.3d", &json!({"focalLength": 70.0, "yaw": 200.0})).unwrap();
     let position = execute(&mut session, "view.3d.resetCamera", &json!({})).unwrap();
@@ -367,4 +378,21 @@ fn the_physical_size_of_the_graph_sizes_the_material_on_the_mesh() {
 
     execute(&mut session, "view.3d", &json!({"physicalSize": false})).unwrap();
     assert_eq!(session.rendered_view3d().uv_scale, [2.0, 1.0]);
+}
+
+#[cfg(unix)]
+#[test]
+fn view_file_commands_reject_a_named_pipe_without_waiting_for_a_writer() {
+    let path = std::env::temp_dir().join(format!("materialcraft-view-fifo-{}", std::process::id()));
+    let status = std::process::Command::new("mkfifo").arg(&path).status().unwrap();
+    assert!(status.success());
+
+    let mut session = new_session();
+    let path_text = path.to_string_lossy();
+    for command in ["view.3d.loadState", "view.3d.loadMesh"] {
+        let result = execute(&mut session, command, &json!({"path": path_text}));
+        assert!(result.is_err(), "{command} accepted a named pipe");
+    }
+
+    std::fs::remove_file(path).unwrap();
 }

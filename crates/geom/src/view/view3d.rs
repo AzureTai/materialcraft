@@ -129,7 +129,14 @@ impl View3d {
 
     /// The camera distance (mesh radii) at which the whole mesh is in view
     pub fn framing_distance(&self) -> f32 {
+        self.framing_distance_for_aspect(1.0)
+    }
+
+    /// Camera distance that fits the mesh in a viewport of `width / height`
+    pub fn framing_distance_for_aspect(&self, aspect: f32) -> f32 {
         let half_angle = (self.vertical_fov().clamp(5.0, 150.0) * 0.5).to_radians();
+        let aspect = if aspect.is_finite() && aspect > 0.0 { aspect.min(1.0) } else { 1.0 };
+        let half_angle = (half_angle.tan() * aspect).atan();
         (View3d::FRAMING_MARGIN / half_angle.sin()).clamp(*View3d::DISTANCE.start(), *View3d::DISTANCE.end())
     }
 
@@ -279,7 +286,7 @@ impl Default for View3d {
             exposure: 0.0,
             height_scale: 0.04,
             height_level: 0.0,
-            normal_y_flip: false,
+            normal_y_flip: true,
             show_axis: false,
             show_grid: false,
             transparency: true,

@@ -17,7 +17,7 @@ pub(super) fn copy_render(app: &mut MaterialCraftApp, context: &egui::Context) {
 pub(super) fn save_render(app: &mut MaterialCraftApp) {
     let Some(frame) = app.view3d.shown.clone() else { return };
 
-    let name = format!("{}.png", materialcraft_engine::formats::safe_file_name(&super::scene_label(app)));
+    let name = format!("{}.png", materialcraft_engine::formats::safe_file_name(&super::frame::shown_label(app)));
     let dialog = craft_dialogs::FileDialog::save().file_name(name).filter("PNG", &["png"]);
     crate::native_dialogs::ask(app, dialog, crate::native_dialogs::Then::SaveRender(Box::new(frame)));
 }
@@ -32,7 +32,7 @@ pub(super) fn save_render(app: &mut MaterialCraftApp) {
 #[cfg(not(target_arch = "wasm32"))]
 pub(super) fn export_geometry(app: &mut MaterialCraftApp) {
     let mesh = super::frame::shown_scene(app).mesh.clone();
-    let name = format!("{}.obj", materialcraft_engine::formats::safe_file_name(&super::scene_label(app)));
+    let name = format!("{}.obj", materialcraft_engine::formats::safe_file_name(&super::frame::shown_label(app)));
     let dialog = craft_dialogs::FileDialog::save().file_name(name).filter("Wavefront OBJ", &["obj"]);
     crate::native_dialogs::ask(app, dialog, crate::native_dialogs::Then::ExportGeometry(mesh));
 }

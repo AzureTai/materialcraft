@@ -4,6 +4,7 @@ use egui::TextureHandle;
 use materialcraft_render::{Lighting, Scene};
 
 use super::frame_job::FrameJob;
+use super::frame_scene::FrameScene;
 use super::overlay::Overlay;
 use super::relief_job::ReliefJob;
 use super::{Subject, Tool};
@@ -33,6 +34,8 @@ pub struct View3dState {
     pub renders: u64,
     /// The last frame shown (RGBA8, for `view.screenshot`)
     pub shown: Option<(u32, u32, Vec<u8>)>,
+    /// The scene and camera that produced the displayed pixels
+    pub(super) shown_scene: Option<FrameScene>,
     /// Index of the quality level of the last moving frame
     pub(super) move_level: usize,
     pub tool: Tool,

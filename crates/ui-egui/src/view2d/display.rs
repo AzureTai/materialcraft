@@ -10,16 +10,16 @@ pub(super) fn display_pixels(image: &Image, view: &View2d) -> Vec<u8> {
 
     if !view.srgb {
         let encoded = encoded_levels();
-        for pixel in pixels.chunks_exact_mut(4) {
+        for pixel in pixels.as_chunks_mut::<4>().0 {
             for value in pixel.iter_mut().take(3) {
                 *value = encoded[usize::from(*value)];
             }
         }
     }
 
-    let Some(channel) = isolated_channel(&view.channel).filter(|_| image.kind == Kind::Color) else { return pixels };
+    let Some(channel) = isolated_channel(&view.channel).filter(|_| image.kind() == Kind::Color) else { return pixels };
 
-    for pixel in pixels.chunks_exact_mut(4) {
+    for pixel in pixels.as_chunks_mut::<4>().0 {
         let value = pixel[channel];
         pixel.copy_from_slice(&[value, value, value, u8::MAX]);
     }

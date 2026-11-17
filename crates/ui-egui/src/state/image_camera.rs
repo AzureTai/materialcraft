@@ -50,6 +50,7 @@ mod tests {
 
         assert_eq!(zoomed.zoom, ImageCamera::STEP);
         assert!(!zoomed.fit, "zooming leaves the fitted view");
+
         // The image point under the anchor is the same before and after
         let before = [(50.0 - camera.offset[0]) / camera.zoom, (30.0 - camera.offset[1]) / camera.zoom];
         let after = [(50.0 - zoomed.offset[0]) / zoomed.zoom, (30.0 - zoomed.offset[1]) / zoomed.zoom];

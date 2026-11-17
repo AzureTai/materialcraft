@@ -71,7 +71,7 @@ impl Look {
         Look {
             shader: view.shader,
             mesh_info: view.mesh_info,
-            parallax: view.shader.shows_height() && view.technique == HeightTechnique::Parallax,
+            parallax: view.displacement && view.uses("height") && view.shader.shows_height() && view.technique == HeightTechnique::Parallax,
             base_weight: number("baseWeight"),
             base_color: color("baseColor"),
             metalness: number("baseMetalness"),
@@ -130,9 +130,11 @@ fn value(view: &View3d, id: &str) -> MaterialValue {
     if !parameter.applies_to(view.shader) {
         return parameter.kind.default();
     }
+
     if view.disabled.contains(id) {
         return absent(parameter);
     }
+
     view.value(id).unwrap_or_else(|| parameter.kind.default())
 }
 

@@ -51,7 +51,12 @@ pub(super) fn show(app: &mut MaterialCraftApp, ui: &mut Ui, shown: Option<&Shown
             egui::FontId::proportional(12.0),
             tokens.viewport_text,
         );
+        app.view2d.texture = None;
+        app.view2d.shown = None;
+        app.view2d.histogram = None;
+        app.view2d.image_size = None;
         app.view2d.hover = None;
+        app.view2d.histogram_drag = None;
         return;
     };
 
@@ -70,6 +75,7 @@ pub(super) fn show(app: &mut MaterialCraftApp, ui: &mut Ui, shown: Option<&Shown
     keys(app, ui, &response);
 
     let view = app.session.view2d.clone();
+
     // The readout keeps the last pixel the pointer was over
     if let Some(fraction) = response.hover_pos().and_then(|pointer| fraction_under(pointer, tile, view.tiled)) {
         app.view2d.hover = Some(pixel(&shown.image, fraction));
@@ -108,7 +114,7 @@ pub(super) fn show(app: &mut MaterialCraftApp, ui: &mut Ui, shown: Option<&Shown
 /// The size, kind and bit depth of the image, on a dark backing so it reads over any image
 fn size_line(painter: &Painter, rect: Rect, shown: &Shown, color: Color32) {
     let kind = if shown.image.is_gray() { tr("Grayscale") } else { "RGBA" };
-    let line = format!("{} x {} ({kind}, {}bpc)", shown.image.w, shown.image.h, shown.bits);
+    let line = format!("{} x {} ({kind}, {}bpc)", shown.image.width(), shown.image.height(), shown.bits);
     let text = painter.layout_no_wrap(line, egui::FontId::proportional(SIZE_LINE_TEXT), color);
     let corner = rect.left_bottom() + vec2(SIZE_LINE_MARGIN, -SIZE_LINE_MARGIN - text.size().y);
 
@@ -128,11 +134,11 @@ fn tool_strip(ui: &mut Ui, strip: Rect) {
 /// Update the camera from this frame's input and return where the image sits on screen
 fn place(app: &mut MaterialCraftApp, ui: &Ui, response: &Response, rect: Rect, shown: &Shown) -> Rect {
     let (maintain_zoom, sampling) = (app.session.view2d.maintain_zoom, app.session.view2d.information);
-    let size = vec2(shown.image.w as f32 * physical_stretch(app, &shown.image), shown.image.h as f32);
+    let size = vec2(shown.image.width() as f32 * physical_stretch(app, &shown.image), shown.image.height() as f32);
     let mut camera = app.ui.image_camera.sanitized();
 
     // Without the zoom lock a new image size keeps the image as large on screen as the last one
-    let current = [shown.image.w, shown.image.h];
+    let current = [shown.image.width(), shown.image.height()];
     if let Some(previous) = app.view2d.image_size.replace(current)
         && previous != current
         && !maintain_zoom
@@ -143,7 +149,8 @@ fn place(app: &mut MaterialCraftApp, ui: &Ui, response: &Response, rect: Rect, s
     }
 
     if camera.fit {
-        camera.zoom = (rect.width() / size.x).min(rect.height() / size.y).clamp(ImageCamera::ZOOM.0, ImageCamera::ZOOM.1);
+        let fit = (rect.width() / size.x).min(rect.height() / size.y);
+        camera.zoom = if fit.is_finite() && fit > 0.0 { fit } else { ImageCamera::ZOOM.0 };
         camera.offset = [0.0, 0.0];
     }
 
@@ -175,7 +182,7 @@ fn physical_stretch(app: &MaterialCraftApp, image: &Image) -> f32 {
     }
 
     let Ok(graph) = app.session.graph() else { return 1.0 };
-    stretch_for(graph.physical_size, [image.w, image.h])
+    stretch_for(graph.physical_size, [image.width(), image.height()])
 }
 
 /// The width factor that gives a `pixels` sized image the proportions of `physical`; 1 without a physical size
@@ -226,13 +233,13 @@ fn texture(app: &mut MaterialCraftApp, context: &egui::Context, shown: &Shown) -
     // The source pixels stay whole for the readout and screenshots; the upload respects the renderer's limit
     let image = &shown.image;
     let pixels = super::display::display_pixels(image, view);
-    let (size, upload) = if image.w.max(image.h) as usize > limit {
-        let scale = limit as f64 / f64::from(image.w.max(image.h));
+    let (size, upload) = if image.width().max(image.height()) as usize > limit {
+        let scale = limit as f64 / f64::from(image.width().max(image.height()));
         let side = |pixels: u32| (f64::from(pixels) * scale).floor().max(1.0) as u32;
-        let smaller = image.resize(side(image.w), side(image.h), false);
-        ([smaller.w as usize, smaller.h as usize], Cow::Owned(super::display::display_pixels(&smaller, view)))
+        let smaller = image.resize(side(image.width()), side(image.height()), false);
+        ([smaller.width() as usize, smaller.height() as usize], Cow::Owned(super::display::display_pixels(&smaller, view)))
     } else {
-        ([image.w as usize, image.h as usize], Cow::Borrowed(&pixels))
+        ([image.width() as usize, image.height() as usize], Cow::Borrowed(&pixels))
     };
     let color_image = if view.premultiplied { ColorImage::from_rgba_premultiplied(size, &upload) } else { ColorImage::from_rgba_unmultiplied(size, &upload) };
     let options = TextureOptions {
@@ -245,7 +252,7 @@ fn texture(app: &mut MaterialCraftApp, context: &egui::Context, shown: &Shown) -
     let texture = context.load_texture("view2d", color_image, options);
     let id = texture.id();
     app.view2d.texture = Some((key, texture));
-    app.view2d.shown = Some((image.w, image.h, pixels));
+    app.view2d.shown = Some((image.width(), image.height(), pixels));
     id
 }
 
@@ -319,7 +326,7 @@ fn fraction_under(pointer: Pos2, tile: Rect, tiled: bool) -> Option<[f32; 2]> {
 /// The pixel at a position given as fractions of the image
 fn pixel(image: &Image, fraction: [f32; 2]) -> [u32; 2] {
     let along = |fraction: f32, side: u32| ((fraction.clamp(0.0, 1.0) * side as f32) as u32).min(side.saturating_sub(1));
-    [along(fraction[0], image.w), along(fraction[1], image.h)]
+    [along(fraction[0], image.width()), along(fraction[1], image.height())]
 }
 
 /// The texture of the background image, read again when another file is chosen
@@ -352,15 +359,15 @@ fn load_background(context: &egui::Context, path: &str) -> Result<TextureHandle,
     let bytes = std::fs::read(path).map_err(|error| error.to_string())?;
     let image = materialcraft_engine::formats::decode(&bytes, false).map_err(|error| error.to_string())?;
     let limit = context.input(|input| input.max_texture_side).max(1);
-    let image = if image.w.max(image.h) as usize > limit {
-        let scale = limit as f64 / f64::from(image.w.max(image.h));
+    let image = if image.width().max(image.height()) as usize > limit {
+        let scale = limit as f64 / f64::from(image.width().max(image.height()));
         let side = |pixels: u32| (f64::from(pixels) * scale).floor().max(1.0) as u32;
-        image.resize(side(image.w), side(image.h), false)
+        image.resize(side(image.width()), side(image.height()), false)
     } else {
         image
     };
 
-    let pixels = ColorImage::from_rgba_unmultiplied([image.w as usize, image.h as usize], &image.to_rgba8_display());
+    let pixels = ColorImage::from_rgba_unmultiplied([image.width() as usize, image.height() as usize], &image.to_rgba8_display());
     Ok(context.load_texture("view2d-background", pixels, TextureOptions::LINEAR))
 }
 
@@ -372,6 +379,61 @@ fn load_background(_: &egui::Context, _: &str) -> Result<TextureHandle, String> 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use materialcraft_engine::core::NodeId;
+
+    #[test]
+    fn an_empty_view_releases_the_previous_image_and_screenshot() {
+        let context = egui::Context::default();
+        let mut app = MaterialCraftApp::headless(materialcraft_engine::new_session(), crate::UiState::default());
+        let mut peak_screenshot_bytes = 0;
+
+        for index in 0..8 {
+            let image = Image::filled(2048, 64, materialcraft_engine::image::Kind::Color, [index as f32 / 8.0; 4]);
+            let shown = Shown { node: NodeId(0), image, key: index + 1, levels: None, bits: "32" };
+            let texture_id = texture(&mut app, &context, &shown);
+            peak_screenshot_bytes = peak_screenshot_bytes.max(app.view2d.shown.as_ref().unwrap().2.capacity());
+
+            context.run_ui(egui::RawInput::default(), |ui| show(&mut app, ui, None, 100.0)).textures_delta.clear();
+
+            assert!(app.view2d.shown.is_none(), "an empty view must not return an obsolete screenshot");
+            assert!(app.view2d.texture.is_none());
+            assert!(context.tex_manager().read().meta(texture_id).is_none(), "deleting the displayed image must release its texture");
+        }
+
+        println!(
+            "distinct empty-view transitions: 8; peak screenshot capacity before deletion: {peak_screenshot_bytes} bytes; retained screenshot bytes after deletion: 0"
+        );
+    }
+
+    #[test]
+    fn distinct_images_release_the_previous_texture_and_bound_the_screenshot_buffer() {
+        let context = egui::Context::default();
+        context.begin_pass(egui::RawInput { max_texture_side: Some(1024), ..Default::default() });
+        let mut app = MaterialCraftApp::headless(materialcraft_engine::new_session(), crate::UiState::default());
+        let mut previous_texture = None;
+        let mut peak_retained_screenshot_bytes = 0;
+
+        for index in 0..8 {
+            let image = Image::filled(2048, 64, materialcraft_engine::image::Kind::Color, [index as f32 / 8.0; 4]);
+            let shown = Shown { node: NodeId(0), image, key: index + 1, levels: None, bits: "32" };
+            let texture_id = texture(&mut app, &context, &shown);
+            assert_eq!(app.view2d.texture.as_ref().unwrap().1.size(), [1024, 32]);
+            if let Some(previous) = previous_texture.replace(texture_id) {
+                assert!(context.tex_manager().read().meta(previous).is_none(), "an earlier image texture stayed alive");
+            }
+            let retained = app.view2d.shown.as_ref().unwrap().2.capacity();
+            peak_retained_screenshot_bytes = peak_retained_screenshot_bytes.max(retained);
+            assert_eq!(app.view2d.shown.as_ref().unwrap().2.len(), 2048 * 64 * 4);
+        }
+
+        println!("distinct images: 8; upload resizes: 8; peak retained screenshot capacity: {peak_retained_screenshot_bytes} bytes");
+        assert!(peak_retained_screenshot_bytes <= 2048 * 64 * 4);
+        let last_texture = previous_texture.unwrap();
+        drop(app);
+        assert!(context.tex_manager().read().meta(last_texture).is_none(), "the last texture survived view shutdown");
+        let mut deltas = context.end_pass().textures_delta;
+        deltas.clear();
+    }
 
     #[test]
     fn a_pointer_reads_the_image_under_it_and_every_repeat_when_tiled() {

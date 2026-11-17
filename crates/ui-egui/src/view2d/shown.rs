@@ -27,8 +27,8 @@ impl Shown {
         };
         // The cooked key alone does not name the size or the port
         let key = result.map_or(0, |result| result.key)
-            ^ u64::from(image.w).rotate_left(16)
-            ^ u64::from(image.h)
+            ^ u64::from(image.width()).rotate_left(16)
+            ^ u64::from(image.height())
             ^ (app.session.view2d.port as u64).wrapping_mul(0x9e37);
 
         Some(Shown { node, image: image.clone(), key, levels, bits: format.bits() })

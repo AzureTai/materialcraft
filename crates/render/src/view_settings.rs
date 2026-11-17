@@ -133,7 +133,7 @@ mod tests {
 
     #[test]
     fn a_switched_off_normal_map_leaves_the_relief_to_shade_itself() {
-        use materialcraft_image::Image;
+        use craft_texture::Image;
 
         let scene = Scene::new(materialcraft_geom::primitives::plane(2.0, 1));
         let slope = Image::gray(8, 8, |x, _| x as f32 / 7.0);

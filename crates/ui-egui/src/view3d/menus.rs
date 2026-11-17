@@ -186,7 +186,10 @@ fn shader_item(app: &mut MaterialCraftApp, ui: &mut Ui, shader: Shader) {
 fn camera(app: &mut MaterialCraftApp, ui: &mut Ui) {
     edit_properties(app, ui, Subject::Camera);
     ui.separator();
-    command(app, ui, "Frame", Some("F"), "view.3d.frame");
+    if ui.add(egui::Button::new(tr("Frame")).shortcut_text("F")).clicked() {
+        super::frame_view(app);
+        ui.close();
+    }
     ui.menu_button(tr("Viewpoint"), |ui| {
         for viewpoint in Viewpoint::ALL {
             if ui.button(tr(viewpoint.label)).clicked() {

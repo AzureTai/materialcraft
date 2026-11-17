@@ -1,6 +1,6 @@
 //! The headless backend: a [`Session`] plus file I/O and windowless renders. Synchronous and UI-free; the MCP server, the RPC server and the CLI all drive it
 
-use std::fs::File;
+use std::fs::OpenOptions;
 use std::io::Read;
 use std::path::Path;
 
@@ -36,19 +36,31 @@ fn read_file(fs: &Filesystem, path: &str) -> Result<Vec<u8>, AutomationError> {
 /// Read a local file under the same bound as capability workspaces: trusted access widens where a
 /// path may point, not how much memory one read may take.
 fn read_trusted(path: &str) -> Result<Vec<u8>, AutomationError> {
-    let file = File::open(path).map_err(|e| AutomationError::Io(format!("cannot read {path}: {e}")))?;
+    let mut options = OpenOptions::new();
+    options.read(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+
+        // Reject named pipes without waiting for a writer, even if the path changes during open
+        options.custom_flags(rustix::fs::OFlags::NONBLOCK.bits() as i32);
+    }
+    let file = options.open(path).map_err(|error| AutomationError::Io(format!("cannot read {path}: {error}")))?;
     let metadata = file.metadata().map_err(|e| AutomationError::Io(format!("cannot read {path}: {e}")))?;
     if !metadata.is_file() {
         return Err(bad(format!("not a regular file: `{path}`")));
     }
+
     if metadata.len() > MAX_READ_BYTES {
         return Err(bad(format!("file too large: `{path}` is {} bytes (limit {MAX_READ_BYTES})", metadata.len())));
     }
+
     let mut bytes = Vec::new();
     file.take(MAX_READ_BYTES + 1).read_to_end(&mut bytes).map_err(|e| AutomationError::Io(format!("cannot read {path}: {e}")))?;
     if bytes.len() as u64 > MAX_READ_BYTES {
         return Err(bad(format!("file too large: `{path}` exceeds the {MAX_READ_BYTES}-byte limit")));
     }
+
     Ok(bytes)
 }
 
@@ -264,22 +276,23 @@ impl Headless {
         Ok(Rendered { width: w, height: h, png })
     }
 
-    fn render_2d(&mut self, o: &RenderOptions, max: u32) -> Result<(u32, u32, Vec<u8>), AutomationError> {
-        let img = match o.node {
-            Some(n) => self.session.cooked.image(NodeId(n), o.port.unwrap_or(0)).ok_or_else(|| bad(format!("node {n} has no cooked output")))?,
+    fn render_2d(&mut self, options: &RenderOptions, maximum_side: u32) -> Result<(u32, u32, Vec<u8>), AutomationError> {
+        let image = match options.node {
+            Some(n) => self.session.cooked.image(NodeId(n), options.port.unwrap_or(0)).ok_or_else(|| bad(format!("node {n} has no cooked output")))?,
             None => self.session.view2d_image().map(|(_, i)| i).ok_or_else(|| bad("nothing to show: the graph has no outputs; pass `node`"))?,
         };
 
-        let (w, h) = (o.width.unwrap_or(img.w).clamp(16, max), o.height.unwrap_or(img.h).clamp(16, max));
-        let img = img.resize(w, h, true);
-        Ok((w, h, img.to_rgba8_display()))
+        let (w, h) = (options.width.unwrap_or(image.width()).clamp(16, maximum_side), options.height.unwrap_or(image.height()).clamp(16, maximum_side));
+        let image = image.resize(w, h, true);
+        Ok((w, h, image.to_rgba8_display()))
     }
 
     fn render_3d(&mut self, o: &RenderOptions, max: u32) -> (u32, u32, Vec<u8>) {
         let v = &self.session.rendered_view3d();
         let scene_id = o.scene.clone().unwrap_or_else(|| v.scene.clone());
         let custom = self.session.custom_mesh.clone().filter(|_| scene_id == "custom");
-        let key = custom.as_ref().map_or_else(|| scene_id.clone(), |(n, _)| format!("custom:{n}"));
+        let key = custom.as_ref().map_or_else(|| scene_id.clone(), |(name, _)| format!("custom:{name}:{}", self.session.custom_mesh_generation));
+
         if self.scene.as_ref().is_none_or(|(id, _)| *id != key) {
             let scene = match custom {
                 Some((_, mesh)) => Scene::new((*mesh).clone()),
@@ -288,10 +301,11 @@ impl Headless {
 
             self.scene = Some((key, scene));
         }
+
         if self.light.as_ref().is_none_or(|l| l.name != v.environment) {
             self.light = Some(Lighting::new(&v.environment));
         }
-        // The view as it is set up, with what this render asks for in its place
+
         let tiling = o.tiling.unwrap_or(v.tiling).clamp(0.1, 64.0);
         let depth = o.displacement.unwrap_or(v.height_scale).clamp(0.0, 0.5);
         let view = materialcraft_engine::View3d { yaw: o.yaw.unwrap_or(v.yaw), pitch: o.pitch.unwrap_or(v.pitch), tiling, height_scale: depth, ..v.clone() };
@@ -302,6 +316,7 @@ impl Headless {
         let (Some((_, scene)), Some(light)) = (&self.scene, &self.light) else { return (w, h, vec![0; (w * h * 4) as usize]) };
         let triangles = if o.hq { HQ_TRIANGLES } else { materialcraft_render::relief_triangles(&view) };
         let displaced = materialcraft_render::raised(scene, &maps, &view, triangles);
+
         if o.hq {
             settings.supersample = 3;
             settings.ao_rays = 8;

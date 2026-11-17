@@ -100,6 +100,12 @@ fn view3d(session: &mut Session, parameters: &J) -> Result<J> {
 #[cfg(not(target_arch = "wasm32"))]
 fn load_mesh(s: &mut Session, p: &J) -> Result<J> {
     let path = strp(p, "path").ok_or_else(|| bad("view.3d.loadMesh", "`path` is required"))?;
+
+    // Opening a named pipe may wait indefinitely for a writer
+    if !std::fs::metadata(path).map_err(|error| bad("view.3d.loadMesh", format!("{path}: {error}")))?.is_file() {
+        return Err(bad("view.3d.loadMesh", format!("{path}: not a regular file")));
+    }
+
     let bytes = std::fs::read(path).map_err(|e| bad("view.3d.loadMesh", format!("{path}: {e}")))?;
     let name = std::path::Path::new(path).file_name().and_then(|n| n.to_str()).unwrap_or(path).to_string();
     s.load_mesh_bytes(&name, &bytes)?;

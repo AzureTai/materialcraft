@@ -112,7 +112,7 @@ fn hits_mesh(app: &mut MaterialCraftApp, pointer: Pos2, area: Rect) -> bool {
     }
 
     let scene = super::frame::shown_scene(app);
-    let sight = Sight::of(&scene, &app.session.view3d, area.width() / area.height());
+    let sight = Sight::of(&scene, super::frame::shown_view(app), area.width() / area.height());
     let ray = sight.ray([(pointer.x - area.left()) / area.width(), (pointer.y - area.top()) / area.height()]);
     scene.bvh.closest(ray.origin, ray.dir, f32::MAX).is_some()
 }
@@ -136,7 +136,7 @@ fn keys(app: &mut MaterialCraftApp, ui: &Ui, response: &Response) {
 
     let pressed = |modifiers: Modifiers, key: Key| ui.input(|input| input.modifiers.matches_exact(modifiers) && input.key_pressed(key));
     if pressed(Modifiers::NONE, Key::F) {
-        app.run("view.3d.frame", json!({}));
+        super::frame_view(app);
     }
     if pressed(Modifiers::NONE, Key::R) {
         app.run("view.3d.resetCamera", json!({}));

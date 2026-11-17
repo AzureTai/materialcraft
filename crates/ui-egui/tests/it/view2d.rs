@@ -32,6 +32,47 @@ fn harness(app: MaterialCraftApp) -> Harness<'static, MaterialCraftApp> {
     harness
 }
 
+#[test]
+fn fit_can_show_an_image_wider_than_the_manual_zoom_limit() {
+    let mut app = app(false);
+    app.session.preview_size = Some(GRAPH_SIZE);
+    app.session.cook();
+    let graph = app.session.graph;
+    app.session.pkg.graphs[graph].physical_size = [100.0, 1.0, 0.0];
+    app.session.view2d.physical_size = true;
+    let mut harness = Harness::builder()
+        .with_context_setup(materialcraft_ui_egui::theme::install)
+        .with_size(vec2(300.0, 640.0))
+        .build_ui_state(|ui, app: &mut MaterialCraftApp| view2d::show(app, ui), app);
+    harness.run_steps(2);
+
+    assert!(harness.state().ui.image_camera.fit);
+    assert!(
+        harness.state().ui.image_camera.zoom < ImageCamera::ZOOM.0,
+        "Fit needs to use the whole available width; zoom was {}",
+        harness.state().ui.image_camera.zoom
+    );
+}
+
+#[test]
+fn copying_premultiplied_pixels_keeps_their_display_brightness() {
+    let mut harness = harness(app(true));
+    harness.state_mut().session.view2d.premultiplied = true;
+    let position = harness.get_by_role_and_label(egui::accesskit::Role::Button, "Copy image to the clipboard").rect().center();
+    harness.event(Event::PointerMoved(position));
+    harness.event(Event::PointerButton { pos: position, button: PointerButton::Primary, pressed: true, modifiers: Modifiers::NONE });
+    harness.step();
+    harness.state_mut().view2d.shown = Some((1, 1, vec![64, 0, 0, 128]));
+    harness.event(Event::PointerButton { pos: position, button: PointerButton::Primary, pressed: false, modifiers: Modifiers::NONE });
+    harness.step();
+
+    let copied = harness.output().platform_output.commands.iter().find_map(|command| match command {
+        egui::OutputCommand::CopyImage(image) => image.pixels.first().copied(),
+        _ => None,
+    });
+    assert_eq!(copied, Some(egui::Color32::from_rgba_premultiplied(64, 0, 0, 128)));
+}
+
 fn click(harness: &mut Harness<'static, MaterialCraftApp>, label: &str) {
     harness.get_by_role_and_label(egui::accesskit::Role::Button, label).click();
     harness.run();
@@ -211,7 +252,7 @@ fn the_zoom_lock_decides_what_a_new_image_size_does() {
         harness.run();
 
         let (_, image) = harness.state().session.view2d_image().unwrap();
-        assert_eq!(image.w, GRAPH_SIZE / 2);
+        assert_eq!(image.width(), GRAPH_SIZE / 2);
         assert_eq!(harness.state().ui.image_camera.zoom, expected, "maintain zoom {maintain_zoom}");
     }
 }

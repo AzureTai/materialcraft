@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 pub const VIEW_STATE_EXTENSION: &str = "mcview";
 
 /// A saved state of the 3D view: its scene, camera, lights, environment, display and material settings
+#[cfg_attr(target_arch = "wasm32", allow(dead_code))]
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub(crate) struct View3dStateFile {
     /// Always [`View3dStateFile::FORMAT`]: what tells this file from other JSON
@@ -13,6 +14,7 @@ pub(crate) struct View3dStateFile {
     pub(crate) view: View3d,
 }
 
+#[cfg_attr(target_arch = "wasm32", allow(dead_code))]
 impl View3dStateFile {
     pub(crate) const FORMAT: &'static str = "materialcraft-3d-view";
     pub(crate) const VERSION: u32 = 1;
@@ -30,6 +32,7 @@ impl View3dStateFile {
         if state.format != View3dStateFile::FORMAT {
             return Err("not a 3D view state".into());
         }
+
         if state.version > View3dStateFile::VERSION {
             return Err(format!("saved by a newer version (state version {})", state.version));
         }

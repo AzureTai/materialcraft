@@ -19,8 +19,10 @@ fn rejected(message: impl Into<String>) -> EngineError {
 /// `[a, b, ...]` of exactly `N` finite numbers under `key`; `None` when the key is absent
 fn numbers<const N: usize>(parameters: &J, key: &str) -> Result<Option<[f32; N]>> {
     let Some(value) = parameters.get(key) else { return Ok(None) };
-    let listed: Option<Vec<f32>> =
-        value.as_array().map(|items| items.iter().filter_map(J::as_f64).map(|number| number as f32).filter(|number| number.is_finite()).collect());
+    let listed: Option<Vec<f32>> = value
+        .as_array()
+        .filter(|items| items.len() == N)
+        .and_then(|items| items.iter().map(|item| item.as_f64().map(|number| number as f32).filter(|number| number.is_finite())).collect());
 
     listed.and_then(|numbers| <[f32; N]>::try_from(numbers).ok()).map(Some).ok_or_else(|| rejected(format!("`{key}` is a list of {N} numbers")))
 }
@@ -48,6 +50,7 @@ fn point_light(parameters: &J, key: &str, light: PointLight) -> Result<PointLigh
     if object(parameters, key)?.is_none() {
         return Ok(light);
     }
+
     let given = &parameters[key];
 
     Ok(PointLight {
@@ -84,6 +87,7 @@ pub(crate) fn updated(session: &Session, parameters: &J) -> Result<View3d> {
         if scene == "custom" && session.custom_mesh.is_none() {
             return Err(rejected("no mesh is loaded: use view.3d.loadMesh"));
         }
+
         if scene != "custom" && !SCENES.iter().any(|(id, _)| *id == scene) {
             return Err(rejected(format!("unknown scene `{scene}`")));
         }

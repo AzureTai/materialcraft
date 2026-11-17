@@ -69,7 +69,13 @@ fn background_image(app: &mut MaterialCraftApp, ui: &mut Ui) {
 fn copy_image(app: &mut MaterialCraftApp, ui: &Ui) {
     let Some((width, height, pixels)) = &app.view2d.shown else { return };
 
-    ui.ctx().copy_image(egui::ColorImage::from_rgba_unmultiplied([*width as usize, *height as usize], pixels));
+    let size = [*width as usize, *height as usize];
+    let image = if app.session.view2d.premultiplied {
+        egui::ColorImage::from_rgba_premultiplied(size, pixels)
+    } else {
+        egui::ColorImage::from_rgba_unmultiplied(size, pixels)
+    };
+    ui.ctx().copy_image(image);
     app.toast(tr("Image copied to the clipboard"), false);
 }
 

@@ -1,6 +1,6 @@
 //! Renders of the 3D view: its menus, tool strip, helpers and its parts in the Properties panel
 
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
@@ -9,16 +9,32 @@ use serde_json::json;
 
 /// Step until the 3D view's picture is the finished one for its current settings
 fn rendered(harness: &mut Harness<'static, MaterialCraftApp>) {
-    let before = harness.state().view3d.renders;
+    let started = Instant::now();
     for _ in 0..600 {
         harness.step();
         let app = harness.state();
-        if app.view3d.renders > before && !app.view3d.busy() && !app.cooker.busy() && !app.session.dirty {
+        // Overlay-only edits reuse a frame; resizing still needs the settling interval
+        if started.elapsed() >= Duration::from_secs_f64(materialcraft_ui_egui::view3d::SETTLE)
+            && app.view3d.renders > 0
+            && !app.view3d.busy()
+            && !app.cooker.busy()
+            && !app.session.dirty
+        {
             harness.run_steps(3);
             return;
         }
+
         std::thread::sleep(Duration::from_millis(10));
     }
+
+    let app = harness.state();
+    panic!(
+        "3D snapshot did not settle: renders={}, view busy={}, cook busy={}, dirty={}",
+        app.view3d.renders,
+        app.view3d.busy(),
+        app.cooker.busy(),
+        app.session.dirty
+    );
 }
 
 fn change(harness: &mut Harness<'static, MaterialCraftApp>, settings: serde_json::Value) {
@@ -53,7 +69,7 @@ fn the_3d_view_shows_its_settings() {
     }
     super::save(&mut harness, &directory, "view3d-lights");
 
-    // The panel's own Camera chip goes away with the panel, which leaves the menu's
+    // Leaving the panel reveals the Camera menu item again
     for label in ["Back to the selection's properties", "Camera", "Edit properties"] {
         harness.get_by_label(label).click();
         harness.run_steps(4);
