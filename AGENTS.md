@@ -89,7 +89,7 @@ file first, then `docs/`.
 
 ```text
 crates/
-  core image geom            L0 document model (package, graphs, nodes, values, function graphs); float images; meshes, BVH, camera
+  core geom                  L0 document model (package, graphs, nodes, values, function graphs); meshes, BVH, camera
   nodes                      L1 the node library: native primitive definitions + CPU cooks, function evaluator and pattern graphs
   eval formats               L2 graph cooking (topological order, sizes, content-addressed cache, sub-graphs); native .sbs packages, bitmaps, texture export
   engine render              L3 Session + command registry (every action is a command), inspect, samples; the 3D preview renderer (CPU PBR + IBL)
