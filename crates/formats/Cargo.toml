@@ -16,8 +16,7 @@ materialcraft-core = { workspace = true }
 craft-texture = { workspace = true }
 materialcraft-geom = { workspace = true }
 materialcraft-nodes = { workspace = true }
-gltf = { workspace = true }
-tobj = { workspace = true }
+craft-mesh = { workspace = true }
 image = { workspace = true }
 craft-texture-dds = { workspace = true }
 serde = { workspace = true }
