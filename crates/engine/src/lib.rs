@@ -5,6 +5,9 @@
 extern crate self as materialcraft_engine;
 
 mod decoded_images;
+mod display_snapshot;
+pub use display_snapshot::DisplaySnapshot;
+mod display_cmds;
 mod document_path;
 mod evaluation_environment_commands;
 mod explorer_clipboard;

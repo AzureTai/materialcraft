@@ -9,7 +9,7 @@ use materialcraft_eval::{Cache, Cooked, Options};
 use serde::{Deserialize, Serialize};
 
 use crate::snapshot::Snapshot;
-use crate::{AnnotationSelection, Clip, EngineError, Result, View2d, View3d};
+use crate::{AnnotationSelection, Clip, DisplaySnapshot, EngineError, Result, View2d, View3d};
 
 /// The 3D view's camera preferences. The app keeps them in its preferences (Edit ▸ Preferences)
 /// and pushes them in with [`Session::set_camera_prefs`]; headless sessions use the defaults.
@@ -98,6 +98,8 @@ pub struct Session {
     pub custom_mesh: Option<(String, Arc<materialcraft_geom::Mesh>)>,
     /// Changes on each successful mesh load, including loads under the same name
     pub custom_mesh_generation: u64,
+    pub(crate) display_snapshot: Option<DisplaySnapshot>,
+    pub(crate) display_output: Option<DisplaySnapshot>,
     /// The node library loaded from the SBS library folder
     pub library: Arc<crate::node_library::NodeLibrary>,
     pub(crate) history: crate::document_history::DocumentHistory,
@@ -158,6 +160,8 @@ impl Session {
             cache: Arc::new(Mutex::new(Cache::default())),
             custom_mesh: None,
             custom_mesh_generation: 0,
+            display_snapshot: None,
+            display_output: None,
             library: Default::default(),
             history: Default::default(),
             group: None,
@@ -175,6 +179,18 @@ impl Session {
 
         session.library = library;
         session
+    }
+
+    /// Hand one immutable displayed snapshot to the next command
+    pub fn begin_display_handoff(&mut self, snapshot: DisplaySnapshot) {
+        self.display_snapshot = Some(snapshot);
+        self.display_output = None;
+    }
+
+    /// Release an unused input and return a clipboard result after the command finishes
+    pub fn finish_display_handoff(&mut self) -> Option<DisplaySnapshot> {
+        self.display_snapshot = None;
+        self.display_output.take()
     }
 
     /// The graph being edited.

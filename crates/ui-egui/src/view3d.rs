@@ -14,6 +14,8 @@ mod frame_scene;
 mod menus;
 mod navigation;
 mod output;
+#[cfg(not(target_arch = "wasm32"))]
+pub(crate) use output::displayed_mesh;
 mod overlay;
 mod overlay_line;
 mod overlay_mark;
@@ -70,6 +72,7 @@ fn panel_context(app: &MaterialCraftApp) -> u64 {
     format!("{:?} {:?}", app.inspected_graph, session.annotation_selection).hash(&mut hasher);
     (app.function_editor.is_some(), app.pattern_editor.is_some()).hash(&mut hasher);
     app.function_editor.as_ref().map(|editor| (&editor.selection, editor.inspected_node)).hash(&mut hasher);
+    app.pattern_editor.as_ref().map(|editor| (&editor.selection, editor.inspected_node)).hash(&mut hasher);
     hasher.finish()
 }
 
@@ -195,6 +198,21 @@ mod inspection_tests {
         app.session.selection = vec![NodeId(u64::MAX)];
         app.reconcile_editors();
         app.session.selection = previous;
+
+        assert_eq!(inspected(&app), None);
+    }
+
+    #[test]
+    fn pattern_selection_discards_the_previous_3d_inspection() {
+        let mut app = MaterialCraftApp::headless(materialcraft_engine::sample_session(), crate::UiState::default());
+        app.pattern_editor = Some(crate::pattern::PatternEditor::new(app.session.graph, NodeId(0)));
+        inspect(&mut app, Subject::Camera);
+        assert_eq!(inspected(&app), Some(Subject::Camera));
+
+        if let Some(editor) = &mut app.pattern_editor {
+            editor.selection.push(1);
+            editor.inspected_node = Some(1);
+        }
 
         assert_eq!(inspected(&app), None);
     }

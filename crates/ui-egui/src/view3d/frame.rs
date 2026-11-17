@@ -437,7 +437,7 @@ fn show_frame(app: &mut MaterialCraftApp, ctx: &egui::Context, frame: Frame, key
 
     state.render_ms = frame.milliseconds;
     state.renders += 1;
-    state.shown = Some((frame.width, frame.height, frame.pixels));
+    state.shown = Some((frame.width, frame.height, Arc::new(frame.pixels)));
     state.shown_scene = Some(frame.scene);
     state.key = Some((key, full));
     state.tex_size = Some(size);

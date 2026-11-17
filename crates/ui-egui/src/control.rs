@@ -261,6 +261,9 @@ fn handle_inner(app: &mut MaterialCraftApp, ctx: &egui::Context, method: &str, p
         "command.run" => {
             let Some(id) = p.get("id").and_then(Value::as_str) else { return err("`id` is required") };
             let params = p.get("params").cloned().unwrap_or(Value::Null);
+            if matches!(id, "view.3d.saveRender" | "view.3d.exportGeometry" | "view.2d.copyImage") {
+                return displayed_command(app, ctx, id, &params);
+            }
             match crate::cook::guard("command request", || {
                 Ok(materialcraft_engine::commands::execute_request(&mut app.session, id, &params).map_err(|error| error.to_string()))
             }) {
@@ -388,12 +391,56 @@ fn handle_inner(app: &mut MaterialCraftApp, ctx: &egui::Context, method: &str, p
         }
         "view.screenshot" => {
             let shown = if p.get("view").and_then(Value::as_str) == Some("2d") { &app.view2d.shown } else { &app.view3d.shown };
-            match shown.as_ref().and_then(|(w, h, px)| encode_png(*w, *h, px.clone())) {
+            match shown.as_ref().and_then(|(w, h, px)| encode_png(*w, *h, px.as_ref().clone())) {
                 Some((w, h, png)) => ok(json!({ "width": w, "height": h, "png": base64::engine::general_purpose::STANDARD.encode(png) })),
                 None => err("that view has not drawn anything yet"),
             }
         }
         other => err(format!("unknown method `{other}`")),
+    }
+}
+
+/// Give a programmatic command the same currently displayed bytes the toolbar or dialog uses
+fn displayed_command(app: &mut MaterialCraftApp, ctx: &egui::Context, id: &str, params: &Value) -> Value {
+    use materialcraft_engine::DisplaySnapshot;
+
+    let snapshot = match id {
+        "view.3d.saveRender" => app.view3d.shown.as_ref().map(|(width, height, pixels)| DisplaySnapshot::render(*width, *height, pixels.clone())),
+        "view.3d.exportGeometry" => {
+            #[cfg(not(target_arch = "wasm32"))]
+            {
+                crate::view3d::displayed_mesh(app).map(DisplaySnapshot::geometry)
+            }
+            #[cfg(target_arch = "wasm32")]
+            {
+                return err("exporting geometry by path needs the desktop app");
+            }
+        }
+        "view.2d.copyImage" => {
+            app.view2d.shown.as_ref().map(|(width, height, pixels)| DisplaySnapshot::image(*width, *height, pixels.clone(), app.view2d.shown_premultiplied))
+        }
+        _ => return err(format!("unknown display command `{id}`")),
+    };
+    let Some(snapshot) = snapshot else { return err("that view has not drawn anything yet") };
+
+    app.session.begin_display_handoff(snapshot);
+    let result = crate::cook::guard("command request", || {
+        Ok(materialcraft_engine::commands::execute_request(&mut app.session, id, params).map_err(|error| error.to_string()))
+    });
+    let output = app.session.finish_display_handoff();
+    match result {
+        Ok(Ok(value)) if id == "view.2d.copyImage" => {
+            let Some((width, height, pixels, premultiplied)) = output.and_then(DisplaySnapshot::into_image) else {
+                return err("the copy command returned no displayed image");
+            };
+            let size = [width as usize, height as usize];
+            let image =
+                if premultiplied { egui::ColorImage::from_rgba_premultiplied(size, &pixels) } else { egui::ColorImage::from_rgba_unmultiplied(size, &pixels) };
+            ctx.copy_image(image);
+            ok(value)
+        }
+        Ok(Ok(value)) => ok(value),
+        Ok(Err(error)) | Err(error) => err(error),
     }
 }
 
@@ -469,6 +516,29 @@ mod tests {
         let reply = handle(&mut app, &ctx, "command.run", &json!({"id": "edit.selectAll"}));
         assert_eq!(reply["ok"], json!(true), "{reply}");
         assert_eq!(app.ui.windows.unsaved, Some(crate::unsaved::Guarded::Quit));
+    }
+
+    #[test]
+    fn programmatic_copy_uses_the_retained_display_pixels_and_alpha_mode() {
+        let mut app = app();
+        let pixels = std::sync::Arc::new(vec![64, 0, 0, 128]);
+        app.view2d.shown = Some((1, 1, pixels.clone()));
+        app.view2d.shown_premultiplied = true;
+        app.session.view2d.premultiplied = false;
+        let ctx = egui::Context::default();
+        ctx.begin_pass(egui::RawInput::default());
+
+        let reply = handle(&mut app, &ctx, "command.run", &json!({"id": "view.2d.copyImage"}));
+        let output = ctx.end_pass();
+
+        assert_eq!((reply["ok"].as_bool(), reply["result"]["width"].as_u64()), (Some(true), Some(1)), "{reply}");
+        let copied = output.platform_output.commands.iter().find_map(|command| match command {
+            egui::OutputCommand::CopyImage(image) => image.pixels.first().copied(),
+            _ => None,
+        });
+        assert_eq!(copied, Some(egui::Color32::from_rgba_premultiplied(64, 0, 0, 128)));
+        assert_eq!(std::sync::Arc::strong_count(&pixels), 2, "the handoff retained an extra copy");
+        assert!(app.session.finish_display_handoff().is_none());
     }
 
     #[test]

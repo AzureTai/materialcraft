@@ -31,10 +31,18 @@ pub(super) fn save_render(app: &mut MaterialCraftApp) {
 /// Ask where to save the mesh the view shows, raised by the height output when it is, as an OBJ file
 #[cfg(not(target_arch = "wasm32"))]
 pub(super) fn export_geometry(app: &mut MaterialCraftApp) {
-    let mesh = super::frame::shown_scene(app).mesh.clone();
+    let Some(mesh) = displayed_mesh(app) else {
+        app.toast(tr("The 3D view has not drawn a mesh yet"), true);
+        return;
+    };
     let name = format!("{}.obj", materialcraft_engine::formats::safe_file_name(&super::frame::shown_label(app)));
     let dialog = craft_dialogs::FileDialog::save().file_name(name).filter("Wavefront OBJ", &["obj"]);
     crate::native_dialogs::ask(app, dialog, crate::native_dialogs::Then::ExportGeometry(mesh));
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub(crate) fn displayed_mesh(app: &MaterialCraftApp) -> Option<std::sync::Arc<materialcraft_engine::geom::Mesh>> {
+    app.view3d.shown_scene.as_ref().map(|frame| frame.scene.mesh.clone())
 }
 
 /// Ask where to save the view's state

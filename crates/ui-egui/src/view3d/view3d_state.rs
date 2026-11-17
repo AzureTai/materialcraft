@@ -33,7 +33,7 @@ pub struct View3dState {
     /// Frames rendered so far (previews and full quality)
     pub renders: u64,
     /// The last frame shown (RGBA8, for `view.screenshot`)
-    pub shown: Option<(u32, u32, Vec<u8>)>,
+    pub shown: Option<(u32, u32, Arc<Vec<u8>>)>,
     /// The scene and camera that produced the displayed pixels
     pub(super) shown_scene: Option<FrameScene>,
     /// Index of the quality level of the last moving frame

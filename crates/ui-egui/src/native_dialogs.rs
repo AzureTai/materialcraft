@@ -31,7 +31,7 @@ pub(crate) enum Then {
     },
     SaveImage(Box<Image>),
     /// The 3D view's frame to write as a PNG file: width, height and RGBA pixels
-    SaveRender(Box<(u32, u32, Vec<u8>)>),
+    SaveRender(Box<(u32, u32, std::sync::Arc<Vec<u8>>)>),
     /// The mesh the 3D view shows, to write as an OBJ file
     ExportGeometry(std::sync::Arc<materialcraft_engine::geom::Mesh>),
     SaveViewState,
@@ -168,15 +168,16 @@ fn chosen(app: &mut MaterialCraftApp, then: Then, path: &std::path::Path) {
         Then::SaveImage(image) => save_image(app, &image, path),
         Then::SaveRender(frame) => {
             let (width, height, pixels) = *frame;
-            let written = crate::control::encode_png(width, height, pixels)
-                .ok_or_else(|| tr("The render could not be encoded").to_string())
-                .and_then(|(_, _, png)| materialcraft_engine::formats::write_atomic(path, &png).map_err(|error| error.to_string()));
-            report_saved(app, written, path);
+            let snapshot = materialcraft_engine::DisplaySnapshot::render_to(width, height, pixels, path.to_path_buf());
+            if app.run_with_display_snapshot("view.3d.saveRender", json!({}), snapshot).0.is_some() {
+                app.toast(format!("{} {picked}", tr("Saved")), false);
+            }
         }
         Then::ExportGeometry(mesh) => {
-            let text = materialcraft_engine::formats::mesh::obj_text(&mesh);
-            let written = materialcraft_engine::formats::write_atomic(path, text.as_bytes()).map_err(|error| error.to_string());
-            report_saved(app, written, path);
+            let snapshot = materialcraft_engine::DisplaySnapshot::geometry_to(mesh, path.to_path_buf());
+            if app.run_with_display_snapshot("view.3d.exportGeometry", json!({}), snapshot).0.is_some() {
+                app.toast(format!("{} {picked}", tr("Saved")), false);
+            }
         }
         Then::SaveViewState => {
             if app.run("view.3d.saveState", json!({"path": picked})).is_some() {
@@ -222,14 +223,6 @@ fn save_to(app: &mut MaterialCraftApp, document: u64, copy: bool, picked: &str) 
     }
     app.toast(format!("{} {path}", tr("Saved")), false);
     true
-}
-
-/// Tell the user where a file went, or why it was not written
-fn report_saved(app: &mut MaterialCraftApp, written: Result<(), String>, path: &std::path::Path) {
-    match written {
-        Ok(()) => app.toast(format!("{} {}", tr("Saved"), path.display()), false),
-        Err(reason) => app.toast(reason, true),
-    }
 }
 
 fn save_image(app: &mut MaterialCraftApp, image: &Image, path: &std::path::Path) {

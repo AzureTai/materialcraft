@@ -65,7 +65,7 @@ pub(super) fn paint(app: &mut MaterialCraftApp, ui: &Ui, view_rect: Rect, area: 
     let tokens = Tokens::get(ui.ctx());
     let painter = ui.painter_at(view_rect);
     if view.show_axis {
-        axes(&painter, &sight, view_rect, tokens.viewport_text);
+        axes(&painter, &sight, view_rect, area.height(), tokens.viewport_text);
     }
     if view.scene_stats {
         for (row, line) in statistics(app, &scene).into_iter().enumerate() {
@@ -123,7 +123,7 @@ fn overlay_key(app: &MaterialCraftApp, scene: &Arc<materialcraft_render::Scene>,
 
 /// The world axes as the camera sees them, in the view's lower left corner, with a bar that
 /// shows how long a round length is where the camera orbits
-fn axes(painter: &egui::Painter, sight: &Sight, view_rect: Rect, text: Color32) {
+fn axes(painter: &egui::Painter, sight: &Sight, view_rect: Rect, picture_height: f32, text: Color32) {
     let center = view_rect.left_bottom() + vec2(MARGIN + AXIS_ARM + 8.0, -(MARGIN + AXIS_ARM + 8.0));
     let rotation = sight.camera.view();
     let mut arms: Vec<(Vec3, Color32, &str)> = [Vec3::X, Vec3::Y, Vec3::Z]
@@ -141,7 +141,7 @@ fn axes(painter: &egui::Painter, sight: &Sight, view_rect: Rect, text: Color32) 
         write(painter, tip + vec2(direction.x, -direction.y) * 7.0, Align2::CENTER_CENTER, name, 10.0, color);
     }
 
-    let points_per_meter = sight.points_per_unit(view_rect.height()) * UNITS_PER_METER / UNITS_PER_MESH_UNIT;
+    let points_per_meter = sight.points_per_unit(picture_height) * UNITS_PER_METER / UNITS_PER_MESH_UNIT;
     let Some(meters) = SCALE_LENGTHS.into_iter().rev().find(|meters| meters * points_per_meter <= SCALE_BAR_LIMIT) else { return };
 
     let start = pos2(center.x + AXIS_ARM + 18.0, view_rect.bottom() - MARGIN - 4.0);
@@ -191,6 +191,28 @@ mod tests {
     use super::*;
     use materialcraft_engine::View3d;
     use materialcraft_render::Scene;
+
+    #[test]
+    fn scale_bar_uses_the_picture_height_in_a_letterboxed_view() {
+        let context = egui::Context::default();
+        let scene = Scene::builtin("cube");
+        let sight = Sight::of(&scene, &View3d::default(), 400.0 / 225.0);
+        let view_rect = Rect::from_min_size(pos2(0.0, 0.0), vec2(400.0, 400.0));
+        let points_per_meter = sight.points_per_unit(225.0) * UNITS_PER_METER / UNITS_PER_MESH_UNIT;
+        let meters = SCALE_LENGTHS.into_iter().rev().find(|meters| meters * points_per_meter <= SCALE_BAR_LIMIT).unwrap();
+
+        context.begin_pass(egui::RawInput::default());
+        axes(&context.layer_painter(egui::LayerId::background()), &sight, view_rect, 225.0, Color32::WHITE);
+        let output = context.end_pass();
+        let bar = output.shapes.iter().find_map(|shape| match &shape.shape {
+            egui::Shape::LineSegment { points, stroke } if *stroke == Stroke::new(1.5, Color32::from_black_alpha(0xc0)) && points[0].y == points[1].y => {
+                Some(points[1].x - points[0].x)
+            }
+            _ => None,
+        });
+
+        assert!((bar.unwrap() - meters * points_per_meter).abs() < 0.01);
+    }
 
     fn overlay(view: &View3d, selected: bool) -> Overlay {
         let scene = Scene::builtin("cube");

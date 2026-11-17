@@ -25,7 +25,7 @@ pub(super) fn show(app: &mut MaterialCraftApp, ui: &mut Ui, shown: Option<&Shown
                     super::save_image(app);
                 }
                 if crate::widgets::icon_button(ui, icon::COPY, tr("Copy image to the clipboard"), false, BUTTON_SIDE).clicked() {
-                    copy_image(app, ui);
+                    copy_image(app, ui.ctx());
                 }
             });
             output_menu(app, ui, shown);
@@ -66,17 +66,17 @@ fn background_image(app: &mut MaterialCraftApp, ui: &mut Ui) {
 }
 
 /// Put the image on the clipboard as the view draws it
-fn copy_image(app: &mut MaterialCraftApp, ui: &Ui) {
-    let Some((width, height, pixels)) = &app.view2d.shown else { return };
+pub(crate) fn copy_image(app: &mut MaterialCraftApp, context: &egui::Context) -> Option<serde_json::Value> {
+    let Some((width, height, pixels)) = &app.view2d.shown else { return None };
+    let snapshot = materialcraft_engine::DisplaySnapshot::image(*width, *height, pixels.clone(), app.view2d.shown_premultiplied);
+    let (result, output) = app.run_with_display_snapshot("view.2d.copyImage", json!({}), snapshot);
+    let (width, height, pixels, premultiplied) = output?.into_image()?;
 
-    let size = [*width as usize, *height as usize];
-    let image = if app.session.view2d.premultiplied {
-        egui::ColorImage::from_rgba_premultiplied(size, pixels)
-    } else {
-        egui::ColorImage::from_rgba_unmultiplied(size, pixels)
-    };
-    ui.ctx().copy_image(image);
+    let size = [width as usize, height as usize];
+    let image = if premultiplied { egui::ColorImage::from_rgba_premultiplied(size, &pixels) } else { egui::ColorImage::from_rgba_unmultiplied(size, &pixels) };
+    context.copy_image(image);
     app.toast(tr("Image copied to the clipboard"), false);
+    result
 }
 
 /// Choose what the view shows: another output of the graph when an output node is shown, else another output of the shown node

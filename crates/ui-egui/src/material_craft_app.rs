@@ -174,6 +174,19 @@ impl MaterialCraftApp {
         }
     }
 
+    /// Run one command with a displayed snapshot and release the handoff before returning
+    pub(crate) fn run_with_display_snapshot(
+        &mut self,
+        id: &str,
+        params: Value,
+        snapshot: materialcraft_engine::DisplaySnapshot,
+    ) -> (Option<Value>, Option<materialcraft_engine::DisplaySnapshot>) {
+        self.session.begin_display_handoff(snapshot);
+        let result = self.run(id, params);
+        let output = self.session.finish_display_handoff();
+        (result, output)
+    }
+
     /// Run an engine command, reporting errors as toasts. Returns the result on success
     pub fn run(&mut self, id: &str, mut params: Value) -> Option<Value> {
         if id.starts_with("graph.annotation.")

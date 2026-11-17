@@ -2861,6 +2861,7 @@ name = "materialcraft-engine"
 version = "0.4.1"
 dependencies = [
  "craft-texture 0.1.0 (git+https://github.com/storytold/craft-libs?rev=a341e86b6d0b31ec5113a4b3e4f07f717a6cf5bf)",
+ "image",
  "materialcraft-core",
  "materialcraft-eval",
  "materialcraft-formats",

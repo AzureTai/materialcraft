@@ -312,6 +312,30 @@ fn the_resets_put_back_their_own_part_and_a_saved_default_replaces_the_built_in_
 }
 
 #[test]
+fn reset_uses_a_built_in_scene_when_the_saved_custom_mesh_is_unavailable() {
+    let mut session = new_session();
+    let mut saved = session.view3d.clone();
+    saved.scene = "custom".into();
+    saved.focal_length = 42.0;
+    session.default_view3d = Some(saved);
+
+    execute(&mut session, "view.3d.reset", &json!({})).unwrap();
+
+    assert_eq!(session.view3d.scene, materialcraft_engine::View3d::default().scene);
+    assert_eq!(session.view3d.focal_length, 42.0);
+}
+
+#[test]
+fn large_render_counts_clamp_before_narrowing() {
+    let mut session = new_session();
+
+    let view = execute(&mut session, "view.3d", &json!({"samples": 4_294_967_297_u64, "ambientOcclusion": 4_294_967_296_u64})).unwrap();
+
+    assert_eq!(view["samples"], 4);
+    assert_eq!(view["ambientOcclusion"], 32);
+}
+
+#[test]
 fn a_state_file_brings_the_view_back_and_a_wrong_file_changes_nothing() {
     let directory = std::env::temp_dir().join(format!("materialcraft-view3d-state-{}", std::process::id()));
     std::fs::create_dir_all(&directory).unwrap();

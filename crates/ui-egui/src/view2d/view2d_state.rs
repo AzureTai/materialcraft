@@ -10,7 +10,9 @@ pub struct View2dState {
     /// The texture of the shown image, keyed by everything it was made from
     pub(super) texture: Option<(u64, TextureHandle)>,
     /// The last shown image (RGBA8, for `view.screenshot`)
-    pub shown: Option<(u32, u32, Vec<u8>)>,
+    pub shown: Option<(u32, u32, Arc<Vec<u8>>)>,
+    /// Alpha handling used when the retained pixels were last displayed
+    pub shown_premultiplied: bool,
     /// The histogram of the shown image, keyed by the image and the counted channel
     pub(super) histogram: Option<(u64, Histogram)>,
     /// The background image file and its texture; no texture when the file could not be shown

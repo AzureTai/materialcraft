@@ -53,6 +53,7 @@ pub(super) fn show(app: &mut MaterialCraftApp, ui: &mut Ui, shown: Option<&Shown
         );
         app.view2d.texture = None;
         app.view2d.shown = None;
+        app.view2d.shown_premultiplied = false;
         app.view2d.histogram = None;
         app.view2d.image_size = None;
         app.view2d.hover = None;
@@ -252,7 +253,8 @@ fn texture(app: &mut MaterialCraftApp, context: &egui::Context, shown: &Shown) -
     let texture = context.load_texture("view2d", color_image, options);
     let id = texture.id();
     app.view2d.texture = Some((key, texture));
-    app.view2d.shown = Some((image.width(), image.height(), pixels));
+    app.view2d.shown = Some((image.width(), image.height(), std::sync::Arc::new(pixels)));
+    app.view2d.shown_premultiplied = view.premultiplied;
     id
 }
 
@@ -351,8 +353,12 @@ fn background_texture(app: &mut MaterialCraftApp, context: &egui::Context) -> Op
 
 #[cfg(not(target_arch = "wasm32"))]
 fn load_background(context: &egui::Context, path: &str) -> Result<TextureHandle, String> {
-    let length = std::fs::metadata(path).map_err(|error| error.to_string())?.len();
-    if length > MAX_BACKGROUND_BYTES {
+    let metadata = std::fs::metadata(path).map_err(|error| error.to_string())?;
+    // A pipe can report zero bytes but block the draw path indefinitely on read
+    if !metadata.is_file() {
+        return Err(format!("{path}: not a regular file"));
+    }
+    if metadata.len() > MAX_BACKGROUND_BYTES {
         return Err(format!("{path} is larger than {} MB", MAX_BACKGROUND_BYTES >> 20));
     }
 
@@ -380,6 +386,14 @@ fn load_background(_: &egui::Context, _: &str) -> Result<TextureHandle, String> 
 mod tests {
     use super::*;
     use materialcraft_engine::core::NodeId;
+
+    #[cfg(unix)]
+    #[test]
+    fn a_device_file_is_rejected_before_the_background_read() {
+        let error = load_background(&egui::Context::default(), "/dev/null").err().unwrap();
+
+        assert!(error.contains("not a regular file"), "{error}");
+    }
 
     #[test]
     fn an_empty_view_releases_the_previous_image_and_screenshot() {

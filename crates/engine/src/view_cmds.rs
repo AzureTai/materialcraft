@@ -3,6 +3,7 @@
 use serde_json::{Value as J, json};
 
 use materialcraft_core::NodeId;
+use materialcraft_geom::view::View3d;
 
 use crate::commands::{CommandSpec, always, bad, has_graph, strp, u64p};
 use crate::{Result, Session, cmd};
@@ -52,7 +53,11 @@ pub(crate) fn specs() -> Vec<CommandSpec> {
         ),
         cmd!("view.3d.loadMesh", "Load mesh...", [], None, "{path} shows an OBJ, glTF or GLB mesh in the 3D view (scene \"custom\")", always, load_mesh),
         cmd!("view.3d.reset", "Reset scene", [], None, "{} back to the saved default view, or the built-in one", always, |s, _| {
-            s.view3d = s.default_view3d.clone().unwrap_or_default();
+            let mut view = s.default_view3d.clone().unwrap_or_default();
+            if view.scene == "custom" && s.custom_mesh.is_none() {
+                view.scene = View3d::default().scene;
+            }
+            s.view3d = view;
             Ok(J::Null)
         }),
         cmd!("view.previewSize", "Preview size", [], None, "{size: 64..8192, or 0 for full size} caps node outputs while editing", always, preview_size),

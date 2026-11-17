@@ -120,8 +120,9 @@ pub(crate) fn updated(session: &Session, parameters: &J) -> Result<View3d> {
     view.far_clip = number("farClip", view.far_clip, View3d::CLIP).max(view.near_clip);
     view.yaw = f32p(parameters, "yaw").map_or(view.yaw, |yaw| yaw.rem_euclid(360.0));
     view.env_rotation = f32p(parameters, "envRotation").map_or(view.env_rotation, |rotation| rotation.rem_euclid(360.0));
-    view.samples = u64p(parameters, "samples").map_or(view.samples, |samples| (samples as u32).clamp(1, View3d::MAX_SAMPLES));
-    view.ambient_occlusion = u64p(parameters, "ambientOcclusion").map_or(view.ambient_occlusion, |rays| (rays as u32).min(View3d::MAX_AMBIENT_OCCLUSION));
+    view.samples = u64p(parameters, "samples").map_or(view.samples, |samples| samples.clamp(1, u64::from(View3d::MAX_SAMPLES)) as u32);
+    view.ambient_occlusion =
+        u64p(parameters, "ambientOcclusion").map_or(view.ambient_occlusion, |rays| rays.min(u64::from(View3d::MAX_AMBIENT_OCCLUSION)) as u32);
     if let Some(scale) = u64p(parameters, "renderScale") {
         view.render_scale =
             View3d::RENDER_SCALES.into_iter().find(|allowed| u64::from(*allowed) == scale).ok_or_else(|| rejected("`renderScale` is 25, 50, 100 or 200"))?;

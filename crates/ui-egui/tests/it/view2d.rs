@@ -62,7 +62,7 @@ fn copying_premultiplied_pixels_keeps_their_display_brightness() {
     harness.event(Event::PointerMoved(position));
     harness.event(Event::PointerButton { pos: position, button: PointerButton::Primary, pressed: true, modifiers: Modifiers::NONE });
     harness.step();
-    harness.state_mut().view2d.shown = Some((1, 1, vec![64, 0, 0, 128]));
+    harness.state_mut().view2d.shown = Some((1, 1, std::sync::Arc::new(vec![64, 0, 0, 128])));
     harness.event(Event::PointerButton { pos: position, button: PointerButton::Primary, pressed: false, modifiers: Modifiers::NONE });
     harness.step();
 
@@ -71,6 +71,21 @@ fn copying_premultiplied_pixels_keeps_their_display_brightness() {
         _ => None,
     });
     assert_eq!(copied, Some(egui::Color32::from_rgba_premultiplied(64, 0, 0, 128)));
+}
+
+#[test]
+fn copy_button_rejects_an_invalid_display_buffer_before_the_clipboard_write() {
+    let mut harness = harness(app(true));
+    let position = harness.get_by_role_and_label(egui::accesskit::Role::Button, "Copy image to the clipboard").rect().center();
+    harness.event(Event::PointerMoved(position));
+    harness.event(Event::PointerButton { pos: position, button: PointerButton::Primary, pressed: true, modifiers: Modifiers::NONE });
+    harness.step();
+    harness.state_mut().view2d.shown = Some((2, 1, std::sync::Arc::new(vec![1, 2, 3])));
+    harness.event(Event::PointerButton { pos: position, button: PointerButton::Primary, pressed: false, modifiers: Modifiers::NONE });
+    harness.step();
+
+    assert!(harness.output().platform_output.commands.iter().all(|command| !matches!(command, egui::OutputCommand::CopyImage(_))));
+    assert!(harness.state().toasts.iter().any(|toast| toast.error && toast.text.contains("displayed RGBA")));
 }
 
 fn click(harness: &mut Harness<'static, MaterialCraftApp>, label: &str) {
