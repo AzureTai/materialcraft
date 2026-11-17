@@ -12,7 +12,9 @@ fn app() -> MaterialCraftApp {
 }
 
 fn settle(harness: &mut Harness<'static, MaterialCraftApp>, after: u64) {
-    const RENDER_TIMEOUT: Duration = Duration::from_secs(10);
+    // Initial lighting preparation and full-quality CPU renders share Rayon workers with
+    // other UI tests; ten seconds can expire while valid work is still running on CI.
+    const RENDER_TIMEOUT: Duration = Duration::from_secs(60);
     const POLL_INTERVAL: Duration = Duration::from_millis(10);
     let deadline = Instant::now() + RENDER_TIMEOUT;
     while Instant::now() < deadline {
@@ -24,7 +26,14 @@ fn settle(harness: &mut Harness<'static, MaterialCraftApp>, after: u64) {
 
         std::thread::sleep(POLL_INTERVAL);
     }
-    panic!("the normal-map preview did not finish rendering");
+    let app = harness.state();
+    panic!(
+        "the normal-map preview did not finish rendering: renders={} (after {after}), dirty={}, cooker_busy={}, view3d_busy={}",
+        app.view3d.renders,
+        app.session.dirty,
+        app.cooker.busy(),
+        app.view3d.busy()
+    );
 }
 
 /// Show the 3D view's material in the Properties panel, through the view's Materials menu
