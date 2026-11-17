@@ -32,7 +32,7 @@ impl NodeLibrary {
         let index = source.graphs.iter().position(|candidate| candidate.function.is_none() && candidate.sbs_path() == graph)?;
         let size = size.clamp(1, COOKED_SIZE);
 
-        // A session links the graph's instances and functions to the library, as an opened package gets
+        // A session resolves library references just as it does for an opened package
         let mut session = Session::with_library(Package::clone(source), library.clone());
         session.limit_preview_caches();
         if cancel.load(Ordering::Relaxed) {
@@ -43,7 +43,7 @@ impl NodeLibrary {
         let decode = session.resource_decoder();
         let mut options = materialcraft_eval::Options::new(&decode);
 
-        // Thin lines and fine grain vanish when cooked at thumbnail size, so the graph cooks larger and is scaled down
+        // Cook larger before downsampling so fine detail survives in thumbnails
         let cooked_size = size.max(COOKED_SIZE);
         options.max_size = Some(cooked_size);
         options.cancel = Some(cancel);

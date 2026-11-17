@@ -11,11 +11,13 @@ fn export_every_format() {
             for i in [&img, &gray] {
                 let b = encode(i, ext, depth, true).unwrap_or_else(|e| panic!("{ext}: {e}"));
                 let back = decode(&b, false).unwrap_or_else(|e| panic!("{ext} decode: {e}"));
+
                 assert_eq!((back.width(), back.height()), (8, 8));
             }
         }
     }
     let png16 = encode(&gray, "png", Depth::U16, false).unwrap();
+
     assert!((decode(&png16, false).unwrap().get(7, 0, false)[0] - gray.get(7, 0, false)[0]).abs() < 1e-3);
 }
 
@@ -39,6 +41,7 @@ fn tga_still_decodes() {
     let mut tga = Cursor::new(Vec::new());
     ::image::RgbaImage::new(2, 2).write_to(&mut tga, ::image::ImageFormat::Tga).unwrap();
     let img = decode(tga.get_ref(), false).unwrap();
+
     assert_eq!((img.width(), img.height(), img.kind()), (2, 2, Kind::Color));
 }
 

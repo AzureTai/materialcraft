@@ -5,13 +5,15 @@ use super::{pattern_stamp::PatternStamp, region::Region, shape};
 use crate::CookContext;
 
 const MAX_SAMPLES: u64 = 256_000_000;
+const MAX_STAMP_COPIES: u64 = 1_048_576;
+const MIN_STAMP_SIZE: f32 = 1e-8;
 
 pub(super) fn render(context: &CookContext, stamps: &[PatternStamp], max_depth: u32) -> Result<Image, String> {
     let (width, height) = craft_texture::clamp_size(context.w, context.h);
     let kind = if context.b("color_mode") { Kind::Color } else { Kind::Gray };
-    let background =
+    let mut background =
         context.input(0).map(|image| image.resize(width, height, context.tile)).unwrap_or_else(|| Image::filled(width, height, kind, context.v4("background")));
-    let background = if kind == Kind::Gray { background.to_gray() } else { background.to_color() };
+    background = if kind == Kind::Gray { background.to_gray() } else { background.to_color() };
     if stamps.is_empty() {
         return Ok(background);
     }
@@ -20,11 +22,12 @@ pub(super) fn render(context: &CookContext, stamps: &[PatternStamp], max_depth: 
     let opacity = context.f("opacity").max(0.0);
     let weights = depth_weights(context.f("roughness"), max_depth)?;
     let integer_sampling = background.integer_sampling();
-    let data = Arc::clone(background.shared_data());
+    let mut data = Arc::clone(background.shared_data());
     drop(background);
-    let mut pixels = Arc::unwrap_or_clone(data);
+
+    let pixels = Arc::make_mut(&mut data);
     let mut budget = MAX_SAMPLES;
-    let mut copies_left = 1_048_576_u64;
+    let mut copies_left = MAX_STAMP_COPIES;
     let render_region = Region::new(context.v4("render_region"))?;
     let period = if context.tile { Region::new(context.v4("tiling_region"))?.period() } else { [1.0; 2] };
 
@@ -33,7 +36,7 @@ pub(super) fn render(context: &CookContext, stamps: &[PatternStamp], max_depth: 
             return Err("pattern parameters must be finite".into());
         }
 
-        if stamp.size.iter().any(|size| size.abs() < 1e-8) {
+        if stamp.size.iter().any(|size| size.abs() < MIN_STAMP_SIZE) {
             continue;
         }
 
@@ -123,11 +126,11 @@ pub(super) fn render(context: &CookContext, stamps: &[PatternStamp], max_depth: 
         }
     }
 
-    Image::from_data(width, height, kind, pixels, &Limits::default()).map(|image| image.with_integer_sampling(integer_sampling)).map_err(|e| e.to_string())
+    Image::from_data(width, height, kind, data, &Limits::default()).map(|image| image.with_integer_sampling(integer_sampling)).map_err(|e| e.to_string())
 }
 
 fn depth_weights(roughness: f32, max_depth: u32) -> Result<Vec<f32>, String> {
-    // Traversal is bounded by the 4096-node acyclic pattern graph. Keep this allocation bounded too
+    // Match the depth allocation cap to the 4096-node acyclic traversal limit
     if max_depth >= 4096 || !roughness.is_finite() || roughness < 0.0 {
         return Err("pattern roughness must be finite and nonnegative, with depth below 4096".into());
     }

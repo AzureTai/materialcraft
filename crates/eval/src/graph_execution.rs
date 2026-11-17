@@ -47,6 +47,7 @@ pub fn cook(package: &Package, graph_index: usize, options: &Options, cache: &Mu
             cooked.cancelled = true;
             break;
         }
+
         let Some(node) = prepared.index.node(id) else { continue };
 
         let result = cook_node(package, graph_index, &prepared, node, &cooked, &variables, options, cache);

@@ -193,7 +193,10 @@ fn a_failed_group_recooks_if_it_cooked_a_temporary_document() {
         s.cook();
         Err(crate::EngineError::Other("failed".into()))
     });
+
     assert!(result.is_err());
+
     s.cook_if_dirty();
+
     assert_eq!(s.cooked.image(id, 0).unwrap().data(), before.as_slice());
 }

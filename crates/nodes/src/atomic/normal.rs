@@ -24,7 +24,7 @@ fn normal(context: &CookContext) -> CookResult {
 
 pub fn height_to_normal(height_map: &Image, intensity: f32, directx: bool, tile: bool, alpha_height: bool) -> Image {
     Image::generate(height_map.width(), height_map.height(), Kind::Color, |x, y| {
-        // Backward differences place alpha wrapped discontinuity on its owning pixel
+        // Backward differences place a wrapped discontinuity on its owning pixel
         let height = height_map.get_gray(x as i64, y as i64, tile);
         let dx = height - height_map.get_gray(x as i64 - 1, y as i64, tile);
         let dy = height - height_map.get_gray(x as i64, y as i64 - 1, tile);

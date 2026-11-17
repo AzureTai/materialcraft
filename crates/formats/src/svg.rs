@@ -79,6 +79,7 @@ mod tests {
     #[test]
     fn draws_a_shape_in_linear_light() {
         let image = decode(&svg(r##"<rect width="2" height="2" fill="#ff0000"/>"##)).unwrap();
+
         let left = image.get(0, 0, false);
 
         assert_eq!((image.width(), image.height()), (4, 2));

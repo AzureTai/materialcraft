@@ -155,6 +155,7 @@ mod tests {
             c("materialcraft-ui-egui", &[("materialcraft-automation", Normal, true), ("egui", Normal, false), ("wgpu", Normal, false)]),
             c("materialcraft", &[("eframe", Normal, false), ("materialcraft-ui-egui", Normal, true), ("winresource", Build, false)]),
         ];
+
         assert!(check(&g).is_empty(), "{:?}", check(&g));
     }
 

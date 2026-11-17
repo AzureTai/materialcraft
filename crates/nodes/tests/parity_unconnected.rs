@@ -22,6 +22,7 @@ fn absent_textures_have_zero_pixels_and_expected_kinds() {
             let image = outputs.first().unwrap();
 
             assert_eq!(image.kind(), kind, "{id}");
+
             for y in 0..h {
                 for x in 0..w {
                     assert_eq!(image.get(x.into(), y.into(), false), pixel, "{id} at {x},{y}");

@@ -121,6 +121,7 @@ fn hostile_param_is_clamped_before_cooking() {
     p.graphs[0].node_mut(blur).unwrap().params.insert("intensity".into(), Value::Float(1e30));
     let cache = Mutex::new(Cache::default());
     let c = cook(&p, 0, &Options::new(&no_res), &cache);
+
     assert!(c.nodes[&blur].error.is_none(), "{:?}", c.nodes[&blur].error);
     assert_eq!(c.image(blur, 0).map(|i| (i.width(), i.height())), Some((64, 64)));
 }
@@ -134,6 +135,7 @@ fn preview_cap_and_unknown_nodes() {
     let mut opts = Options::new(&no_res);
     opts.max_size = Some(128);
     let c = cook(&p, 0, &opts, &cache);
+
     assert_eq!(c.image(out, 0).map(|i| i.width()), Some(128));
     assert!(c.nodes[&bad].error.is_some());
 }
@@ -379,20 +381,27 @@ fn cached_input_fingerprint_tracks_copy_on_write_and_shape() {
     let cache = Mutex::new(Cache::default());
     let image = Image::filled(128, 128, Kind::Gray, [0.0; 4]);
     let first = image_key(&image, &cache);
+
     assert_eq!(image_key(&image, &cache), first);
+
     let mut data = image.data().to_vec();
     data[1] = 1.0;
     let image = Image::from_data(128, 128, Kind::Gray, data, &Limits::default()).unwrap();
     let changed = image_key(&image, &cache);
+
     assert_ne!(changed, first);
-    // The same buffer read as another shape.
+
+    // The same buffer read as another shape
     let image = Image::from_data(64, 256, Kind::Gray, Arc::clone(image.shared_data()), &Limits::default()).unwrap();
     let reshaped = image_key(&image, &cache);
+
     assert_ne!(reshaped, changed);
 
     cache.lock().unwrap().clear();
+
     assert_eq!(image_key(&image, &cache), reshaped);
 }
+
 #[test]
 fn preview_cap_does_not_compound_downscaling() {
     let (mut p, noise, blur, out) = sample();
@@ -402,10 +411,12 @@ fn preview_cap_does_not_compound_downscaling() {
     let mut opts = Options::new(&no_res);
     opts.max_size = Some(512);
     let c = cook(&p, 0, &opts, &cache);
+
     assert_eq!(c.image(noise, 0).map(|i| (i.width(), i.height())), Some((512, 512)));
     assert_eq!(c.image(blur, 0).map(|i| (i.width(), i.height())), Some((128, 128)));
     assert_eq!(c.image(out, 0).map(|i| (i.width(), i.height())), Some((128, 128)));
 }
+
 #[test]
 fn preview_cap_uses_nominal_dimensions_through_bypassed_nodes() {
     let (mut p, noise, blur, out) = sample();
@@ -416,10 +427,12 @@ fn preview_cap_uses_nominal_dimensions_through_bypassed_nodes() {
     let mut opts = Options::new(&no_res);
     opts.max_size = Some(128);
     let c = cook(&p, 0, &opts, &cache);
+
     assert_eq!(c.image(noise, 0).map(|i| (i.width(), i.height())), Some((128, 64)));
     assert_eq!(c.image(blur, 0).map(|i| (i.width(), i.height())), Some((128, 64)));
     assert_eq!(c.image(out, 0).map(|i| (i.width(), i.height())), Some((128, 64)));
 }
+
 #[test]
 fn changed_unsampled_input_recooks() {
     let mut g = Graph::new("g");
@@ -432,15 +445,19 @@ fn changed_unsampled_input_recooks() {
     opts.inputs.insert("input".into(), image.clone());
     let cache = Mutex::new(Cache::default());
     let first = cook(&p, 0, &opts, &cache);
+
     assert!(!first.nodes[&input].cached);
+
     let mut data = image.data().to_vec();
     data[1] = 1.0;
     let changed = Image::from_data(128, 128, Kind::Gray, data, &Limits::default()).unwrap();
     opts.inputs.insert("input".into(), changed);
     let second = cook(&p, 0, &opts, &cache);
+
     assert!(!second.nodes[&input].cached);
     assert_eq!(second.image(input, 0).unwrap().data()[1], 1.0);
 }
+
 #[test]
 fn linear_input_images_and_bitmap_nodes_request_data_reads() {
     // The decoder returns 0.5 for a linear request and 0.2 for an sRGB one
@@ -531,16 +548,25 @@ fn bound_input_image_linear_flag_change_recooks_instance() {
     let cache = Mutex::new(Cache::default());
     let opts = Options::new(&res);
     let first = cook(&p, 0, &opts, &cache);
+
     assert!(first.nodes[&inst].error.is_none(), "{:?}", first.nodes[&inst].error);
     assert!(!first.nodes[&inst].cached);
+
     let first_value = first.image(inst, 0).unwrap().data()[0];
+
     assert!((first_value - 0.2).abs() < 1e-4, "sRGB bound image should reach the instance, got {first_value}");
+
     let second = cook(&p, 0, &opts, &cache);
+
     assert!(second.nodes[&inst].cached, "an unchanged instance should be served from the cache");
+
     p.graphs[1].input_images_linear.insert("in".into());
     let third = cook(&p, 0, &opts, &cache);
+
     assert!(!third.nodes[&inst].cached, "toggling input_images_linear must recook the instance");
+
     let third_value = third.image(inst, 0).unwrap().data()[0];
+
     assert!((third_value - 0.5).abs() < 1e-4, "linear bound image should reach the instance, got {third_value}");
 }
 

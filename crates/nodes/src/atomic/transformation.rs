@@ -21,8 +21,9 @@ fn transformation(context: &CookContext) -> CookResult {
     let input = context.input(0).cloned().unwrap_or_else(|| Image::filled(context.w, context.h, Kind::Gray, [0.0; 4]));
     let offset = context.v2("offset");
     let matrix = context.v4("matrix");
+    const MIN_DETERMINANT: f32 = 1e-8;
     let determinant = matrix[0] * matrix[3] - matrix[1] * matrix[2];
-    if !determinant.is_finite() || determinant.abs() < 1e-8 {
+    if !determinant.is_finite() || determinant.abs() < MIN_DETERMINANT {
         return Err("transform matrix is singular".into());
     }
 
@@ -78,7 +79,8 @@ fn nearest_mip(mut input: Image, matrix: [f32; 4], context: &CookContext) -> Ima
                     let sum: u32 = pixels.iter().map(|pixel| (pixel[channel].clamp(0.0, 1.0) * maximum).round() as u32).sum();
                     ((sum + 2) / 4) as f32 / maximum
                 } else {
-                    pixels.iter().map(|pixel| pixel[channel]).sum::<f32>() * 0.25
+                    // Average in f64 so finite HDR texels cannot overflow the sum
+                    (pixels.iter().map(|pixel| f64::from(pixel[channel])).sum::<f64>() * 0.25) as f32
                 }
             })
         });

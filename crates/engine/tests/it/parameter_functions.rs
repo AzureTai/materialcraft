@@ -25,17 +25,21 @@ fn output_size_function_controls_resolution_and_survives_sbs() {
 
     let cooked = session.cook();
     let image = cooked.image(owner, 0).unwrap();
+
     assert_eq!((image.width(), image.height()), (128, 32));
     assert!(cooked.nodes[&owner].error.is_none());
 
     let bytes = formats::sbs::write_sbs(&session.pkg).unwrap();
     let loaded = formats::sbs::read_sbs(&bytes, "parameter-functions.sbs", &|_| None).unwrap();
+
     assert!(loaded.warnings.is_empty(), "{:?}", loaded.warnings);
+
     let mut reopened = Session::new(loaded.pkg);
     reopened.preview_size = None;
     let owner = reopened.graph().unwrap().nodes.iter().find(|node| node.def == "uniform").unwrap().id;
     let cooked = reopened.cook();
     let image = cooked.image(owner, 0).unwrap();
+
     assert_eq!((image.width(), image.height()), (128, 32));
 }
 
@@ -90,6 +94,7 @@ fn native_dynamic_output_size_is_not_discarded_on_load() {
     let cooked = session.cook();
 
     let image = cooked.image(owner, 0).unwrap();
+
     assert_eq!((image.width(), image.height()), (64, 32));
 }
 
@@ -394,6 +399,7 @@ fn base_functions_inherit_from_the_primary_input_and_bypasses_keep_input_dimensi
 
     let cooked = session.cook();
     let image = cooked.image(blend, 0).unwrap();
+
     assert_eq!((image.width(), image.height()), (16, 16));
     assert_eq!(cooked.nodes[&blend].base.size, [32, 32]);
     assert_eq!(cooked.nodes[&output].base.size, [32, 32]);

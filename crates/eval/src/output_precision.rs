@@ -49,10 +49,10 @@ fn with_pixels(image: Image, integer_sampling: bool, convert: impl Fn(&mut f32))
     limits.max_pixels = u64::MAX;
     limits.max_bytes = u64::MAX;
 
-    let shared = Arc::clone(image.shared_data());
+    let mut data = Arc::clone(image.shared_data());
     drop(image);
-    let mut data = Arc::unwrap_or_clone(shared);
-    data.iter_mut().for_each(convert);
+
+    Arc::make_mut(&mut data).iter_mut().for_each(convert);
 
     // `data` keeps the size and kind of a valid image, so `from_data` accepts it
     Image::from_data(width, height, kind, data, &limits)
