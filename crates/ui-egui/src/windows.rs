@@ -11,8 +11,7 @@ use serde_json::{Value, json};
 
 use crate::MaterialCraftApp;
 use crate::i18n::tr;
-use crate::shell::modality::Modality;
-use crate::theme::{Accent, Brightness, Tokens};
+use crate::theme::Tokens;
 
 /// Template previews for the New graph dialog (rendered in the background on first open)
 #[derive(Default)]
@@ -75,19 +74,24 @@ thread_local! {
     static TEMPLATES: std::cell::RefCell<TemplatePreviews> = std::cell::RefCell::new(TemplatePreviews::default());
 }
 
+/// A template's rendered preview, once the background render has finished
+pub(crate) fn template_preview(ctx: &egui::Context, id: &str) -> Option<egui::TextureId> {
+    TEMPLATES.with(|previews| previews.borrow_mut().get(ctx, id))
+}
+
 pub fn show(app: &mut MaterialCraftApp, ctx: &egui::Context) {
     if let Some(error) = app.thumbs.tick(ctx, &app.session.library, app.cooker.busy() || app.session.dirty) {
         app.toast(error, true);
     }
 
     if app.ui.windows.new_graph {
-        new_graph(app, ctx);
+        crate::new_graph_dialog::show(app, ctx);
     }
     if app.ui.windows.export {
         crate::export::show(app, ctx);
     }
     if app.ui.windows.preferences {
-        preferences(app, ctx);
+        crate::preferences::show(app, ctx);
     }
     if app.ui.windows.about {
         about(app, ctx);
@@ -96,7 +100,10 @@ pub fn show(app: &mut MaterialCraftApp, ctx: &egui::Context) {
         shortcuts(app, ctx);
     }
     if app.ui.windows.home {
-        home(app, ctx);
+        crate::home_screen::show(app, ctx);
+    }
+    if app.ui.windows.plugin_manager {
+        crate::plugin_manager::show(app, ctx);
     }
 
     crate::unsaved::show(app, ctx);
@@ -118,129 +125,6 @@ pub(crate) fn modal(ctx: &egui::Context, id: &str, title: &str, open: &mut bool,
         .pivot(egui::Align2::CENTER_CENTER)
         .default_pos(ctx.content_rect().center())
         .show(ctx, body);
-}
-
-fn new_graph(app: &mut MaterialCraftApp, ctx: &egui::Context) {
-    use materialcraft_engine::core::GraphKind;
-
-    let mut open = true;
-    let mut create = false;
-    modal(ctx, "new-graph", tr("New graph"), &mut open, vec2(440.0, 290.0), |ui| {
-        ui.horizontal(|ui| {
-            ui.selectable_value(&mut app.ui.new_graph_kind, GraphKind::Material, tr("Graph"));
-            ui.selectable_value(&mut app.ui.new_graph_kind, GraphKind::Function, tr("Function Graph"));
-        });
-        ui.add_space(12.0);
-        ui.label(tr("Graph name"));
-        let name = ui.text_edit_singleline(&mut app.ui.new_graph_name);
-        crate::widgets::name(&name, egui::Role::TextInput, "Graph name");
-
-        if app.ui.new_graph_kind == GraphKind::Material {
-            ui.add_space(8.0);
-            crate::widgets::combo(ui, tr("Template"), app.ui.new_graph_template.clone(), |ui| {
-                for (id, label) in materialcraft_engine::samples::TEMPLATES {
-                    ui.selectable_value(&mut app.ui.new_graph_template, id.to_string(), tr(label));
-                }
-            });
-            let size = egui::ComboBox::from_label(tr("Size")).selected_text(format!("{} px", app.ui.new_graph_size)).show_ui(ui, |ui| {
-                for size in [256u32, 512, 1024, 2048, 4096] {
-                    ui.selectable_value(&mut app.ui.new_graph_size, size, format!("{size} px"));
-                }
-            });
-            crate::widgets::name(&size.response, egui::Role::ComboBox, "Size");
-        }
-
-        ui.add_space(12.0);
-        ui.label(format!("{}: {}", tr("Package"), app.session.pkg.name));
-        ui.add_space(16.0);
-        ui.horizontal(|ui| {
-            if ui.add(crate::widgets::primary_button(ui, tr("Create"))).clicked() {
-                create = true;
-            }
-            if ui.button(tr("Cancel")).clicked() {
-                app.ui.windows.new_graph = false;
-            }
-        });
-    });
-
-    if create {
-        let parameters =
-            json!({"kind": app.ui.new_graph_kind, "template": app.ui.new_graph_template, "name": app.ui.new_graph_name, "size": app.ui.new_graph_size});
-        if app.run("file.new", parameters).is_some() {
-            app.ui.frame_all = true;
-            open = false;
-        }
-    }
-    if !open {
-        app.ui.windows.new_graph = false;
-    }
-}
-
-fn preferences(app: &mut MaterialCraftApp, ctx: &egui::Context) {
-    let mut open = true;
-    let mut clear_cache = false;
-    modal(ctx, "prefs", tr("Preferences"), &mut open, vec2(400.0, 500.0), |ui| {
-        let p = &mut app.ui.prefs;
-        let current_lang = crate::i18n::current();
-        crate::widgets::combo(ui, tr("Language"), current_lang.name, |ui| {
-            for l in &crate::i18n::LANGUAGES {
-                if ui.selectable_label(p.language == l.code, l.name).clicked() {
-                    p.language = l.code.to_owned();
-                    crate::i18n::set_language(&p.language);
-                }
-            }
-        });
-        crate::widgets::combo(ui, tr("Brightness"), tr(p.brightness.label()), |ui| {
-            for b in Brightness::ALL {
-                ui.selectable_value(&mut p.brightness, b, tr(b.label()));
-            }
-        });
-        crate::widgets::combo(ui, tr("Accent color"), tr(p.accent.label()), |ui| {
-            for a in Accent::ALL {
-                ui.selectable_value(&mut p.accent, a, tr(a.label()));
-            }
-        });
-        crate::widgets::slider(ui, tr("Interface scale"), &mut p.ui_scale, 0.75..=2.0, 2);
-        let mut auto = p.autosave_minutes as f32;
-        if crate::widgets::slider(ui, tr("Autosave every (minutes, 0 = off)"), &mut auto, 0.0..=60.0, 0).changed() {
-            p.autosave_minutes = auto.round() as u32;
-        }
-        let mut undo_limit = p.history.undo_limit as f32;
-        if crate::widgets::slider(ui, tr("Undo history (steps)"), &mut undo_limit, 1.0..=10_000.0, 0).changed() {
-            p.history.undo_limit = undo_limit.round() as u32;
-        }
-        crate::widgets::combo(ui, tr("Preview size while editing"), crate::preview_resolution::label(p.preview_size), |ui| {
-            crate::preview_resolution::choices(ui, &mut p.preview_size);
-        });
-        ui.checkbox(&mut p.thumbnails, tr("Show node thumbnails"));
-        ui.separator();
-        ui.label(tr("Library preview cache"));
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            use materialcraft_engine::LibraryCachePrefs;
-            ui.horizontal(|ui| {
-                let label = ui.label(tr("Disk limit (MiB, 0 = off)"));
-                ui.add(egui::DragValue::new(&mut p.library_cache.disk_mib).range(0..=LibraryCachePrefs::MAX_DISK_MIB)).labelled_by(label.id);
-            });
-            ui.horizontal(|ui| {
-                let label = ui.label(tr("Maximum stored previews"));
-                ui.add(egui::DragValue::new(&mut p.library_cache.max_previews).range(1..=LibraryCachePrefs::MAX_PREVIEWS)).labelled_by(label.id);
-            });
-        }
-        clear_cache = ui.button(tr("Clear cache")).clicked();
-        ui.label(tr("Previews rebuild as they come into view."));
-        ui.separator();
-        crate::widgets::slider(ui, tr("3D pan limit (mesh radii)"), &mut p.camera.pan_limit, 0.0..=20.0, 1);
-        crate::widgets::slider(ui, tr("3D pan speed"), &mut p.camera.pan_speed, 0.1..=4.0, 2);
-    });
-    if clear_cache {
-        app.run("library.cache.clear", serde_json::json!({}));
-        app.apply_prefs();
-    }
-
-    if !open {
-        app.ui.windows.preferences = false;
-    }
 }
 
 fn about(app: &mut MaterialCraftApp, ctx: &egui::Context) {
@@ -294,96 +178,6 @@ fn shortcuts(app: &mut MaterialCraftApp, ctx: &egui::Context) {
     });
     if !open {
         app.ui.windows.shortcuts = false;
-    }
-}
-
-fn home(app: &mut MaterialCraftApp, ctx: &egui::Context) {
-    let mut open = true;
-    let mut create: Option<(&str, &str)> = None;
-    let modality = Modality::capture(app, ctx);
-    let free = !modality.is_blocked();
-    modal(ctx, "home", tr("Home"), &mut open, vec2(760.0, 470.0), |ui| {
-        let tk = Tokens::get(ui.ctx());
-        ui.horizontal_top(|ui| {
-            // Left rail: actions and links
-            ui.vertical(|ui| {
-                ui.set_width(150.0);
-                if ui.add_enabled(free, crate::widgets::primary_button(ui, tr("New graph"))).clicked() {
-                    app.ui.windows.home = false;
-                    app.ui.windows.new_graph = true;
-                }
-                ui.add_space(4.0);
-                if ui.add_enabled(modality.allows("file.open"), egui::Button::new(format!("{}  {}", icon::FOLDER_OPEN, tr("Open package...")))).clicked() {
-                    app.ui.windows.home = false;
-                    crate::menus::invoke(app, ui.ctx(), "file.open");
-                }
-                ui.add_space(16.0);
-                ui.hyperlink_to(tr("Documentation"), "https://github.com/storytold/materialcraft#readme");
-                ui.hyperlink_to(tr("Community (Discord)"), "https://discord.gg/artcraft");
-                ui.hyperlink_to("getartcraft.com", "https://getartcraft.com/apps/materialcraft");
-                ui.add_space(16.0);
-                ui.checkbox(&mut app.ui.prefs.show_home, tr("Show at startup"));
-            });
-            ui.separator();
-            ui.vertical(|ui| {
-                ui.label(RichText::new(tr("Welcome to MaterialCraft")).size(18.0).strong().color(tk.text_strong));
-                ui.label(
-                    RichText::new(tr(
-                        "Build tileable materials from noises, patterns and filters, see them live in 2D and 3D, and export the maps for any engine.",
-                    ))
-                    .color(tk.text_dim),
-                );
-                ui.add_space(8.0);
-                ui.label(RichText::new(tr("Samples")).strong());
-                ui.horizontal_wrapped(|ui| {
-                    if !free {
-                        ui.disable();
-                    }
-                    for (id, label) in materialcraft_engine::samples::TEMPLATES.iter().filter(|(id, _)| !matches!(*id, "empty" | "pbr")) {
-                        let (r, resp) = ui.allocate_exact_size(vec2(92.0, 116.0), egui::Sense::click());
-                        crate::widgets::name(&resp, egui::Role::ListItem, label);
-                        if free && resp.hovered() {
-                            ui.painter().rect_filled(r, 6.0, tk.row_hover);
-                        }
-                        let img = egui::Rect::from_min_size(r.min + vec2(6.0, 4.0), vec2(80.0, 80.0));
-                        match TEMPLATES.with(|t| t.borrow_mut().get(ui.ctx(), id)) {
-                            Some(t) => {
-                                ui.painter().image(t, img, egui::Rect::from_min_max(egui::Pos2::ZERO, egui::pos2(1.0, 1.0)), Color32::WHITE);
-                            }
-                            None => {
-                                ui.painter().circle_filled(img.center(), 36.0, tk.row);
-                            }
-                        }
-                        let g = ui.painter().layout(tr(label).to_string(), egui::FontId::proportional(11.0), tk.text, 90.0);
-                        ui.painter().galley(egui::pos2(r.center().x - g.size().x * 0.5, img.bottom() + 6.0), g, tk.text);
-                        if free && resp.clicked() {
-                            create = Some((id, label));
-                        }
-                    }
-                });
-                ui.add_space(8.0);
-                ui.label(RichText::new(tr("Recent")).strong());
-                if app.ui.recent.is_empty() {
-                    ui.label(RichText::new(tr("No recent packages")).color(tk.text_dim));
-                }
-                #[cfg(not(target_arch = "wasm32"))]
-                for p in app.ui.recent.clone().into_iter().take(6) {
-                    if ui.add_enabled(free, egui::Link::new(&p)).clicked() {
-                        open_path(app, &p);
-                        app.ui.windows.home = false;
-                    }
-                }
-            });
-        });
-    });
-    if let Some((id, label)) = create {
-        if app.run("file.new", json!({"template": id, "name": label.replace(' ', "_"), "size": 1024})).is_some() {
-            app.ui.frame_all = true;
-        }
-        open = false;
-    }
-    if !open {
-        app.ui.windows.home = false;
     }
 }
 
@@ -564,6 +358,10 @@ pub fn file_action(app: &mut MaterialCraftApp, ctx: &egui::Context, id: &str) ->
                 crate::export::open(app, crate::export::ExportTab::Mcmat);
                 true
             }
+            "file.saveAll" => {
+                save_all(app);
+                true
+            }
             "file.sendToTextureCraft" => {
                 if app.run("file.sendToTextureCraft", json!({})).is_some() {
                     app.toast(tr("Sent to TextureCraft: find it on the shelf under My smart materials"), false);
@@ -595,6 +393,33 @@ pub fn file_action(app: &mut MaterialCraftApp, ctx: &egui::Context, id: &str) ->
             _ => return false,
         }
         true
+    }
+}
+
+/// File ▸ Save all: save every modified package with a file and say which still need Save as
+#[cfg(not(target_arch = "wasm32"))]
+fn save_all(app: &mut MaterialCraftApp) {
+    let Some(reply) = app.run("file.saveAll", json!({})) else { return };
+
+    let saved: Vec<String> = reply["saved"].as_array().into_iter().flatten().filter_map(|path| path.as_str().map(str::to_string)).collect();
+    for path in &saved {
+        app.ui.add_recent(path);
+    }
+
+    let names = |key: &str| reply[key].as_array().into_iter().flatten().filter_map(|name| name.as_str()).collect::<Vec<_>>().join(", ");
+    let without_file = names("withoutFile");
+    let failed: Vec<String> = reply["failed"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .map(|failure| format!("{}: {}", failure["package"].as_str().unwrap_or_default(), failure["error"].as_str().unwrap_or_default()))
+        .collect();
+    if !failed.is_empty() {
+        app.toast(format!("{} {}", tr("Not saved:"), failed.join("; ")), true);
+    } else if !without_file.is_empty() {
+        app.toast(format!("{} {} ({without_file})", saved.len(), tr("saved; use Save as for packages without a file")), false);
+    } else {
+        app.toast(format!("{} {}", saved.len(), tr("packages saved")), false);
     }
 }
 

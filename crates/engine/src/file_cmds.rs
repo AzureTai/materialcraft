@@ -6,7 +6,7 @@ use serde_json::{Value as J, json};
 use materialcraft_core::{Package, Resource, ResourceBytes};
 use materialcraft_formats::{Depth, encode, output_name};
 
-use crate::commands::{CommandSpec, always, bad, has_graph, has_package, strp, u64p};
+use crate::commands::{CommandSpec, always, bad, boolp, has_graph, has_package, strp, u64p};
 use crate::samples::{TEMPLATES, template};
 use crate::{ExportRequest, Result, Session, cmd};
 
@@ -17,7 +17,7 @@ pub(crate) fn specs() -> Vec<CommandSpec> {
             "Graph...",
             ["File", "New"],
             Some("Ctrl+N"),
-            "{name?, folder?, kind? (material|function), template? (see graph.templates), size? (px, power of two)} adds a new graph to the package and opens it",
+            "{name?, folder?, kind? (material|function), template? (see graph.templates), size? (px, power of two), height? (px, power of two; default size), newPackage? (create the graph in a new package)} adds a new graph to the package and opens it",
             always,
             new_graph
         ),
@@ -69,26 +69,38 @@ fn new_graph(session: &mut Session, parameters: &J) -> Result<J> {
     } else {
         TEMPLATES.iter().find(|entry| entry.0 == template_id).map_or("Graph", |entry| entry.1)
     };
-    let size = u64p(parameters, "size").unwrap_or(1024).clamp(16, 8192);
-    let log2 = 63 - size.leading_zeros();
+    let width = u64p(parameters, "size").unwrap_or(1024).clamp(16, 8192);
+    let height = u64p(parameters, "height").unwrap_or(width).clamp(16, 8192);
+    let [width_log2, height_log2] = [width, height].map(|side| 63 - side.leading_zeros());
     let base = strp(parameters, "name").map(str::to_string).unwrap_or_else(|| label.replace(' ', "_"));
     let folder = strp(parameters, "folder").unwrap_or("");
-    crate::folder_path::require(&session.pkg, folder)?;
+    let in_new_package = boolp(parameters, "newPackage").unwrap_or(false);
+    if in_new_package && !folder.is_empty() {
+        return Err(bad("file.new", "a new package has no folders yet: leave `folder` out"));
+    }
+    if !in_new_package {
+        crate::folder_path::require(&session.pkg, folder)?;
+    }
     crate::folder_path::require_graph_folder(folder)?;
     let base = crate::folder_path::name(&base)?;
 
-    let name = crate::folder_path::unique(&session.pkg, folder, base);
     let mut graph = if kind == materialcraft_core::GraphKind::Function {
-        let mut graph = materialcraft_core::Graph::new(&name);
+        let mut graph = materialcraft_core::Graph::new(base);
         graph.function = Some(materialcraft_core::FunctionGraph::default());
         graph
     } else {
-        template(template_id, &name, log2)?
+        template(template_id, base, width_log2)?
     };
-    graph.folder = folder.into();
-    if !session.has_package() {
+
+    // Everything is checked before a package opens, so a refused request leaves the workspace as it was
+    if in_new_package || !session.has_package() {
         session.open_package(Package::new("Untitled package"), None)?;
     }
+
+    let name = crate::folder_path::unique(&session.pkg, folder, base);
+    graph.name = name.clone();
+    graph.size = [width_log2, height_log2];
+    graph.folder = folder.into();
     session.edit("New graph", |session| {
         session.pkg.graphs.push(graph);
         session.graph = session.pkg.graphs.len() - 1;

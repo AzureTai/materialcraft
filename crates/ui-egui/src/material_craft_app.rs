@@ -155,6 +155,9 @@ impl MaterialCraftApp {
             let _ = materialcraft_engine::execute(&mut self.session, "session.history", &serde_json::json!(self.ui.prefs.history));
         }
 
+        self.ui.recent.truncate(self.ui.prefs.recent_limit.clamp(1, crate::state::Prefs::MAX_RECENT));
+        self.session.view_outputs_on_open = self.ui.prefs.view_outputs_on_open;
+
         if self.session.camera != self.ui.prefs.camera.sanitized() {
             self.session.set_camera_prefs(self.ui.prefs.camera);
         }
@@ -367,21 +370,26 @@ impl MaterialCraftApp {
         }
 
         self.next_autosave = now + period;
-        let dir = user_dir("autosave");
-        let path = dir.join(format!("{}.mcraft", materialcraft_engine::formats::safe_file_name(&self.session.pkg.name)));
+        let folder = user_dir("autosave");
         let pkg = self.session.pkg.clone();
+        let keep = self.ui.prefs.autosave_versions.clamp(1, crate::state::Prefs::MAX_AUTOSAVE_VERSIONS);
         let spawned = std::thread::Builder::new().name("materialcraft-autosave".into()).spawn(move || {
-            let result = std::fs::create_dir_all(&dir)
-                .map_err(|e| e.to_string())
+            let path = crate::autosave_versions::next_path(&folder, &pkg.name);
+            let result = std::fs::create_dir_all(&folder)
+                .map_err(|error| error.to_string())
                 .and_then(|_| {
                     materialcraft_engine::formats::project::ProjectFiles::build(&pkg, "autosave.mcraft", true)
                         .and_then(|files| files.zip())
-                        .map_err(|e| e.to_string())
+                        .map_err(|error| error.to_string())
                 })
-                .and_then(|bytes| materialcraft_engine::formats::write_atomic(&path, &bytes).map_err(|e| e.to_string()));
+                .and_then(|bytes| materialcraft_engine::formats::write_atomic(&path, &bytes).map_err(|error| error.to_string()));
+
             match result {
-                Ok(()) => log::info!("autosaved {}", path.display()),
-                Err(e) => log::warn!("autosave to {} failed: {e}", path.display()),
+                Ok(()) => {
+                    crate::autosave_versions::prune(&folder, &pkg.name, keep);
+                    log::info!("autosaved {}", path.display());
+                }
+                Err(error) => log::warn!("autosave to {} failed: {error}", path.display()),
             }
         });
         if let Err(e) = spawned {
@@ -505,7 +513,9 @@ impl MaterialCraftApp {
         // Tab can focus a menu or toolbar button while drawing; preserve keyboard ownership
         self.graph.keyboard_was_focused = ctx.egui_wants_keyboard_input();
         menus::menu_bar(self, ui);
-        toolbar::main_toolbar(self, ui);
+        if self.ui.prefs.show_toolbar {
+            toolbar::main_toolbar(self, ui);
+        }
         toolbar::status_bar(self, ui);
         self.ui.explorer.hovered = false;
         egui::CentralPanel::default().frame(egui::Frame::NONE.fill(theme::Tokens::get(&ctx).chrome)).show(ui, |ui| docking::show(self, ui));

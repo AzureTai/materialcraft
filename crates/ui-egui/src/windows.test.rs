@@ -38,14 +38,14 @@ mod home_modality_tests {
     fn home_actions_are_live_when_nothing_blocks_them() {
         let harness = harness(|_| {});
         assert!(open_package(&harness));
-        assert!(!harness.get(By::new().role(egui::accesskit::Role::Button).label("New graph")).accesskit_node().is_disabled());
+        assert!(!harness.get(By::new().role(egui::accesskit::Role::Button).label_contains("New graph")).accesskit_node().is_disabled());
     }
 
     #[test]
     fn open_package_is_off_behind_a_dialog_and_home_stays_open() {
         let harness = harness(|app| app.ui.windows.about = true);
         assert!(!open_package(&harness));
-        assert!(harness.get(By::new().role(egui::accesskit::Role::Button).label("New graph")).accesskit_node().is_disabled());
+        assert!(harness.get(By::new().role(egui::accesskit::Role::Button).label_contains("New graph")).accesskit_node().is_disabled());
         assert!(harness.state().ui.windows.home);
     }
 
@@ -62,7 +62,7 @@ mod home_modality_tests {
     #[test]
     fn a_sample_tile_and_a_recent_link_wait_behind_a_file_dialog() {
         let mut harness = harness(file_dialog);
-        assert!(harness.get(By::new().role(egui::accesskit::Role::Link).label("recent.sbs")).accesskit_node().is_disabled());
+        assert!(harness.get(By::new().role(egui::accesskit::Role::Button).label_contains("recent.sbs")).accesskit_node().is_disabled());
         let graphs = harness.state().session.pkg.graphs.len();
         let (_, sample) = materialcraft_engine::samples::TEMPLATES.iter().find(|(id, _)| !matches!(*id, "empty" | "pbr")).unwrap();
         harness.get(By::new().role(egui::accesskit::Role::ListItem).label(sample)).click();

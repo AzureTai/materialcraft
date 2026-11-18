@@ -96,8 +96,14 @@ fn open_blocker(app: &MaterialCraftApp) -> Option<Blocker> {
     if windows.package_save.is_some() {
         return Some(Blocker::Dialog);
     }
-    (app.expose_parameter_dialog.is_some() || windows.new_graph || windows.export || windows.preferences || windows.about || app.ui.explorer.rename.is_some())
-        .then_some(Blocker::Dialog)
+    (app.expose_parameter_dialog.is_some()
+        || windows.new_graph
+        || windows.export
+        || windows.preferences
+        || windows.about
+        || windows.plugin_manager
+        || app.ui.explorer.rename.is_some())
+    .then_some(Blocker::Dialog)
 }
 
 #[cfg(test)]

@@ -41,6 +41,8 @@ pub(crate) enum Then {
     },
     /// The image file the 2D view draws behind transparent pixels
     BackgroundImage,
+    /// Help ▸ Export log: the Console's messages, one per line
+    ExportLog(String),
     /// The parameters `graph.input.bind` runs with, before the path
     BindInput(Value, GraphRef),
 }
@@ -92,6 +94,13 @@ pub(crate) fn save_package(app: &mut MaterialCraftApp, copy: bool) {
     let then = Then::SavePackage { document: app.session.document_id, copy, before_action: false };
     let dialog = save_dialog(app);
     ask(app, dialog, then);
+}
+
+/// Help ▸ Export log: ask where to write the Console's messages as a text file
+pub(crate) fn export_log(app: &mut MaterialCraftApp) {
+    let text = app.session.log.join("\n");
+    let dialog = craft_dialogs::FileDialog::save().file_name("materialcraft-log.txt").filter(tr("Text"), &["txt"]);
+    ask(app, dialog, Then::ExportLog(text));
 }
 
 /// Save in the unsaved-changes prompt, for a package without a path: waits behind any open dialog
@@ -179,6 +188,10 @@ fn chosen(app: &mut MaterialCraftApp, then: Then, path: &std::path::Path) {
                 app.toast(format!("{} {picked}", tr("Saved")), false);
             }
         }
+        Then::ExportLog(text) => match materialcraft_engine::formats::write_atomic(path, text.as_bytes()) {
+            Ok(()) => app.toast(format!("{} {picked}", tr("Saved")), false),
+            Err(error) => app.toast(format!("{}: {error}", tr("The log could not be saved")), true),
+        },
         Then::SaveViewState => {
             if app.run("view.3d.saveState", json!({"path": picked})).is_some() {
                 app.toast(format!("{} {picked}", tr("Saved")), false);

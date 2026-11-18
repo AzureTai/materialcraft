@@ -270,3 +270,16 @@ fn extracted_graph_outputs_remain_unclassified() {
     let output = graph.nodes.iter().find(|node| node.def == "output").unwrap();
     assert_eq!(materialcraft_engine::eval::output_usage(output), "any");
 }
+
+#[test]
+fn opening_a_graph_shows_its_outputs_only_while_the_preference_is_on() {
+    let mut session = new_session();
+    let shown = session.material_preview.clone();
+    session.view_outputs_on_open = false;
+    execute(&mut session, "file.new", &json!({"template": "pbr", "name": "Quiet"})).unwrap();
+    assert_eq!(session.material_preview, shown, "the 3D view keeps what it showed");
+
+    session.view_outputs_on_open = true;
+    execute(&mut session, "file.new", &json!({"template": "pbr", "name": "Shown"})).unwrap();
+    assert_eq!(session.material_preview.graph, Some(session.graph));
+}
