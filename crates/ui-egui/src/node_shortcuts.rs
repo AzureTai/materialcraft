@@ -78,12 +78,15 @@ mod tests {
         let event = |modifiers, repeat| Event::Key { key, physical_key: None, pressed: true, repeat, modifiers };
         let plain = event(egui::Modifiers::NONE, false);
         let alt = event(egui::Modifiers::ALT, false);
-        let raw = egui::RawInput { events: vec![plain, alt], ..Default::default() };
+        let raw = egui::RawInput { events: vec![plain, Event::ModifiersChanged(egui::Modifiers::ALT), alt], ..Default::default() };
         let shortcuts = [("node:blur".to_owned(), "Alt+B".to_owned()), ("node:levels".to_owned(), "B".to_owned())].into();
 
-        let _ = egui::Context::default().run_ui(raw, |ui| {
-            assert_eq!(ui.input(|input| pressed(&shortcuts, input, Platform::Windows)), Some("node:levels"));
-        });
+        egui::Context::default()
+            .run_ui(raw, |ui| {
+                assert_eq!(ui.input(|input| pressed(&shortcuts, input, Platform::Windows)), Some("node:levels"));
+            })
+            .drop_without_applying_deltas();
+
         assert!(event_chord(&event(egui::Modifiers::ALT, true), Platform::Windows).is_none());
     }
 }
