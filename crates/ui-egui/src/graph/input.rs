@@ -273,30 +273,28 @@ pub(super) fn handle(
         app.run("library.add", json!({"entry": payload.0, "at": at, "snapToGrid": app.ui.prefs.snap_to_grid}));
     }
 
-    // Keys over the canvas
-    let hovered = pointer.is_some_and(|position| rect.contains(position));
-    if hovered && app.graph.search.is_none() && !crate::shell::modality::Modality::capture(app, &context).is_blocked() {
-        let space = !context.egui_wants_keyboard_input() && context.input(|input| input.key_pressed(egui::Key::Space));
+    if let Some(position) = pointer.filter(|position| rect.contains(*position))
+        && app.graph.search.is_none()
+        && !crate::shell::modality::Modality::capture(app, &context).is_blocked()
+    {
+        let typing = context.egui_wants_keyboard_input();
+        let platform = craft_keymap::egui::platform(&context);
+        if !typing && let Some(entry) = context.input(|input| crate::node_shortcuts::pressed(&app.ui.prefs.node_shortcuts, input, platform)) {
+            let under_pointer = camera.to_graph(position);
+            let at = [under_pointer.x - NODE_W * 0.5, under_pointer.y - 20.0];
+            app.run("library.add", json!({"entry": entry, "at": at, "snapToGrid": app.ui.prefs.snap_to_grid}));
+            return;
+        }
+
+        let space = !typing && context.input(|input| input.key_pressed(egui::Key::Space));
         let tab = app.ui.prefs.tab_opens_node_search
             && !app.graph.keyboard_was_focused
             && !context.text_edit_focused()
             && context.input(|input| input.key_pressed(egui::Key::Tab));
-        if (space || tab)
-            && let Some(position) = pointer
-        {
+        if space || tab {
             open_search(app, &context, camera.to_graph(position), None);
         }
 
-        // A node creation shortcut adds its entry under the pointer
-        let typing = context.egui_wants_keyboard_input();
-        if !typing
-            && let Some(position) = pointer
-            && let Some(entry) = context.input(|input| crate::node_shortcuts::pressed(&app.ui.prefs.node_shortcuts, input))
-        {
-            let under_pointer = camera.to_graph(position);
-            let at = [under_pointer.x - NODE_W * 0.5, under_pointer.y - 20.0];
-            app.run("library.add", json!({"entry": entry, "at": at, "snapToGrid": app.ui.prefs.snap_to_grid}));
-        }
         if GraphCamera::frame_key(ui, rect) {
             let selected = !app.session.selection.is_empty();
             frame(app, rect, selected);

@@ -83,10 +83,12 @@ impl Cooker {
 
 /// Tools ▸ Cancel rendering: stop the running cook; the next edit cooks again
 pub fn cancel(app: &mut MaterialCraftApp) {
-    if app.cooker.busy() {
-        app.cooker.stop();
-        app.cooker.stopped_by_user = true;
+    if !app.cooker.busy() {
+        return;
     }
+
+    app.cooker.stop();
+    app.cooker.stopped_by_user = true;
     app.session.dirty = false;
 }
 
@@ -105,6 +107,7 @@ pub fn drive(app: &mut MaterialCraftApp, ctx: &egui::Context) {
     if let Some(rx) = &app.cooker.rx {
         match rx.try_recv() {
             Ok(result) => {
+                let stopped_by_user = std::mem::take(&mut app.cooker.stopped_by_user);
                 app.cooker.rx = None;
                 app.cooker.started = None;
                 #[cfg(not(target_arch = "wasm32"))]
@@ -112,19 +115,20 @@ pub fn drive(app: &mut MaterialCraftApp, ctx: &egui::Context) {
                     app.cooker.cancel = None;
                 }
                 match result {
-                    // A stopped cook is partial: keep the previous results and cook again, unless the user stopped it
+                    _ if stopped_by_user => {}
+
+                    // Partial results are discarded so the previous preview stays visible
                     Ok(c) if c.cancelled() => {
-                        if app.cooker.epoch == app.session.cook_epoch && !app.cooker.stopped_by_user {
+                        if app.cooker.epoch == app.session.cook_epoch {
                             app.session.dirty = true;
                         }
-                        app.cooker.stopped_by_user = false;
                     }
                     Ok(c) => {
-                        if !app.session.dirty && app.cooker.epoch == app.session.cook_epoch {
+                        if !app.cooker.suspended && !app.session.dirty && app.cooker.epoch == app.session.cook_epoch {
                             app.session.accept_preview(c);
                         }
                     }
-                    Err(msg) if !app.session.dirty && app.cooker.epoch == app.session.cook_epoch => report_failure(app, msg),
+                    Err(msg) if !app.cooker.suspended && !app.session.dirty && app.cooker.epoch == app.session.cook_epoch => report_failure(app, msg),
                     Err(_) => {}
                 }
                 ctx.request_repaint();
@@ -140,9 +144,10 @@ pub fn drive(app: &mut MaterialCraftApp, ctx: &egui::Context) {
                 return;
             }
             Err(TryRecvError::Disconnected) => {
+                let stopped_by_user = std::mem::take(&mut app.cooker.stopped_by_user);
                 app.cooker.rx = None;
                 app.cooker.started = None;
-                if !app.session.dirty && app.cooker.epoch == app.session.cook_epoch {
+                if !stopped_by_user && !app.cooker.suspended && !app.session.dirty && app.cooker.epoch == app.session.cook_epoch {
                     report_failure(app, "the cook worker stopped unexpectedly".into());
                 }
                 #[cfg(not(target_arch = "wasm32"))]
@@ -152,6 +157,7 @@ pub fn drive(app: &mut MaterialCraftApp, ctx: &egui::Context) {
             }
         }
     }
+
     if app.session.dirty && !app.cooker.suspended {
         start(app, ctx.input(|i| i.time));
         ctx.request_repaint();

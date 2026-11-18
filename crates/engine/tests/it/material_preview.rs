@@ -283,3 +283,41 @@ fn opening_a_graph_shows_its_outputs_only_while_the_preference_is_on() {
     execute(&mut session, "file.new", &json!({"template": "pbr", "name": "Shown"})).unwrap();
     assert_eq!(session.material_preview.graph, Some(session.graph));
 }
+
+#[test]
+fn opening_a_package_respects_the_output_preview_preference() {
+    let mut source = new_session();
+    execute(&mut source, "file.new", &json!({"template": "pbr"})).unwrap();
+    execute(&mut source, "graph.delete", &json!({"graph": 0})).unwrap();
+    let bytes = materialcraft_engine::file_cmds::save_bytes(&source).unwrap();
+    let mut destination = new_session();
+    destination.view_outputs_on_open = false;
+
+    materialcraft_engine::file_cmds::open_bytes(&mut destination, &bytes, None).unwrap();
+
+    assert_eq!(destination.material_preview.graph, None);
+
+    destination.view_outputs_on_open = true;
+    materialcraft_engine::file_cmds::open_bytes(&mut destination, &bytes, None).unwrap();
+
+    assert_eq!(destination.material_preview.graph, Some(0));
+}
+
+#[test]
+fn reloading_a_package_respects_the_output_preview_preference() {
+    let directory = std::env::temp_dir().join(format!("materialcraft-reload-preview-{}", std::process::id()));
+    std::fs::create_dir(&directory).unwrap();
+    let mut session = new_session();
+    let path = directory.join("preview.sbs");
+    execute(&mut session, "file.saveAs", &json!({"path": path})).unwrap();
+
+    session.view_outputs_on_open = false;
+    execute(&mut session, "file.reload", &json!({})).unwrap();
+    let disabled = session.material_preview.clone();
+    session.view_outputs_on_open = true;
+    execute(&mut session, "file.reload", &json!({})).unwrap();
+    std::fs::remove_dir_all(directory).unwrap();
+
+    assert_eq!(disabled, MaterialPreview::default());
+    assert_eq!(session.material_preview.graph, Some(0));
+}

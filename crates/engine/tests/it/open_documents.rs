@@ -138,8 +138,9 @@ fn saving_a_new_file_preserves_its_identity_across_path_aliases() {
 #[test]
 fn save_all_writes_every_modified_package_with_a_file_and_lists_the_rest() {
     let folder = std::env::temp_dir().join(format!("materialcraft-save-all-{}", std::process::id()));
-    std::fs::create_dir_all(&folder).unwrap();
+    std::fs::create_dir(&folder).unwrap();
     let first_path = folder.join("first.sbs");
+    let saved_path = folder.canonicalize().unwrap().join("first.sbs");
     let second_path = folder.join("second.sbs");
 
     let mut session = Session::new(Package::new("First"));
@@ -157,7 +158,7 @@ fn save_all_writes_every_modified_package_with_a_file_and_lists_the_rest() {
 
     let reply = execute(&mut session, "file.saveAll", &json!({})).unwrap();
 
-    assert_eq!(reply["saved"], json!([first_path.to_str().unwrap()]));
+    assert_eq!(reply["saved"], json!([saved_path.to_str().unwrap()]));
     assert_eq!(reply["withoutFile"], json!(["Unsaved"]));
     assert_eq!(reply["failed"], json!([]));
     assert_eq!(session.document_id, active, "the package that was active stays active");
@@ -184,4 +185,23 @@ fn a_new_graph_can_start_its_own_package_and_take_any_size() {
     assert!(execute(&mut session, "file.new", &json!({"template": "invalid", "newPackage": true})).is_err());
     assert!(execute(&mut session, "file.new", &json!({"folder": "Missing", "newPackage": true})).is_err());
     assert_eq!(session.open_packages().len(), 2);
+}
+
+#[test]
+fn a_refused_graph_leaves_the_active_package_unchanged() {
+    let mut session = Session::new(Package::new("First"));
+    let destination = session.document_id;
+    execute(&mut session, "file.newPackage", &json!({"name": "Second"})).unwrap();
+    let original = session.document_id;
+
+    let refused = execute(&mut session, "file.new", &json!({"document": destination, "template": "invalid"}));
+
+    assert!(refused.is_err());
+    assert_eq!(session.document_id, original);
+    assert!(session.package(destination).unwrap().graphs.is_empty());
+
+    execute(&mut session, "file.new", &json!({"document": destination, "template": "empty", "name": "New graph"})).unwrap();
+
+    assert_eq!(session.document_id, destination);
+    assert_eq!(session.graph().unwrap().name, "New graph");
 }

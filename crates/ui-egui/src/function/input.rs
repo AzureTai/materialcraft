@@ -186,6 +186,7 @@ pub(super) fn handle(
     {
         editor.menu_at = camera.to_graph(pointer_position);
     }
+
     // Space or Tab over the canvas, or a double-click on empty canvas, searches for a node to add
     // Tab moves focus between widgets, so it waits only for text fields and focus held before this frame
     let space = !ui.ctx().egui_wants_keyboard_input() && ui.input(|input| input.key_pressed(egui::Key::Space));

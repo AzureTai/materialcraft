@@ -45,6 +45,7 @@ mod material_craft_app;
 mod native_dialogs;
 pub mod pattern;
 mod plugin_manager;
+#[path = "preference/mod.rs"]
 pub mod preferences;
 mod template_card;
 mod toast;

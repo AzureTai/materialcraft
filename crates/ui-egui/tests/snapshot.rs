@@ -1672,7 +1672,18 @@ fn explorer_inputs_and_graph_drop_share_labels_and_material_assignment() {
 
     save(&mut harness, &directory, "graph-drop-target");
     harness.event(egui::Event::PointerButton { pos: end, button: egui::PointerButton::Primary, pressed: false, modifiers: egui::Modifiers::NONE });
-    settle(&mut harness, 45);
+    let has_expected_material = |harness: &Harness<'static, MaterialCraftApp>| {
+        harness
+            .state()
+            .view3d
+            .shown
+            .as_ref()
+            .is_some_and(|(_, _, frame)| frame.as_chunks::<4>().0.iter().filter(|pixel| u16::from(pixel[0]) > u16::from(pixel[1]) + 30).nth(100).is_some())
+    };
+    let deadline = std::time::Instant::now() + Duration::from_secs(6);
+    while !has_expected_material(&harness) && std::time::Instant::now() < deadline {
+        settle(&mut harness, 1);
+    }
 
     assert_eq!(harness.state().session.graph, graph, "dropping a graph must not open it");
     assert_eq!(harness.state().session.view3d, camera, "dropping must not orbit the camera");
@@ -1682,9 +1693,7 @@ fn explorer_inputs_and_graph_drop_share_labels_and_material_assignment() {
 
     assert_eq!((binding.graph, binding.node), (0, NodeId(output)));
 
-    let frame = &harness.state().view3d.shown.as_ref().unwrap().2;
-
-    assert!(frame.as_chunks::<4>().0.iter().filter(|pixel| u16::from(pixel[0]) > u16::from(pixel[1]) + 30).count() > 100);
+    assert!(has_expected_material(&harness), "the assigned material appears in the rendered frame");
 
     save(&mut harness, &directory, "graph-dropped-on-material");
 }
@@ -1697,6 +1706,7 @@ fn library_cache_preferences() {
     settle(&mut h, 4);
     h.state_mut().ui.windows.preferences = true;
     settle(&mut h, 4);
+
     // The dock has a Library tab too, so the page is chosen directly
     h.state_mut().ui.preferences.page = materialcraft_ui_egui::preferences::PreferencesPage::Library;
     settle(&mut h, 4);

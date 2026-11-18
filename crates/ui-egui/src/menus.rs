@@ -93,6 +93,7 @@ pub const CATALOG: &[MenuItem] = &[
     sep("File"),
     it("File", "Save", "file.save", Some("Ctrl+S")),
     it("File", "Save as...", "file.saveAs", Some("Ctrl+Shift+S")),
+    #[cfg(not(target_arch = "wasm32"))]
     it("File", "Save all", "file.saveAll", None),
     it("File", "Close all", "ui.closeAll", None),
     sep("File"),
@@ -198,6 +199,10 @@ pub fn enabled(app: &MaterialCraftApp, id: &str) -> bool {
         return app.cooker.busy();
     }
 
+    if id == "graph.cook" && app.cooker.suspended {
+        return false;
+    }
+
     if matches!(id, "edit.paste" | "edit.pasteWithoutLinks") {
         return app.session.graph().is_ok() && app.session.clipboard.as_ref().is_some_and(|clip| !clip.nodes.is_empty());
     }
@@ -205,6 +210,7 @@ pub fn enabled(app: &MaterialCraftApp, id: &str) -> bool {
     if is_ui(id) {
         return true;
     }
+
     materialcraft_engine::find(id).is_some_and(|c| (c.enabled)(&app.session).is_ok())
 }
 
@@ -231,11 +237,13 @@ pub fn invoke(app: &mut MaterialCraftApp, ctx: &egui::Context, id: &str) {
         app.ui.dock.toggle(panel);
         return;
     }
+
     if let Some(size) = id.strip_prefix("ui.preview.").and_then(|s| s.parse::<u32>().ok()) {
         app.ui.prefs.preview_size = size;
         app.apply_prefs();
         return;
     }
+
     match id {
         "ui.newGraph" => crate::new_graph_dialog::open(app, materialcraft_engine::core::GraphKind::Material),
         "ui.newFunctionGraph" => crate::new_graph_dialog::open(app, materialcraft_engine::core::GraphKind::Function),
@@ -261,19 +269,21 @@ pub fn invoke(app: &mut MaterialCraftApp, ctx: &egui::Context, id: &str) {
         "ui.help.checkForUpdates" => crate::updates_ui::check(app),
         "ui.cook.cancel" => crate::cook::cancel(app),
         "ui.cook.suspend" => crate::cook::toggle_suspended(app),
+        "graph.cook" if app.cooker.suspended => {}
         "ui.pluginManager" => app.ui.windows.plugin_manager = true,
         "ui.view.toolbar" => app.ui.prefs.show_toolbar = !app.ui.prefs.show_toolbar,
         #[cfg(not(target_arch = "wasm32"))]
         "ui.help.exportLog" => crate::native_dialogs::export_log(app),
-        id if crate::help_links::url(id).is_some() => {
+        _ => {
             if let Some(url) = crate::help_links::url(id) {
                 ctx.open_url(egui::OpenUrl::new_tab(url));
+                return;
             }
-        }
-        _ => {
+
             if crate::windows::file_action(app, ctx, id) {
                 return;
             }
+
             app.run(id, Value::Null);
         }
     }
@@ -449,6 +459,7 @@ pub fn shortcuts(app: &mut MaterialCraftApp, ctx: &egui::Context) {
     if ctx.egui_wants_keyboard_input() || egui::Popup::is_any_open(ctx) {
         return;
     }
+
     // The desktop sends Copy, Cut and Paste events in place of their key presses
     if !ctx
         .input(|i| i.events.iter().any(|e| matches!(e, egui::Event::Key { pressed: true, .. } | egui::Event::Copy | egui::Event::Cut | egui::Event::Paste(_))))
@@ -460,6 +471,7 @@ pub fn shortcuts(app: &mut MaterialCraftApp, ctx: &egui::Context) {
     if !modality.is_blocked() && crate::explorer::shortcuts(app, ctx) {
         return;
     }
+
     if !modality.is_blocked() {
         crate::graph::wire_actions::shortcuts(app, ctx);
     }
@@ -468,21 +480,21 @@ pub fn shortcuts(app: &mut MaterialCraftApp, ctx: &egui::Context) {
     if app.keymap.platform() != platform {
         app.keymap = keymap(platform);
     }
-    // Selected label text copies through egui's Copy and Cut events, which a hit would remove
+
+    // Keep egui's copy, cut, and Escape events while label text is selected
     let label_selected = label_text_selected(ctx);
+
     // A clipboard chord with nothing to copy or paste leaves its event to egui instead of reporting an error
     let unavailable_clipboard_commands: Vec<&str> = ["edit.copy", "edit.cut", "edit.paste"].into_iter().filter(|id| !enabled(app, id)).collect();
+
     // A drag in progress keeps Escape so the gesture can cancel itself
     let gesture_in_progress = ctx.input(|i| i.pointer.any_down());
+    let node_search_open = app.graph.search_is_open() || app.function_editor.as_ref().is_some_and(|editor| editor.search.is_some());
     let hits = ctx.input_mut(|i| {
         app.dispatcher.dispatch_filtered(i, &app.keymap, &Active::NONE, |hit| {
             let id = hit.command.id.as_str();
-            // Escape cancels a cook only while one runs and no drag is held, so it keeps closing and clearing everything else
-            let cancels_nothing = id == "ui.cook.cancel" && (!app.cooker.busy() || gesture_in_progress);
-            modality.allows(id)
-                && !(label_selected && matches!(id, "edit.copy" | "edit.cut"))
-                && !unavailable_clipboard_commands.contains(&id)
-                && !cancels_nothing
+            let keeps_escape = id == "ui.cook.cancel" && (!app.cooker.busy() || gesture_in_progress || node_search_open || label_selected);
+            modality.allows(id) && !(label_selected && matches!(id, "edit.copy" | "edit.cut")) && !unavailable_clipboard_commands.contains(&id) && !keeps_escape
         })
     });
     for hit in hits {

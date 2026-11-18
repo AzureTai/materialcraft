@@ -32,6 +32,7 @@ fn render_templates() -> crate::thumbs::Previews {
         .filter_map(|(id, _)| {
             let mut s = materialcraft_engine::Session::new(materialcraft_engine::core::Package::new("t"));
             s.pkg.graphs.push(materialcraft_engine::samples::template(id, "t", 8).ok()?);
+            s.material_preview = materialcraft_engine::MaterialPreview::for_graph(&s.pkg, 0);
             s.preview_size = Some(256);
             s.cook();
             let maps = materialcraft_render::Maps::from_usages(s.material_maps());
@@ -57,26 +58,28 @@ impl TemplatePreviews {
             let _ = tx.send(render_templates());
             self.rx = Some(rx);
         }
-        if let Some(rx) = &self.rx
-            && let Ok(list) = rx.try_recv()
-        {
-            for (k, px) in list {
-                let img = egui::ColorImage::from_rgba_unmultiplied([PREVIEW as usize, PREVIEW as usize], &px);
-                self.tex.insert(k.clone(), ctx.load_texture(format!("tpl-{k}"), img, egui::TextureOptions::LINEAR));
+        if let Some(rx) = &self.rx {
+            match rx.try_recv() {
+                Ok(previews) => {
+                    for (template, pixels) in previews {
+                        let image = egui::ColorImage::from_rgba_unmultiplied([PREVIEW as usize, PREVIEW as usize], &pixels);
+                        let texture = ctx.load_texture(format!("tpl-{template}"), image, egui::TextureOptions::LINEAR);
+                        self.tex.insert(template, texture);
+                    }
+                    self.rx = None;
+                }
+                Err(std::sync::mpsc::TryRecvError::Disconnected) => self.rx = None,
+                Err(std::sync::mpsc::TryRecvError::Empty) => {}
             }
-            self.rx = None;
         }
+
         self.tex.get(id).map(TextureHandle::id)
     }
 }
 
-thread_local! {
-    static TEMPLATES: std::cell::RefCell<TemplatePreviews> = std::cell::RefCell::new(TemplatePreviews::default());
-}
-
 /// A template's rendered preview, once the background render has finished
-pub(crate) fn template_preview(ctx: &egui::Context, id: &str) -> Option<egui::TextureId> {
-    TEMPLATES.with(|previews| previews.borrow_mut().get(ctx, id))
+pub(crate) fn template_preview(app: &mut MaterialCraftApp, ctx: &egui::Context, id: &str) -> Option<egui::TextureId> {
+    (id != crate::template_card::FUNCTION_TEMPLATE).then(|| app.template_previews.get(ctx, id)).flatten()
 }
 
 pub fn show(app: &mut MaterialCraftApp, ctx: &egui::Context) {
@@ -125,6 +128,12 @@ pub(crate) fn modal(ctx: &egui::Context, id: &str, title: &str, open: &mut bool,
         .pivot(egui::Align2::CENTER_CENTER)
         .default_pos(ctx.content_rect().center())
         .show(ctx, body);
+}
+
+pub(crate) fn dialog_size(ctx: &egui::Context, preferred: egui::Vec2) -> egui::Vec2 {
+    // Leave room for the title bar and window margins inside the viewport
+    const FRAME_SPACE: egui::Vec2 = vec2(32.0, 72.0);
+    preferred.min((ctx.content_rect().size() - FRAME_SPACE).max(vec2(20.0, 40.0)))
 }
 
 fn about(app: &mut MaterialCraftApp, ctx: &egui::Context) {
@@ -401,26 +410,29 @@ pub fn file_action(app: &mut MaterialCraftApp, ctx: &egui::Context, id: &str) ->
 fn save_all(app: &mut MaterialCraftApp) {
     let Some(reply) = app.run("file.saveAll", json!({})) else { return };
 
-    let saved: Vec<String> = reply["saved"].as_array().into_iter().flatten().filter_map(|path| path.as_str().map(str::to_string)).collect();
-    for path in &saved {
+    let saved = reply["saved"].as_array().into_iter().flatten();
+    let saved_count = saved.clone().count();
+    for path in saved.filter_map(Value::as_str) {
         app.ui.add_recent(path);
     }
 
-    let names = |key: &str| reply[key].as_array().into_iter().flatten().filter_map(|name| name.as_str()).collect::<Vec<_>>().join(", ");
-    let without_file = names("withoutFile");
-    let failed: Vec<String> = reply["failed"]
+    let without_file: Vec<&str> = reply["withoutFile"].as_array().into_iter().flatten().filter_map(Value::as_str).collect();
+    let failures: Vec<String> = reply["failed"]
         .as_array()
         .into_iter()
         .flatten()
         .map(|failure| format!("{}: {}", failure["package"].as_str().unwrap_or_default(), failure["error"].as_str().unwrap_or_default()))
         .collect();
-    if !failed.is_empty() {
-        app.toast(format!("{} {}", tr("Not saved:"), failed.join("; ")), true);
-    } else if !without_file.is_empty() {
-        app.toast(format!("{} {} ({without_file})", saved.len(), tr("saved; use Save as for packages without a file")), false);
-    } else {
-        app.toast(format!("{} {}", saved.len(), tr("packages saved")), false);
+    let mut message = format!("{saved_count} {}", tr("packages saved"));
+    if !without_file.is_empty() {
+        message.push_str(&format!("\n{} {}", tr("Use Save as for:"), without_file.join(", ")));
     }
+    if !failures.is_empty() {
+        message.push_str(&format!("\n{} {}", tr("Not saved:"), failures.join("; ")));
+    }
+
+    app.session.log(format!("Save all: {saved_count} saved, {} need Save as, {} failed", without_file.len(), failures.len()));
+    app.toast_only(message, !failures.is_empty());
 }
 
 /// Whether File ▸ Save writes straight to the package's path (a package opened from a URL has none to write to)

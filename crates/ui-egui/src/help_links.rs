@@ -2,7 +2,7 @@
 
 /// Help menu ids and the pages they open
 pub(crate) const HELP_LINKS: &[(&str, &str)] = &[
-    ("ui.help.tutorials", "https://getartcraft.com/tutorials"),
+    ("ui.help.tutorials", "https://craft.wiki/apps/materialcraft/getting-started/"),
     ("ui.help.releaseNotes", "https://github.com/storytold/materialcraft/releases"),
     ("ui.help.requirements", "https://craft.wiki/apps/materialcraft/install-update/"),
     ("ui.help.docs", "https://craft.wiki/apps/materialcraft/overview/"),
@@ -13,7 +13,7 @@ pub(crate) const HELP_LINKS: &[(&str, &str)] = &[
     ("ui.help.feedback", "https://getartcraft.com/support"),
     ("ui.help.apps", "https://getartcraft.com/apps"),
     ("ui.help.website", "https://getartcraft.com/apps/materialcraft"),
-    ("ui.help.news", "https://getartcraft.com/news"),
+    ("ui.help.news", "https://github.com/storytold/materialcraft/releases"),
 ];
 
 /// The page a Help menu id opens

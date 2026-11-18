@@ -18,19 +18,23 @@ pub(super) fn show(app: &mut MaterialCraftApp, ui: &mut Ui) {
     ui.label(egui::RichText::new(tr("Save Current State As Default, in the 3D view's Scene menu, saves the whole view here")).small().color(tokens.text_dim));
 
     let current = ENVIRONMENTS.iter().find(|(id, _)| *id == view.environment).map_or(view.environment.clone(), |(_, label)| tr(label).to_string());
+    let mut changed = false;
     crate::widgets::combo(ui, tr("Default environment"), current, |ui| {
         for (id, label) in ENVIRONMENTS {
-            ui.selectable_value(&mut view.environment, (*id).to_string(), tr(label));
+            if ui.selectable_label(view.environment == *id, tr(label)).clicked() && view.environment != *id {
+                view.environment = (*id).to_owned();
+                changed = true;
+            }
         }
     });
 
     heading(ui, "Default lighting state");
-    ui.checkbox(&mut view.ambient.enabled, tr("Ambient Light"));
-    ui.checkbox(&mut view.lights[0].enabled, tr("Point Light 1"));
-    ui.checkbox(&mut view.lights[1].enabled, tr("Point Light 2"));
+    changed |= ui.checkbox(&mut view.ambient.enabled, tr("Ambient Light")).changed();
+    changed |= ui.checkbox(&mut view.lights[0].enabled, tr("Point Light 1")).changed();
+    changed |= ui.checkbox(&mut view.lights[1].enabled, tr("Point Light 2")).changed();
 
     // Only an actual change makes a saved default out of the built-in one
-    if view != prefs.default_view3d.clone().unwrap_or_default() {
+    if changed {
         prefs.default_view3d = Some(view);
     }
 

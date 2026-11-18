@@ -1,7 +1,7 @@
 //! The template cards of the New graph dialog and the home screen: a rendered preview, a name,
 //! the kind of graph, and an information button that says what the template holds
 
-use egui::{Color32, RichText, Sense, Ui, vec2};
+use egui::{Color32, Sense, Ui, vec2};
 use egui_phosphor::regular as icon;
 use materialcraft_engine::core::GraphKind;
 
@@ -36,7 +36,7 @@ pub(crate) fn cards() -> Vec<TemplateCard> {
 fn description(id: &str) -> &'static str {
     match id {
         "empty" => "An empty material graph",
-        "pbr" => "Base color, normal, roughness, metallic, height and ambient occlusion outputs, ready to connect",
+        "pbr" => "Base color, normal, roughness, metallic, height and ambient occlusion outputs with inputs already connected",
         "atomics" => "A small graph of atomic nodes working together",
         FUNCTION_TEMPLATE => "An empty function graph: a value computed from function nodes",
         _ => "",
@@ -58,7 +58,7 @@ pub(crate) fn show(ui: &mut Ui, card: &TemplateCard, chosen: bool, preview: Opti
 
     let fill = if chosen || response.hovered() { tokens.row_hover } else { tokens.row };
     ui.painter().rect_filled(rect, 6.0, fill);
-    if chosen {
+    if chosen || response.has_focus() {
         ui.painter().rect_stroke(rect, 6.0, egui::Stroke::new(1.5, tokens.accent), egui::StrokeKind::Inside);
     }
 
@@ -80,11 +80,15 @@ pub(crate) fn show(ui: &mut Ui, card: &TemplateCard, chosen: bool, preview: Opti
     let kind = tr(card.kind_label());
     ui.painter().text(egui::pos2(rect.center().x, rect.bottom() - 18.0), egui::Align2::CENTER_CENTER, kind, egui::FontId::proportional(11.0), tokens.text_dim);
 
-    // The information button tells what the template holds
     let info = egui::Rect::from_center_size(rect.right_top() + vec2(-16.0, 16.0), vec2(18.0, 18.0));
-    let info_response = ui.interact(info, response.id.with("info"), Sense::hover());
+    let info_response = ui.interact(info, response.id.with("info"), Sense::click());
+    crate::widgets::name(&info_response, egui::Role::Button, tr(card.description));
     ui.painter().text(info.center(), egui::Align2::CENTER_CENTER, icon::INFO, egui::FontId::proportional(16.0), tokens.text_dim);
-    info_response.on_hover_text(RichText::new(tr(card.description)));
+    if info_response.has_focus() {
+        ui.painter().rect_stroke(info, 3.0, egui::Stroke::new(1.0, tokens.accent), egui::StrokeKind::Inside);
+        info_response.show_tooltip_text(tr(card.description));
+    }
+    info_response.on_hover_text(tr(card.description));
 
     response
 }

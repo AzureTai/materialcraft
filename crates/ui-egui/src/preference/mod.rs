@@ -5,6 +5,7 @@
 mod general_page;
 mod graph_page;
 mod library_page;
+mod preference_action;
 mod preferences_page;
 mod preferences_state;
 mod projects_page;
@@ -12,6 +13,7 @@ mod shortcuts_page;
 mod view3d_page;
 
 use egui::{RichText, Ui, vec2};
+use preference_action::PreferenceAction;
 
 pub use preferences_page::PreferencesPage;
 pub use preferences_state::PreferencesState;
@@ -25,14 +27,6 @@ const PAGE_LIST_WIDTH: f32 = 150.0;
 const PAGE_ROW_HEIGHT: f32 = 36.0;
 const BUTTON_WIDTH: f32 = 110.0;
 const BUTTON_BAR_HEIGHT: f32 = 40.0;
-
-/// What the buttons at the bottom of the window asked for
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum Choice {
-    Ok,
-    Cancel,
-    Apply,
-}
 
 /// A section heading of a page, in capitals like the reference layout
 pub(super) fn heading(ui: &mut Ui, title: &str) {
@@ -57,21 +51,22 @@ pub fn show(app: &mut MaterialCraftApp, ctx: &egui::Context) {
         app.ui.preferences.applied = Some(app.ui.prefs.clone());
     }
 
+    let size = crate::windows::dialog_size(ctx, WINDOW_SIZE);
     let mut open = true;
     let mut choice = None;
     let mut rebuild_previews = false;
-    crate::windows::modal(ctx, "prefs", tr("Preferences"), &mut open, WINDOW_SIZE, |ui| {
-        ui.set_min_size(WINDOW_SIZE);
+    crate::windows::modal(ctx, "prefs", tr("Preferences"), &mut open, size, |ui| {
+        ui.set_min_size(size);
         let whole = ui.available_rect_before_wrap();
         let bar_top = whole.bottom() - BUTTON_BAR_HEIGHT;
-        let list = egui::Rect::from_min_max(whole.min, egui::pos2(whole.left() + PAGE_LIST_WIDTH, bar_top));
+        let list = egui::Rect::from_min_max(whole.min, egui::pos2(whole.left() + PAGE_LIST_WIDTH.min(size.x * 0.35), bar_top));
         let page = egui::Rect::from_min_max(egui::pos2(list.right() + 16.0, whole.top()), egui::pos2(whole.right(), bar_top));
 
         page_list(app, &mut ui.new_child(egui::UiBuilder::new().max_rect(list)));
 
         let mut page_ui = ui.new_child(egui::UiBuilder::new().max_rect(page));
-        egui::ScrollArea::vertical().id_salt("preferences-page").auto_shrink([false, false]).show(&mut page_ui, |ui| {
-            ui.set_width(page.width() - 12.0);
+        egui::ScrollArea::both().id_salt("preferences-page").auto_shrink([false, false]).show(&mut page_ui, |ui| {
+            ui.set_min_width((page.width() - 12.0).max(0.0));
             match app.ui.preferences.page {
                 PreferencesPage::General => general_page::show(app, ui),
                 PreferencesPage::Projects => projects_page::show(app, ui),
@@ -84,12 +79,13 @@ pub fn show(app: &mut MaterialCraftApp, ctx: &egui::Context) {
 
         let bar = egui::Rect::from_min_max(egui::pos2(whole.left(), bar_top), whole.max);
         let mut bar_ui = ui.new_child(egui::UiBuilder::new().max_rect(bar).layout(egui::Layout::right_to_left(egui::Align::Center)));
-        for (label, pressed) in [("Apply", Choice::Apply), ("Cancel", Choice::Cancel), ("OK", Choice::Ok)] {
-            let button = if pressed == Choice::Ok { crate::widgets::primary_button(&bar_ui, tr(label)) } else { egui::Button::new(tr(label)) };
-            if bar_ui.add_sized([BUTTON_WIDTH, 28.0], button).clicked() {
+        for (label, pressed) in [("Apply", PreferenceAction::Apply), ("Cancel", PreferenceAction::Cancel), ("OK", PreferenceAction::Ok)] {
+            let button = if pressed == PreferenceAction::Ok { crate::widgets::primary_button(&bar_ui, tr(label)) } else { egui::Button::new(tr(label)) };
+            if bar_ui.add_sized([BUTTON_WIDTH.min(bar.width() / 3.0 - 4.0), 28.0], button).clicked() {
                 choice = Some(pressed);
             }
         }
+
         ui.advance_cursor_after_rect(whole);
     });
 
@@ -98,16 +94,16 @@ pub fn show(app: &mut MaterialCraftApp, ctx: &egui::Context) {
     }
 
     // Closing the window is Cancel
-    let choice = if open { choice } else { Some(Choice::Cancel) };
+    let choice = if open { choice } else { Some(PreferenceAction::Cancel) };
     match choice {
-        Some(Choice::Apply) => app.ui.preferences.applied = Some(app.ui.prefs.clone()),
-        Some(Choice::Cancel) => {
+        Some(PreferenceAction::Apply) => app.ui.preferences.applied = Some(app.ui.prefs.clone()),
+        Some(PreferenceAction::Cancel) => {
             if let Some(applied) = app.ui.preferences.applied.take() {
                 app.ui.prefs = applied;
             }
             close(app);
         }
-        Some(Choice::Ok) => close(app),
+        Some(PreferenceAction::Ok) => close(app),
         None => {}
     }
     app.apply_prefs();

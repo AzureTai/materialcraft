@@ -13,6 +13,8 @@ use crate::theme::Tokens;
 const WINDOW_SIZE: egui::Vec2 = vec2(1000.0, 620.0);
 const RAIL_WIDTH: f32 = 220.0;
 const CARD_GAP: f32 = 14.0;
+const RAIL_PADDING: f32 = 12.0;
+const STARTUP_BAR_HEIGHT: f32 = 32.0;
 /// The links down the left side, under their headings: (heading, [(label, Help menu id)])
 const LINKS: [(&str, &[(&str, &str)]); 2] = [
     ("Learn", &[("Tutorials", "ui.help.tutorials"), ("Documentation", "ui.help.docs"), ("What's new", "ui.help.news")]),
@@ -20,15 +22,22 @@ const LINKS: [(&str, &[(&str, &str)]); 2] = [
 ];
 
 pub(crate) fn show(app: &mut MaterialCraftApp, ctx: &egui::Context) {
+    let size = crate::windows::dialog_size(ctx, WINDOW_SIZE);
     let mut open = true;
-    crate::windows::modal(ctx, "home", tr("Home"), &mut open, WINDOW_SIZE, |ui| {
-        ui.set_min_size(WINDOW_SIZE);
+    crate::windows::modal(ctx, "home", tr("Home"), &mut open, size, |ui| {
+        ui.set_min_size(size);
         let whole = ui.available_rect_before_wrap();
-        let rail = egui::Rect::from_min_max(whole.min, egui::pos2(whole.left() + RAIL_WIDTH, whole.bottom()));
+        let rail = egui::Rect::from_min_max(whole.min, egui::pos2(whole.left() + RAIL_WIDTH.min(size.x * 0.4), whole.bottom()));
         let content = egui::Rect::from_min_max(egui::pos2(rail.right() + 24.0, whole.top()), whole.max);
 
-        left_rail(app, &mut ui.new_child(egui::UiBuilder::new().max_rect(rail)));
-        start(app, &mut ui.new_child(egui::UiBuilder::new().max_rect(content)));
+        let mut rail_ui = ui.new_child(egui::UiBuilder::new().max_rect(rail.with_max_y(rail.bottom() - STARTUP_BAR_HEIGHT)));
+        egui::ScrollArea::vertical().id_salt("home-links").auto_shrink([false, false]).show(&mut rail_ui, |ui| left_rail(app, ui));
+        let checkbox = rail.with_min_y(rail.bottom() - STARTUP_BAR_HEIGHT).with_min_x(rail.left() + RAIL_PADDING);
+        ui.new_child(egui::UiBuilder::new().max_rect(checkbox)).checkbox(&mut app.ui.prefs.show_home, tr("Show at startup"));
+
+        let mut content_ui = ui.new_child(egui::UiBuilder::new().max_rect(content));
+        egui::ScrollArea::vertical().id_salt("home-content").auto_shrink([false, false]).show(&mut content_ui, |ui| start(app, ui));
+
         ui.advance_cursor_after_rect(whole);
     });
     if !open {
@@ -41,16 +50,16 @@ fn left_rail(app: &mut MaterialCraftApp, ui: &mut Ui) {
     let tokens = Tokens::get(ui.ctx());
     let modality = Modality::capture(app, ui.ctx());
     ui.painter().rect_filled(ui.max_rect(), 6.0, tokens.row);
-    ui.add_space(12.0);
+    ui.add_space(RAIL_PADDING);
 
     ui.horizontal(|ui| {
-        ui.add_space(12.0);
+        ui.add_space(RAIL_PADDING);
         ui.vertical(|ui| {
             ui.label(RichText::new("MaterialCraft").size(22.0).strong().color(tokens.accent));
             ui.label(RichText::new(format!("{} {}", tr("Version"), materialcraft_engine::VERSION)).small().color(tokens.text_dim));
             ui.add_space(16.0);
 
-            let width = RAIL_WIDTH - 24.0;
+            let width = (ui.available_width() - RAIL_PADDING).max(0.0);
             let new_graph = crate::widgets::primary_button(ui, &format!("{}  {}", icon::FILE_PLUS, tr("New graph...")));
             if ui.add_enabled_ui(!modality.is_blocked(), |ui| ui.add_sized([width, 30.0], new_graph)).inner.clicked() {
                 app.ui.windows.home = false;
@@ -73,9 +82,6 @@ fn left_rail(app: &mut MaterialCraftApp, ui: &mut Ui) {
             }
         });
     });
-
-    let bottom = egui::Rect::from_min_max(egui::pos2(ui.max_rect().left() + 12.0, ui.max_rect().bottom() - 32.0), ui.max_rect().right_bottom());
-    ui.new_child(egui::UiBuilder::new().max_rect(bottom)).checkbox(&mut app.ui.prefs.show_home, tr("Show at startup"));
 }
 
 /// The welcome, the template cards and the recent packages
@@ -100,7 +106,7 @@ fn start(app: &mut MaterialCraftApp, ui: &mut Ui) {
                 ui.disable();
             }
             for card in row {
-                let preview = crate::windows::template_preview(ui.ctx(), card.id);
+                let preview = crate::windows::template_preview(app, ui.ctx(), card.id);
                 if crate::template_card::show(ui, card, false, preview).clicked() && free {
                     begin_with(app, card);
                 }
@@ -130,17 +136,21 @@ fn recent(app: &mut MaterialCraftApp, ui: &mut Ui) {
     }
 
     #[cfg(not(target_arch = "wasm32"))]
-    egui::ScrollArea::vertical().id_salt("home-recent").show(ui, |ui| {
+    {
         let free = !Modality::capture(app, ui.ctx()).is_blocked();
-        for path in app.ui.recent.clone() {
-            let file = std::path::Path::new(&path).file_name().map_or_else(|| path.clone(), |name| name.to_string_lossy().into_owned());
+        let mut selected = None;
+        for path in &app.ui.recent {
+            let file = std::path::Path::new(path).file_name().map_or_else(|| std::borrow::Cow::Borrowed(path.as_str()), |name| name.to_string_lossy());
             let text = egui::text::LayoutJob::simple_singleline(format!("{}  {file}", icon::PACKAGE), egui::FontId::proportional(13.0), tokens.text);
-            let row = ui.add_enabled(free, egui::Button::new(text).frame_when_inactive(false)).on_hover_text(&path);
-            ui.label(RichText::new(&path).small().color(tokens.text_dim));
+            let row = ui.add_enabled(free, egui::Button::new(text).frame_when_inactive(false)).on_hover_text(path.as_str());
+            ui.label(RichText::new(path.as_str()).small().color(tokens.text_dim));
             if row.clicked() {
-                crate::windows::open_path(app, &path);
-                app.ui.windows.home = false;
+                selected = Some(path.clone());
             }
         }
-    });
+        if let Some(path) = selected {
+            crate::windows::open_path(app, &path);
+            app.ui.windows.home = false;
+        }
+    }
 }

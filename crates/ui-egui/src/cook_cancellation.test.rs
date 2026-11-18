@@ -43,3 +43,28 @@ fn ready_results_are_discarded_when_an_edit_is_pending() {
     assert_eq!(app.session.cooked.ms, 123.0);
     assert!(!app.session.dirty);
 }
+
+#[test]
+fn cancelling_a_finished_worker_keeps_the_displayed_preview() {
+    let (mut app, tx, flag) = waiting();
+    tx.send(Ok(PreviewCook { cooked: Cooked { ms: 7.0, ..Default::default() }, ..Default::default() })).unwrap();
+
+    cancel(&mut app);
+    drive(&mut app, &egui::Context::default());
+
+    assert!(flag.load(Ordering::Relaxed));
+    assert_eq!(Arc::strong_count(&flag), 1, "the settled cooker releases the cancellation flag");
+    assert_eq!(app.session.cooked.ms, 123.0);
+    assert!(!app.cooker.busy());
+    assert!(!app.session.dirty);
+}
+
+#[test]
+fn cancelling_without_a_worker_keeps_pending_work() {
+    let mut app = MaterialCraftApp::headless(materialcraft_engine::new_session(), crate::UiState::default());
+    app.session.dirty = true;
+
+    cancel(&mut app);
+
+    assert!(app.session.dirty);
+}

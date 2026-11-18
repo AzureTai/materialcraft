@@ -150,3 +150,26 @@ fn project_dialogs_offer_separate_formats_and_import_filters_show_full_names() {
     assert!(bitmap.iter().any(|(label, _)| label == "JPEG - JFIF Compliant (*.jpg *.jif *.jpeg *.jpe)"));
     assert_eq!(resource_filters(true)[1].0, "Scalable Vector Graphics (*.svg)");
 }
+
+#[test]
+fn template_texture_handles_drop_with_their_application() {
+    let context = egui::Context::default();
+    let manager = context.tex_manager();
+    let initial_count = manager.read().num_allocated();
+
+    for name in ["empty", "pbr", "atomics"] {
+        let mut app = crate::MaterialCraftApp::headless(materialcraft_engine::new_session(), crate::UiState::default());
+        let (sender, receiver) = std::sync::mpsc::channel();
+        sender.send(vec![(name.to_string(), vec![255; (super::PREVIEW * super::PREVIEW * 4) as usize])]).unwrap();
+        app.template_previews.rx = Some(receiver);
+        app.template_previews.started = true;
+
+        let texture = super::template_preview(&mut app, &context, name).unwrap();
+
+        assert!(manager.read().meta(texture).is_some());
+        assert_eq!(manager.read().num_allocated(), initial_count + 1);
+        drop(app);
+        assert!(manager.read().meta(texture).is_none());
+        assert_eq!(manager.read().num_allocated(), initial_count);
+    }
+}

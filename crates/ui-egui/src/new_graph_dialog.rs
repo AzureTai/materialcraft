@@ -15,6 +15,8 @@ const WINDOW_SIZE: egui::Vec2 = vec2(1000.0, 640.0);
 const SETTINGS_WIDTH: f32 = 340.0;
 const CARD_GAP: f32 = 14.0;
 const BUTTON_WIDTH: f32 = 120.0;
+const ACTION_BAR_HEIGHT: f32 = 36.0;
+const COLUMN_GAP: f32 = 24.0;
 /// The sides a new graph can have, in pixels
 const SIDES: [u32; 6] = [256, 512, 1024, 2048, 4096, 8192];
 /// The categories the dialog lists: every template, or the templates of one kind of graph
@@ -41,17 +43,24 @@ fn choose(app: &mut MaterialCraftApp, card: &TemplateCard) {
 }
 
 pub(crate) fn show(app: &mut MaterialCraftApp, ctx: &egui::Context) {
+    let size = crate::windows::dialog_size(ctx, WINDOW_SIZE);
     let mut open = true;
     let mut create = false;
     let title = if app.ui.new_graph_kind == GraphKind::Function { tr("New function graph") } else { tr("New graph") };
-    crate::windows::modal(ctx, "new-graph", title, &mut open, WINDOW_SIZE, |ui| {
-        ui.set_min_size(WINDOW_SIZE);
+    crate::windows::modal(ctx, "new-graph", title, &mut open, size, |ui| {
+        ui.set_min_size(size);
         let whole = ui.available_rect_before_wrap();
-        let cards = egui::Rect::from_min_max(whole.min, egui::pos2(whole.right() - SETTINGS_WIDTH - 24.0, whole.bottom()));
-        let settings = egui::Rect::from_min_max(egui::pos2(whole.right() - SETTINGS_WIDTH, whole.top()), whole.max);
+        let settings_left = whole.right() - SETTINGS_WIDTH.min(size.x * 0.52);
+        let cards = egui::Rect::from_min_max(whole.min, egui::pos2(settings_left - COLUMN_GAP, whole.bottom()));
+        let settings = egui::Rect::from_min_max(egui::pos2(settings_left, whole.top()), whole.max);
 
         card_grid(app, &mut ui.new_child(egui::UiBuilder::new().max_rect(cards)));
-        create = graph_settings(app, &mut ui.new_child(egui::UiBuilder::new().max_rect(settings)));
+        let bar = settings.with_min_y(settings.bottom() - ACTION_BAR_HEIGHT);
+        let form = settings.with_max_y(bar.top());
+        let mut form_ui = ui.new_child(egui::UiBuilder::new().max_rect(form));
+        let destination_available = egui::ScrollArea::vertical().auto_shrink([false, false]).show(&mut form_ui, |ui| graph_settings(app, ui)).inner;
+        create = graph_actions(app, &mut ui.new_child(egui::UiBuilder::new().max_rect(bar)), destination_available);
+
         ui.advance_cursor_after_rect(whole);
     });
 
@@ -66,13 +75,6 @@ pub(crate) fn show(app: &mut MaterialCraftApp, ctx: &egui::Context) {
 /// Create the graph. Returns true when it was created
 fn run(app: &mut MaterialCraftApp) -> bool {
     let target = app.ui.new_graph_package;
-    if let Some(document) = target
-        && document != app.session.document_id
-        && app.run("package.activate", json!({"document": document})).is_none()
-    {
-        return false;
-    }
-
     let kind = if app.ui.new_graph_kind == GraphKind::Function { "function" } else { "material" };
     let height = if app.ui.new_graph_linked { app.ui.new_graph_size } else { app.ui.new_graph_height };
     let parameters = json!({
@@ -81,6 +83,7 @@ fn run(app: &mut MaterialCraftApp) -> bool {
         "name": app.ui.new_graph_name,
         "size": app.ui.new_graph_size,
         "height": height,
+        "document": target,
         "newPackage": target.is_none(),
     });
     let created = app.run("file.new", parameters).is_some();
@@ -96,7 +99,7 @@ fn card_grid(app: &mut MaterialCraftApp, ui: &mut Ui) {
     ui.horizontal(|ui| {
         ui.label(RichText::new(tr("Category")).strong());
         let current = CATEGORIES.iter().find(|(kind, _)| *kind == app.ui.new_graph_category).map_or("", |(_, label)| label);
-        let combo = egui::ComboBox::from_id_salt("new-graph-category").width(220.0).selected_text(tr(current)).show_ui(ui, |ui| {
+        let combo = egui::ComboBox::from_id_salt("new-graph-category").width(ui.available_width().min(220.0)).selected_text(tr(current)).show_ui(ui, |ui| {
             for (kind, label) in CATEGORIES {
                 ui.selectable_value(&mut app.ui.new_graph_category, kind, tr(label));
             }
@@ -124,7 +127,7 @@ fn card_grid(app: &mut MaterialCraftApp, ui: &mut Ui) {
                     ui.spacing_mut().item_spacing.x = CARD_GAP;
                     for card in row {
                         let chosen = app.ui.new_graph_kind == card.kind && app.ui.new_graph_template == card.id;
-                        let preview = crate::windows::template_preview(ui.ctx(), card.id);
+                        let preview = crate::windows::template_preview(app, ui.ctx(), card.id);
                         let response = crate::template_card::show(ui, card, chosen, preview);
                         if response.clicked() {
                             choose(app, card);
@@ -141,7 +144,7 @@ fn card_grid(app: &mut MaterialCraftApp, ui: &mut Ui) {
     });
 }
 
-/// The graph's name, size and package, and the Create and Cancel buttons. Returns true for Create
+/// The graph's name, size and package. Returns whether the chosen package is available.
 fn graph_settings(app: &mut MaterialCraftApp, ui: &mut Ui) -> bool {
     let tokens = Tokens::get(ui.ctx());
     ui.horizontal(|ui| {
@@ -173,29 +176,45 @@ fn graph_settings(app: &mut MaterialCraftApp, ui: &mut Ui) -> bool {
     }
 
     ui.label(RichText::new(tr("Create graph in")).strong());
-    let packages: Vec<(u64, String)> = app.session.open_packages().into_iter().map(|(id, package, _, _)| (id, package.name.clone())).collect();
-    let current = app
-        .ui
-        .new_graph_package
-        .and_then(|id| packages.iter().find(|(package, _)| *package == id))
-        .map_or_else(|| tr("New package").to_string(), |(_, name)| name.clone());
+    let packages = app.session.open_packages();
+    let package_label = |id, name: &str, path: Option<&str>| match path {
+        Some(path) => format!("{name} — {path}"),
+        None => format!("{name} (#{id})"),
+    };
+    let destination_available = app.ui.new_graph_package.is_none_or(|target| packages.iter().any(|(id, ..)| *id == target));
+    let current = app.ui.new_graph_package.map_or_else(
+        || tr("New package").to_string(),
+        |target| {
+            packages
+                .iter()
+                .find(|(id, ..)| *id == target)
+                .map_or_else(|| tr("Choose a package").to_string(), |(id, package, path, _)| package_label(*id, &package.name, *path))
+        },
+    );
     let combo = egui::ComboBox::from_id_salt("new-graph-package").width(ui.available_width()).selected_text(current).show_ui(ui, |ui| {
         ui.selectable_value(&mut app.ui.new_graph_package, None, tr("New package"));
-        for (id, name) in &packages {
-            ui.selectable_value(&mut app.ui.new_graph_package, Some(*id), name);
+        for (id, package, path, _) in &packages {
+            ui.selectable_value(&mut app.ui.new_graph_package, Some(*id), package_label(*id, &package.name, *path));
         }
     });
     crate::widgets::name(&combo.response, egui::Role::ComboBox, "Create graph in");
 
+    destination_available
+}
+
+fn graph_actions(app: &mut MaterialCraftApp, ui: &mut Ui, destination_available: bool) -> bool {
     let mut create = std::mem::take(&mut app.ui.new_graph_create_now);
-    let bottom = ui.max_rect().bottom();
-    let bar = egui::Rect::from_min_max(egui::pos2(ui.max_rect().left(), bottom - 32.0), ui.max_rect().right_bottom());
-    let mut bar_ui = ui.new_child(egui::UiBuilder::new().max_rect(bar).layout(egui::Layout::right_to_left(egui::Align::Center)));
-    if bar_ui.add_sized([BUTTON_WIDTH, 28.0], egui::Button::new(tr("Cancel"))).clicked() {
-        app.ui.windows.new_graph = false;
-    }
-    create |= bar_ui.add_sized([BUTTON_WIDTH, 28.0], crate::widgets::primary_button(&bar_ui, tr("Create"))).clicked();
-    create
+    let button_width = BUTTON_WIDTH.min((ui.available_width() * 0.5 - ui.spacing().item_spacing.x).max(0.0));
+    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+        if ui.add_sized([button_width, 28.0], egui::Button::new(tr("Cancel"))).clicked() {
+            app.ui.windows.new_graph = false;
+        }
+
+        let create_button = crate::widgets::primary_button(ui, tr("Create"));
+        create |= ui.add_enabled_ui(destination_available, |ui| ui.add_sized([button_width, 28.0], create_button)).inner.clicked();
+    });
+
+    create && destination_available && app.ui.windows.new_graph
 }
 
 /// A list of the sides a graph can have

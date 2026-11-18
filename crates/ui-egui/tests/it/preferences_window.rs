@@ -59,6 +59,34 @@ fn cancel_returns_to_the_preferences_of_the_last_apply() {
 }
 
 #[test]
+fn draft_limits_preserve_recents_and_undo_until_applied() {
+    let mut harness = harness();
+    for _ in 0..3 {
+        harness.state_mut().run("graph.node.add", serde_json::json!({"def": "uniform"})).unwrap();
+    }
+    for path in ["first.sbs", "second.sbs", "third.sbs"] {
+        harness.state_mut().ui.add_recent(path);
+    }
+    let history = harness.state().session.history();
+    open(&mut harness);
+    harness.state_mut().ui.prefs.history.undo_limit = 1;
+    harness.state_mut().ui.prefs.recent_limit = 1;
+    harness.run_steps(2);
+    click(&mut harness, Role::Button, "Cancel");
+
+    assert_eq!(harness.state().session.history(), history);
+    assert_eq!(harness.state().ui.recent.len(), 3);
+
+    open(&mut harness);
+    harness.state_mut().ui.prefs.history.undo_limit = 1;
+    harness.state_mut().ui.prefs.recent_limit = 1;
+    click(&mut harness, Role::Button, "Apply");
+
+    assert_eq!(harness.state().session.history_prefs.undo_limit, 1);
+    assert_eq!(harness.state().ui.recent, ["third.sbs"]);
+}
+
+#[test]
 fn a_shortcut_is_captured_refused_when_taken_and_adds_its_node_over_the_graph() {
     let mut harness = harness();
     open(&mut harness);

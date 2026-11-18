@@ -88,14 +88,17 @@ fn open_blocker(app: &MaterialCraftApp) -> Option<Blocker> {
     if windows.unsaved.is_some() || app.awaiting_save.is_some() {
         return Some(Blocker::UnsavedPrompt);
     }
+
     #[cfg(not(target_arch = "wasm32"))]
     if crate::updates_ui::blocks_input(app) {
         return Some(Blocker::Update);
     }
+
     #[cfg(any(test, target_arch = "wasm32"))]
     if windows.package_save.is_some() {
         return Some(Blocker::Dialog);
     }
+
     (app.expose_parameter_dialog.is_some()
         || windows.new_graph
         || windows.export

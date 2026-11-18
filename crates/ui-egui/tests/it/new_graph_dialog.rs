@@ -45,7 +45,8 @@ fn a_card_and_an_unlinked_size_make_the_graph_in_the_active_package() {
     assert!(!harness.state().ui.windows.new_graph);
     assert_eq!(session.open_packages().len(), packages);
     assert_eq!(session.graph().unwrap().size, [9, 11]);
-    assert!(!session.graph().unwrap().nodes.is_empty(), "the atomic sample's nodes");
+    let sample = materialcraft_engine::samples::template("atomics", "Fixture", 9).unwrap();
+    assert_eq!(session.graph().unwrap().nodes, sample.nodes);
 }
 
 #[test]

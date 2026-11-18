@@ -101,10 +101,15 @@ impl Default for UiState {
 }
 
 impl UiState {
+    /// Preferences committed by Apply or OK, including while the window shows a draft
+    pub(crate) fn committed_prefs(&self) -> &Prefs {
+        self.preferences.applied.as_ref().unwrap_or(&self.prefs)
+    }
+
     /// Remember `path` at the top of the recent list, keeping as many as the preferences ask for
     pub fn add_recent(&mut self, path: &str) {
         self.recent.retain(|recent| recent != path);
         self.recent.insert(0, path.to_string());
-        self.recent.truncate(self.prefs.recent_limit.clamp(1, Prefs::MAX_RECENT));
+        self.recent.truncate(self.committed_prefs().recent_limit.clamp(1, Prefs::MAX_RECENT));
     }
 }

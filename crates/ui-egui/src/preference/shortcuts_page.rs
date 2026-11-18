@@ -1,6 +1,7 @@
 //! Preferences ▸ Shortcuts: keys that add an atomic node or a graph item under the pointer
 
-use egui::{Key, RichText, Ui};
+use craft_keymap::Key;
+use egui::{RichText, Ui};
 use egui_phosphor::regular as icon;
 use materialcraft_engine::node_library::LibraryItem;
 
@@ -22,7 +23,7 @@ pub(super) fn show(app: &mut MaterialCraftApp, ui: &mut Ui) {
             let any = !app.ui.prefs.node_shortcuts.is_empty();
             if ui
                 .add_enabled_ui(any, |ui| {
-                    crate::widgets::icon_button(ui, icon::ARROW_COUNTER_CLOCKWISE, tr("Remove every node creation shortcut"), false, 22.0)
+                    crate::widgets::icon_button(ui, icon::ARROW_COUNTER_CLOCKWISE, tr("Remove every node creation shortcut"), false, ICON_SIDE)
                 })
                 .inner
                 .clicked()
@@ -44,21 +45,20 @@ pub(super) fn show(app: &mut MaterialCraftApp, ui: &mut Ui) {
     ui.add_space(4.0);
 
     let (search, key_search, only_assigned) = (state.shortcut_search.to_lowercase(), state.shortcut_key_search.to_lowercase(), state.only_assigned);
-    let entries: Vec<_> = app
-        .session
-        .library_entries()
-        .into_iter()
+    let catalog = crate::library::entries(app, ui.ctx());
+    let entries: Vec<_> = catalog
+        .iter()
         .filter(|entry| entry.missing.is_none() && crate::node_shortcuts::CATEGORIES.contains(&entry.category.as_str()))
         .filter(|entry| search.is_empty() || entry.label.to_lowercase().contains(&search))
         .filter(|entry| {
-            let shortcut = app.ui.prefs.node_shortcuts.get(&entry.id).map(|text| text.to_lowercase());
-            (!only_assigned || shortcut.is_some()) && (key_search.is_empty() || shortcut.is_some_and(|text| text.contains(&key_search)))
+            let shortcut = app.ui.prefs.node_shortcuts.get(&entry.id);
+            (!only_assigned || shortcut.is_some()) && (key_search.is_empty() || shortcut.is_some_and(|text| text.to_lowercase().contains(&key_search)))
         })
         .collect();
 
     capture(app, ui);
     egui::ScrollArea::vertical().auto_shrink([false, false]).show_rows(ui, ROW_HEIGHT, entries.len(), |ui, rows| {
-        for entry in &entries[rows] {
+        for entry in entries.get(rows).unwrap_or_default() {
             ui.horizontal(|ui| {
                 ui.set_height(ROW_HEIGHT);
                 let picture = match &entry.item {
@@ -108,31 +108,32 @@ fn field(app: &mut MaterialCraftApp, ui: &mut Ui, entry: &str, label: &str) {
 fn capture(app: &mut MaterialCraftApp, ui: &mut Ui) {
     let Some(entry) = app.ui.preferences.capturing.clone() else { return };
 
-    let pressed = ui.input(|input| {
-        input.events.iter().find_map(|event| match event {
-            egui::Event::Key { key, pressed: true, modifiers, .. } => Some((*modifiers, *key)),
-            _ => None,
-        })
-    });
-    let Some((modifiers, key)) = pressed else { return };
+    let platform = craft_keymap::egui::platform(ui.ctx());
+    let chord = ui.input(|input| input.events.iter().find_map(|event| crate::node_shortcuts::event_chord(event, platform)));
+    let Some(chord) = chord else { return };
 
     app.ui.preferences.capturing = None;
-    if modifiers.is_none() && key == Key::Escape {
+    if chord.mods.is_none() && chord.key == Key::Escape {
         return;
     }
-    if modifiers.is_none() && matches!(key, Key::Backspace | Key::Delete) {
+
+    if chord.mods.is_none() && matches!(chord.key, Key::Backspace | Key::Delete) {
         app.ui.prefs.node_shortcuts.remove(&entry);
         return;
     }
 
-    let Some(text) = crate::node_shortcuts::text(modifiers, key) else { return };
-
-    if let Some(command) = crate::node_shortcuts::taken_by(&text) {
-        app.toast(format!("{text} {} {command}", tr("is already the shortcut of")), true);
+    let text = crate::node_shortcuts::text(chord);
+    if let Some(command) = crate::node_shortcuts::taken_by(chord, platform) {
+        app.toast(format!("{text} {} {}", tr("is already the shortcut of"), tr(command)), true);
         return;
     }
 
-    // A shortcut adds one entry: giving it to this one takes it from any other
-    app.ui.prefs.node_shortcuts.retain(|_, assigned| *assigned != text);
+    // A shortcut belongs to at most one entry
+    app.ui.prefs.node_shortcuts.retain(|_, assigned| {
+        crate::menus::parse_shortcut(assigned).is_none_or(|mut assigned| {
+            assigned.mods = assigned.mods.effective(platform);
+            assigned != chord
+        })
+    });
     app.ui.prefs.node_shortcuts.insert(entry, text);
 }

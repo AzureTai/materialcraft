@@ -30,16 +30,20 @@ fn choose(harness: &mut Harness<'static, MaterialCraftApp>, menu: &str, item: &s
 #[test]
 fn a_suspended_engine_cooks_nothing_until_it_is_resumed() {
     let mut harness = harness();
-    for _ in 0..200 {
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
+    while std::time::Instant::now() < deadline {
         harness.step();
         if !harness.state().cooker.busy() && !harness.state().session.dirty {
             break;
         }
+
         std::thread::sleep(std::time::Duration::from_millis(5));
     }
+    assert!(!harness.state().cooker.busy() && !harness.state().session.dirty, "the initial cook must settle");
 
     choose(&mut harness, "Tools", "Suspend engine");
     assert!(harness.state().cooker.suspended);
+    assert!(!menus::enabled(harness.state(), "graph.cook"));
 
     harness.state_mut().session.dirty = true;
     harness.run_steps(5);
