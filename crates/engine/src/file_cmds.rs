@@ -38,7 +38,7 @@ pub(crate) fn specs() -> Vec<CommandSpec> {
             "Export outputs...",
             ["File"],
             Some("Ctrl+Shift+E"),
-            "{dir, format? (png|jpg|tga|bmp|webp|exr|hdr), pattern? ($(graph)_$(identifier)), depth? (8|16|32), size? (px of the larger side, or [width, height]; rounded down to powers of two, 16..8192; default the graph's size, keeping its proportions), outputs? ([identifier]: default every connected output), colorSpaces? ({identifier: srgb|linear|raw}: default sRGB for color usages, raw for data; linear and raw write values unchanged), graph?} cooks the graph at full size and writes the outputs",
+            "{dir, format? (png|jpg|tga|bmp|webp|exr|hdr), pattern? ($(graph)_$(identifier)), depth? (8|16|32), size? (px of the larger side, or [width, height]; rounded down to powers of two, 16..8192; default the graph's size, keeping its proportions), outputs? ([identifier]: default every connected output), colorSpaces? ({identifier: srgb|linear|raw}: default sRGB for color usages, raw for data; linear and raw write values unchanged), graph?, profile? (maps|materialx), preset?, values? {parameter: value}, inputs? {identifier: image path}, normalFormat? (opengl|directx), displacementScale?} cooks the selected outputs and writes the requested export",
             has_graph,
             export
         ),
@@ -178,6 +178,22 @@ pub fn open_bytes(session: &mut Session, bytes: &[u8], name: Option<String>) -> 
 }
 
 pub fn open_bytes_linked(session: &mut Session, bytes: &[u8], name: Option<String>, linked: &dyn Fn(&str) -> Option<Vec<u8>>) -> Result<()> {
+    open_resolved(session, bytes, name, linked, crate::linked_files::load)
+}
+
+/// Resolve every external graph and its assets through the caller's read capability.
+pub fn open_bytes_scoped(session: &mut Session, bytes: &[u8], path: &str, read: &dyn Fn(&str) -> Option<Vec<u8>>) -> Result<()> {
+    let assets = |reference: &str| read(&crate::document_path::resolve(path, reference));
+    open_resolved(session, bytes, Some(path.into()), &assets, |pkg| crate::linked_files::load_scoped(pkg, read))
+}
+
+fn open_resolved(
+    session: &mut Session,
+    bytes: &[u8],
+    name: Option<String>,
+    linked: &dyn Fn(&str) -> Option<Vec<u8>>,
+    load: impl FnOnce(&mut Package) -> Vec<String>,
+) -> Result<()> {
     let name = name.map(|path| crate::document_path::normalize(&path));
     if let Some(name) = &name
         && let Some((id, ..)) = session.open_packages().into_iter().find(|entry| entry.2 == Some(name.as_str()))
@@ -185,10 +201,10 @@ pub fn open_bytes_linked(session: &mut Session, bytes: &[u8], name: Option<Strin
         return session.activate_document(id);
     }
 
-    if materialcraft_formats::material::is_material(bytes) {
-        let (manifest, source) = materialcraft_formats::material::read_material(bytes)?;
-        session.open_package(materialcraft_formats::sbs::read_sbs(&source, "source.sbs", &|_| None)?.pkg, None)?;
-        session.graph = session.pkg.graph_by_name(&manifest.graph).map_or(0, |(index, _)| index);
+    if name.as_deref().is_some_and(|path| has_extension(path, "mcmat")) || materialcraft_formats::material::is_material(bytes) {
+        let (package, entry) = materialcraft_formats::material::read_material(bytes)?;
+        session.open_package(package, None)?;
+        session.graph = entry;
         session.open_material_preview();
         return Ok(());
     }
@@ -197,7 +213,7 @@ pub fn open_bytes_linked(session: &mut Session, bytes: &[u8], name: Option<Strin
     for (path, source) in &session.pkg.dependencies {
         read.pkg.dependencies.entry(path.clone()).or_insert_with(|| source.clone());
     }
-    let link_warnings = crate::linked_files::load(&mut read.pkg);
+    let link_warnings = load(&mut read.pkg);
     let path = if read.warnings.is_empty() { name } else { None };
     read.warnings.extend(link_warnings);
     session.open_package(read.pkg, path)?;
@@ -254,16 +270,19 @@ fn package_for_save(session: &Session, path: Option<&str>) -> Package {
 }
 
 pub fn save_files_at(session: &Session, path: &str) -> Result<materialcraft_formats::project::ProjectFiles> {
-    session.package(session.document_id)?;
-    let archive = is_mcraft(path);
-    let package = if archive { session.pkg.clone() } else { package_for_save(session, Some(path)) };
+    let active_package = session.package(session.document_id)?;
     let filename = std::path::Path::new(path).file_name().and_then(|name| name.to_str()).unwrap_or("package.sbs");
+    if is_mcraft(path) {
+        return Ok(materialcraft_formats::project::ProjectFiles::build(active_package, filename, true)?);
+    }
+
+    let package = package_for_save(session, Some(path));
     #[cfg(not(target_arch = "wasm32"))]
-    if !archive && materialcraft_formats::sbs::library::contains_file(std::path::Path::new(path)) {
+    if materialcraft_formats::sbs::library::contains_file(std::path::Path::new(path)) {
         return Ok(materialcraft_formats::project::ProjectFiles::build_linked(&package, filename)?);
     }
 
-    Ok(materialcraft_formats::project::ProjectFiles::build(&package, filename, archive)?)
+    Ok(materialcraft_formats::project::ProjectFiles::build(&package, filename, false)?)
 }
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -345,21 +364,15 @@ fn save(_: &mut Session, _: &J) -> Result<J> {
 
 /// Cook the requested graph at full size and encode its requested outputs (`pattern` names files)
 pub fn export_outputs(s: &Session, request: &ExportRequest) -> Result<Vec<Exported>> {
-    let mut package = s.pkg.clone();
-    if let Some(size) = request.size {
-        let graph = package.graph_mut(request.graph)?;
-        graph.size = size.log2_size(graph.size);
-    }
+    let options = crate::MaterialOptions { size: request.size, ..Default::default() };
+    let cooked = options.cook(s, request.graph, request.outputs.as_deref(), None)?;
+    encode_outputs(s.pkg.graph(request.graph)?, &cooked, request)
+}
 
-    let graph = package.graph(request.graph)?;
-    let decoder = s.resource_decoder();
-    let mut options = materialcraft_eval::Options::new(&decoder);
-    options.environment = s.environment;
-    let cooked = materialcraft_eval::cook(&package, request.graph, &options, &s.cache);
-
+pub(crate) fn encode_outputs(graph: &materialcraft_core::Graph, cooked: &materialcraft_eval::Cooked, request: &ExportRequest) -> Result<Vec<Exported>> {
     let mut files = Vec::new();
     let mut names = std::collections::HashSet::new();
-    for (id, usage, identifier, image) in materialcraft_eval::outputs(graph, &cooked) {
+    for (id, usage, identifier, image) in materialcraft_eval::outputs(graph, cooked) {
         let Some(image) = image.filter(|_| request.includes(&identifier)) else { continue };
 
         let file = format!("{}.{}", output_name(&request.pattern, &graph.name, &identifier, usage), request.format);
@@ -370,7 +383,13 @@ pub fn export_outputs(s: &Session, request: &ExportRequest) -> Result<Vec<Export
         let node = graph.node(id)?;
         let output_format = if node.base.format == materialcraft_core::OutputFormat::Inherit { graph.format } else { node.base.format };
         let depth = request.depth.unwrap_or_else(|| Depth::from_format(output_format));
-        let bytes = encode(image, &request.format, depth, request.color_space(&identifier, usage).encodes_srgb())?;
+
+        // Keep grayscale float exports scene-linear unless the caller picks a color space
+        let srgb = request.color_space(&identifier, usage).encodes_srgb()
+            && !(image.kind() == craft_texture::Kind::Gray
+                && matches!(request.format.as_str(), "exr" | "hdr")
+                && !request.color_spaces.contains_key(&identifier));
+        let bytes = encode(image, &request.format, depth, srgb)?;
         files.push(Exported { file, bytes });
     }
 
@@ -385,12 +404,14 @@ pub fn export_outputs(s: &Session, request: &ExportRequest) -> Result<Vec<Export
 #[cfg(not(target_arch = "wasm32"))]
 fn export(s: &mut Session, p: &J) -> Result<J> {
     let dir = strp(p, "dir").ok_or_else(|| bad("file.export", "`dir` is required"))?;
-    let files = export_outputs(s, &ExportRequest::from_params(s, p)?)?;
+    let (files, mut report) = crate::material_bake::export(s, p, crate::material_bake::read_input)?;
     let folder = std::path::Path::new(dir);
     std::fs::create_dir_all(folder).map_err(|error| bad("file.export", format!("{dir}: {error}")))?;
 
     // Check every name first so a rejected export leaves the folder untouched
-    if let Some(existing) = files.iter().find(|exported| folder.join(&exported.file).exists()) {
+    if p.get("profile").and_then(J::as_str) != Some("materialx")
+        && let Some(existing) = files.iter().find(|exported| folder.join(&exported.file).exists())
+    {
         return Err(bad(
             "file.export",
             format!("duplicate export filename `{}`: use unique output identifiers or a different filename pattern", existing.file),
@@ -404,7 +425,8 @@ fn export(s: &mut Session, p: &J) -> Result<J> {
         written.push(path.display().to_string());
     }
     s.log(format!("Exported {} files to {dir}", written.len()));
-    Ok(json!({"files": written}))
+    report["files"] = json!(written);
+    Ok(report)
 }
 
 #[cfg(target_arch = "wasm32")]

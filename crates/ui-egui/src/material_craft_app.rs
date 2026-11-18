@@ -54,6 +54,8 @@ pub struct MaterialCraftApp {
     /// Native file dialogs (desktop only)
     #[cfg(not(target_arch = "wasm32"))]
     pub(crate) dialogs: crate::native_dialogs::Dialogs,
+    #[cfg(not(target_arch = "wasm32"))]
+    pub(crate) material_export_job: Option<std::sync::mpsc::Receiver<Result<Value, String>>>,
     /// The held action waiting for the Save dialog the unsaved-changes prompt opened
     pub(crate) awaiting_save: Option<crate::unsaved::Guarded>,
     /// The window buttons to draw when the app draws the window frame; `None` while the desktop draws it (desktop only)
@@ -130,10 +132,13 @@ impl MaterialCraftApp {
             updates_rt: crate::updates_ui::Runtime::default(),
             #[cfg(not(target_arch = "wasm32"))]
             dialogs: crate::native_dialogs::unattached(),
+            #[cfg(not(target_arch = "wasm32"))]
+            material_export_job: None,
             awaiting_save: None,
             #[cfg(not(target_arch = "wasm32"))]
             window_layout: None,
             keymap: menus::keymap(craft_keymap::Platform::current()),
+
             // Accept clipboard events without duplicating web key commands
             dispatcher: craft_keymap::egui::Dispatcher::new().with_repeat(true).with_clipboard_events(true),
             system_clipboard: None,
@@ -509,6 +514,8 @@ impl MaterialCraftApp {
         web_files::poll(self);
         #[cfg(not(target_arch = "wasm32"))]
         crate::native_dialogs::poll(self);
+        #[cfg(not(target_arch = "wasm32"))]
+        crate::export::poll(self, ctx);
         if !crate::shell::modality::Modality::capture(self, ctx).is_blocked() {
             for f in ctx.input(|i| i.raw.dropped_files.clone()) {
                 web_files::dropped(self, ctx, &f);

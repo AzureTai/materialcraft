@@ -180,14 +180,25 @@ fn explorer_drags_a_linked_graph_between_open_packages() {
     harness.state_mut().run("graph.node.param", json!({"id": color.0, "param": "color", "value": [0.9, 0.3, 0.1, 1.0]})).unwrap();
     let position = harness.get(By::new().role(egui::accesskit::Role::TreeItem).label("Target canvas")).rect().center();
     double_click(&mut harness, position);
-    settle(&mut harness, 8);
+
+    // Wait for the linked graph to be recooked after switching back to its document
+    let expected_pixel = [0.9, 0.3, 0.1, 1.0];
+    let linked_color_updated = |harness: &Harness<'static, MaterialCraftApp>| {
+        harness
+            .state()
+            .session
+            .cooked
+            .image(instance, 0)
+            .is_some_and(|image| image.get(0, 0, false).into_iter().zip(expected_pixel).all(|(actual, expected)| (actual - expected).abs() <= 1.0 / 255.0))
+    };
+    let deadline = std::time::Instant::now() + Duration::from_secs(6);
+    while !linked_color_updated(&harness) && std::time::Instant::now() < deadline {
+        settle(&mut harness, 1);
+    }
 
     assert_eq!(harness.state().session.document_id, target_document);
     assert_eq!(harness.state().session.history(), ["Add graph instance"]);
-
-    let value = harness.state().session.cooked.image(instance, 0).unwrap().get(0, 0, false);
-
-    assert!(value.into_iter().zip([0.9, 0.3, 0.1, 1.0]).all(|(actual, expected)| (actual - expected).abs() <= 1.0 / 255.0));
+    assert!(linked_color_updated(&harness), "the linked instance uses the updated source pixel");
     assert!(harness.state().session.modified);
 
     save(&mut harness, &directory, "linked-instance-source-edit");
@@ -1672,6 +1683,10 @@ fn explorer_inputs_and_graph_drop_share_labels_and_material_assignment() {
 
     save(&mut harness, &directory, "graph-drop-target");
     harness.event(egui::Event::PointerButton { pos: end, button: egui::PointerButton::Primary, pressed: false, modifiers: egui::Modifiers::NONE });
+
+    // Process the queued release before testing a frame that may already show the hover preview
+    harness.step();
+
     let has_expected_material = |harness: &Harness<'static, MaterialCraftApp>| {
         harness
             .state()

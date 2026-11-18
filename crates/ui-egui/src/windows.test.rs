@@ -130,6 +130,7 @@ mod import_tests {
         assert_eq!(app.session.history().len(), base);
     }
 }
+
 #[test]
 fn project_dialogs_offer_separate_formats_and_import_filters_show_full_names() {
     use super::{package_filters, resource_filters};
@@ -140,8 +141,9 @@ fn project_dialogs_offer_separate_formats_and_import_filters_show_full_names() {
 
     let opened = package_filters(true, false);
 
-    assert_eq!(opened[0], ("All formats (*.sbs *.mcraft)", &["sbs", "mcraft"][..]));
-    assert_eq!(&opened[1..], &saved);
+    assert_eq!(opened[0], ("All formats (*.sbs *.mcraft *.mcmat)", &["sbs", "mcraft", "mcmat"][..]));
+    assert_eq!(&opened[1..3], &saved);
+    assert_eq!(opened[3].1, &["mcmat"]);
 
     let bitmap = resource_filters(false);
 
