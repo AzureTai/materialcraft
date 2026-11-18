@@ -186,7 +186,10 @@ impl MaterialCraftApp {
             self.session.default_view3d = default_view;
         }
 
-        let preview_size = if self.ui.prefs.preview_size == 0 { None } else { Some(self.ui.prefs.preview_size.clamp(64, 8192)) };
+        let preview_size = match self.ui.committed_prefs().preview_size {
+            0 => None,
+            size => Some(size.clamp(64, 8192)),
+        };
         if self.session.preview_size != preview_size {
             let _ = materialcraft_engine::execute(&mut self.session, "view.previewSize", &serde_json::json!({"size": preview_size.unwrap_or(0)}));
         }

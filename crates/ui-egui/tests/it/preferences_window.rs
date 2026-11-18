@@ -87,6 +87,30 @@ fn draft_limits_preserve_recents_and_undo_until_applied() {
 }
 
 #[test]
+fn draft_preview_size_reaches_the_session_only_on_apply_or_ok() {
+    let mut harness = harness();
+    let initial = harness.state().session.preview_size;
+    open(&mut harness);
+    harness.state_mut().ui.prefs.preview_size = 64;
+    harness.run_steps(2);
+
+    assert_eq!(harness.state().session.preview_size, initial);
+    click(&mut harness, Role::Button, "Cancel");
+    assert_eq!(harness.state().session.preview_size, initial);
+
+    open(&mut harness);
+    harness.state_mut().ui.prefs.preview_size = 1;
+    click(&mut harness, Role::Button, "Apply");
+    assert_eq!(harness.state().session.preview_size, Some(64));
+
+    harness.state_mut().ui.prefs.preview_size = 0;
+    harness.run_steps(2);
+    assert_eq!(harness.state().session.preview_size, Some(64));
+    click(&mut harness, Role::Button, "OK");
+    assert_eq!(harness.state().session.preview_size, None);
+}
+
+#[test]
 fn a_shortcut_is_captured_refused_when_taken_and_adds_its_node_over_the_graph() {
     let mut harness = harness();
     open(&mut harness);

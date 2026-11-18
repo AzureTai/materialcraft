@@ -65,6 +65,8 @@ pub struct Cooker {
     pub suspended: bool,
     /// Tools ▸ Cancel rendering stopped the running cook: it does not start again until the next edit
     stopped_by_user: bool,
+    /// The retained preview cannot supply parameter values at this epoch
+    cancelled_preview_epoch: Option<u64>,
 }
 
 impl Cooker {
@@ -81,6 +83,10 @@ impl Cooker {
     }
 }
 
+pub(crate) fn preview_ready(app: &MaterialCraftApp) -> bool {
+    !app.session.dirty && !app.cooker.busy() && app.cooker.cancelled_preview_epoch != Some(app.session.cook_epoch)
+}
+
 /// Tools ▸ Cancel rendering: stop the running cook; the next edit cooks again
 pub fn cancel(app: &mut MaterialCraftApp) {
     if !app.cooker.busy() {
@@ -89,6 +95,7 @@ pub fn cancel(app: &mut MaterialCraftApp) {
 
     app.cooker.stop();
     app.cooker.stopped_by_user = true;
+    app.cooker.cancelled_preview_epoch = Some(app.session.cook_epoch);
     app.session.dirty = false;
 }
 
@@ -124,8 +131,9 @@ pub fn drive(app: &mut MaterialCraftApp, ctx: &egui::Context) {
                         }
                     }
                     Ok(c) => {
-                        if !app.cooker.suspended && !app.session.dirty && app.cooker.epoch == app.session.cook_epoch {
+                        if !app.cooker.suspended && !app.session.dirty && app.cooker.epoch == app.session.cook_epoch && c.graph == app.session.graph {
                             app.session.accept_preview(c);
+                            app.cooker.cancelled_preview_epoch = None;
                         }
                     }
                     Err(msg) if !app.cooker.suspended && !app.session.dirty && app.cooker.epoch == app.session.cook_epoch => report_failure(app, msg),

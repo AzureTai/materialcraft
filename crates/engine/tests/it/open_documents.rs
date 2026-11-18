@@ -205,3 +205,27 @@ fn a_refused_graph_leaves_the_active_package_unchanged() {
     assert_eq!(session.document_id, destination);
     assert_eq!(session.graph().unwrap().name, "New graph");
 }
+
+#[test]
+fn a_new_package_resolves_reserved_graph_names() {
+    for new_package in [true, false] {
+        let mut session = Session::new(Package::new("Existing"));
+        let original = session.document_id;
+        if !new_package {
+            execute(&mut session, "package.close", &json!({})).unwrap();
+            assert!(session.open_packages().is_empty());
+        }
+
+        let mut parameters = json!({"template": "empty", "name": "Resources"});
+        if new_package {
+            parameters["newPackage"] = json!(true);
+        }
+        let reply = execute(&mut session, "file.new", &parameters).unwrap();
+
+        assert_eq!(reply["name"], "Resources_1", "newPackage: {new_package}");
+        assert_eq!(session.graph().unwrap().name, "Resources_1");
+        assert!(session.pkg.folder_paths().contains("Resources"));
+        assert_ne!(session.document_id, original);
+        assert_eq!(session.open_packages().len(), if new_package { 2 } else { 1 });
+    }
+}

@@ -95,7 +95,9 @@ fn new_graph(session: &mut Session, parameters: &J) -> Result<J> {
 
     crate::folder_path::require_graph_folder(folder)?;
     let base = crate::folder_path::name(&base)?;
-    let name = target.map_or_else(|| base.to_owned(), |package| crate::folder_path::unique(package, folder, base));
+    let mut new_package = None;
+    let destination = target.unwrap_or_else(|| new_package.insert(Package::new("Untitled package")));
+    let name = crate::folder_path::unique(destination, folder, base);
 
     let mut graph = if kind == materialcraft_core::GraphKind::Function {
         let mut graph = materialcraft_core::Graph::new(&name);
@@ -112,8 +114,8 @@ fn new_graph(session: &mut Session, parameters: &J) -> Result<J> {
     // Validate the graph before changing the active package
     if let Some(document) = target_document {
         session.activate_document(document)?;
-    } else if in_new_package || !session.has_package() {
-        session.open_package(Package::new("Untitled package"), None)?;
+    } else if let Some(package) = new_package {
+        session.open_package(package, None)?;
     }
 
     session.edit("New graph", |session| {
