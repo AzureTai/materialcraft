@@ -1,13 +1,12 @@
 use super::{
     constant::SELF_DEPENDENCY,
     sbs_writer::SbsWriter,
-    xml::{child_element, child_value, children_named, xml_escape},
+    xml::{XmlNode, child_element, child_value, children_named, xml_escape},
 };
 use materialcraft_core::{GraphInstance, GraphPort, Value};
-use roxmltree::Node as XmlNode;
 use std::fmt::Write;
 
-pub(super) fn read(element: XmlNode<'_, '_>, value: Option<&Value>, type_code: u32) -> Result<GraphInstance, String> {
+pub(super) fn read(element: XmlNode<'_>, value: Option<&Value>, type_code: u32) -> Result<GraphInstance, String> {
     let Some(Value::Text(reference)) = value else { return Err("function instance has no source reference".into()) };
     let (package, graph) = source_reference(element, reference)?;
 
@@ -37,7 +36,7 @@ pub(super) fn read(element: XmlNode<'_, '_>, value: Option<&Value>, type_code: u
     })
 }
 
-fn source_reference(element: XmlNode<'_, '_>, reference: &str) -> Result<(String, String), String> {
+fn source_reference(element: XmlNode<'_>, reference: &str) -> Result<(String, String), String> {
     if let Some(reference) = reference.strip_prefix("pkg:///") {
         let (graph, query) = reference.split_once('?').unwrap_or((reference, ""));
         let dependency = query.split('&').find_map(|part| part.strip_prefix("dependency="));

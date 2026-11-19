@@ -14,19 +14,17 @@ use super::read_node::ReadNode;
 use super::sbs_value::{SbsValue, exposed_default, sbs_constant, to_natural_value, to_param_value};
 use super::type_code;
 use super::warnings::Warnings;
-use super::xml::{child_element, child_value, children_named, parse_floats};
+use super::xml::{XmlNode, child_element, child_value, children_named, parse_floats};
 use materialcraft_core::{
     BaseParameter, ComponentUsage, Connection, ExposedParameter, Graph, MAX_SIZE_LOG2, MIN_SIZE_LOG2, MISSING_NODE, Node, NodeId, OutputFormat, Package,
     ParameterInheritance, Resource, ResourceBytes, Value,
 };
 use materialcraft_nodes::find;
-use roxmltree::Node as XmlNode;
 use std::collections::{HashMap, HashSet};
 
-pub(super) struct SbsReader<'text, 'warnings> {
+pub(super) struct SbsReader<'warnings> {
     pub(super) inflation_work: std::cell::Cell<u64>,
     pub(super) resource_budget: Option<&'warnings std::cell::Cell<u64>>,
-    pub(super) text: &'text str,
     pub(super) warnings: &'warnings mut Warnings,
     pub(super) dependencies: HashMap<String, String>,
     pub(super) graph_names: HashMap<String, String>,
@@ -38,22 +36,22 @@ pub(super) struct SbsReader<'text, 'warnings> {
     pub(super) wire_count: usize,
 }
 
-impl<'text> SbsReader<'text, '_> {
+impl SbsReader<'_> {
     pub(super) fn collect_items<'a>(
         &mut self,
-        content: XmlNode<'a, 'text>,
+        content: XmlNode<'a>,
         folder: &str,
         pkg: &mut Package,
-        graphs: &mut Vec<(String, XmlNode<'a, 'text>)>,
+        graphs: &mut Vec<(String, XmlNode<'a>)>,
         linked: &dyn Fn(&str) -> Option<Vec<u8>>,
     ) {
         let mut pending = vec![(folder.to_string(), content)];
         while let Some((folder, content)) = pending.pop() {
-            for item in content.children().filter(|child| child.is_element()) {
+            for item in content.elements() {
                 let identifier = child_value(item, "identifier").unwrap_or("").trim().to_string();
                 let path = if folder.is_empty() { identifier.clone() } else { format!("{folder}/{identifier}") };
 
-                match item.tag_name().name() {
+                match item.name.as_str() {
                     "graph" | "function" => graphs.push((path, item)),
                     "group" => {
                         if identifier.is_empty() || identifier.contains('/') {
@@ -240,7 +238,7 @@ impl<'text> SbsReader<'text, '_> {
             }
         }
 
-        if element.has_tag_name("function") {
+        if element.is("function") {
             graph.function_type = child_value(element, "type").and_then(|code| code.parse().ok()).unwrap_or(0);
             self.read_graph_inputs(element, &mut graph);
             let dynamic = child_element(element, "paramValue").and_then(|value| child_element(value, "dynamicValue"));
@@ -454,9 +452,7 @@ impl<'text> SbsReader<'text, '_> {
             .map(|o| (child_value(o, "uid").unwrap_or("").to_string(), child_value(o, "comptype") == Some("2")))
             .collect();
         let all_outputs_to = |port: &str| output_uids.iter().map(|(uid, _)| (uid.clone(), port.to_string())).collect::<Vec<_>>();
-        let text = self.text;
-
-        let Some(implementation) = child_element(comp_node, "compImplementation").and_then(|i| i.children().find(|c| c.is_element())) else {
+        let Some(implementation) = child_element(comp_node, "compImplementation").and_then(|i| i.elements().next()) else {
             let (id, index, node) = push_node(graph, MISSING_NODE, pos);
             if let Some(node) = node {
                 fill_placeholder(node, "other", "empty node", "", None, &output_uids, None);
@@ -466,7 +462,7 @@ impl<'text> SbsReader<'text, '_> {
         };
 
         let params = child_element(implementation, "parameters");
-        match implementation.tag_name().name() {
+        match implementation.name.as_str() {
             "compInputBridge" => {
                 let entry = child_value(implementation, "entry").unwrap_or("");
                 let input = image_inputs.get(entry);
@@ -556,7 +552,8 @@ impl<'text> SbsReader<'text, '_> {
                     None => {
                         let (id, index, node) = push_node(graph, MISSING_NODE, pos);
                         if let Some(node) = node {
-                            fill_placeholder(node, "filter", filter_name, "", params.map(|p| &text[p.range()]), &output_uids, None);
+                            let raw_params = params.map(craft_xml::El::to_xml);
+                            fill_placeholder(node, "filter", filter_name, "", raw_params.as_deref(), &output_uids, None);
                         }
 
                         ReadNode { id, index, inputs: HashMap::new(), outputs: placeholder_outputs(&output_uids, None), open_inputs: true }
@@ -644,8 +641,8 @@ impl<'text> SbsReader<'text, '_> {
         let short_name = path.rsplit('/').next().unwrap_or(&path).to_string();
         let (id, index, node) = push_node(graph, MISSING_NODE, pos);
         if let Some(node) = node {
-            let raw_params = params.map(|parameters| &self.text[parameters.range()]);
-            fill_placeholder(node, "instance", &short_name, dependency.as_deref().unwrap_or(""), raw_params, output_uids, Some(&bridgings));
+            let raw_params = params.map(craft_xml::El::to_xml);
+            fill_placeholder(node, "instance", &short_name, dependency.as_deref().unwrap_or(""), raw_params.as_deref(), output_uids, Some(&bridgings));
             node.params.insert("sbs_path".into(), Value::Text(path));
         }
 

@@ -1,13 +1,12 @@
 use super::sbs_value::{constant_xml, sbs_constant, sbs_constant_element, to_natural_value};
 use super::sbs_writer::SbsWriter;
-use super::xml::{child_element, child_value, children_named, parse_floats, xml_escape};
+use super::xml::{XmlNode, child_element, child_value, children_named, parse_floats, xml_escape};
 use materialcraft_core::{FunctionGraph, FunctionNode, Value};
 use materialcraft_nodes::function;
-use roxmltree::Node as XmlNode;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write;
 
-pub(super) fn read(element: XmlNode<'_, '_>) -> Result<FunctionGraph, String> {
+pub(super) fn read(element: XmlNode<'_>) -> Result<FunctionGraph, String> {
     let mut graph = FunctionGraph {
         output: child_value(element, "rootnode").and_then(|value| value.parse().ok()),
         nodes: Vec::new(),
@@ -29,7 +28,7 @@ pub(super) fn read(element: XmlNode<'_, '_>) -> Result<FunctionGraph, String> {
             .into_iter()
             .flat_map(|data| children_named(data, "funcData"))
             .find(|data| child_value(*data, "name") == Some(op))
-            .and_then(|data| data.children().filter(|child| child.is_element()).find_map(|child| sbs_constant_element(child).or_else(|| sbs_constant(child))))
+            .and_then(|data| data.elements().find_map(|child| sbs_constant_element(child).or_else(|| sbs_constant(child))))
             .map(|value| to_natural_value(&value));
         let type_code = child_value(element, "type").and_then(|value| value.parse().ok()).unwrap_or(0);
         let mut instance = if op == "instance" { Some(super::function_instance::read(element, value.as_ref(), type_code)?) } else { None };
@@ -70,7 +69,7 @@ pub(super) fn read(element: XmlNode<'_, '_>) -> Result<FunctionGraph, String> {
         graph.nodes.push(FunctionNode {
             missing: missing.then_some(names),
             missing_data: if missing {
-                child_element(element, "funcDatas").map(|data| element.document().input_text()[data.range()].to_string()).unwrap_or_default()
+                child_element(element, "funcDatas").map(craft_xml::El::to_xml).unwrap_or_default()
             } else {
                 String::new()
             },
@@ -141,18 +140,24 @@ pub(super) fn write(graph: &FunctionGraph, writer: &mut SbsWriter) -> Result<Str
         output.push_str("</connections>");
         if node.missing.is_some() && !node.missing_data.is_empty() {
             // Only a bounded data element may be emitted; command input must not inject package XML
-            let options = roxmltree::ParsingOptions { allow_dtd: false, nodes_limit: 100_000 };
-            if node.missing_data.len() > (1 << 20) {
+            let options = craft_xml::Options {
+                limits: craft_xml::Limits {
+                    max_input: 1 << 20,
+                    max_nodes: 100_000,
+                    max_depth: 1024,
+                    max_elements: usize::MAX,
+                    max_attrs: usize::MAX,
+                    max_attrs_total: usize::MAX,
+                },
+                doctype: craft_xml::Doctype::Reject,
+                ..craft_xml::Options::default().strict()
+            };
+            let root = options.parse(node.missing_data.as_bytes()).map_err(|_| "invalid preserved function data")?;
+            if root.name != "funcDatas" {
                 return Err("invalid preserved function data".into());
             }
 
-            let document = roxmltree::Document::parse_with_options(&node.missing_data, options).map_err(|_| "invalid preserved function data")?;
-            let root = document.root_element();
-            if !root.has_tag_name("funcDatas") {
-                return Err("invalid preserved function data".into());
-            }
-
-            output.push_str(node.missing_data.get(root.range()).ok_or("invalid preserved function data")?);
+            output.push_str(&root.to_xml());
         } else if let Some(instance) = &node.instance {
             output.push_str(&super::function_instance::write(instance, writer));
         } else if let Some(value) = &node.value {

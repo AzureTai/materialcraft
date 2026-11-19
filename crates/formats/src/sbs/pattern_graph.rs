@@ -1,14 +1,13 @@
 use materialcraft_core::{PatternGraph, PatternNode, PatternNodeKind, Value};
-use roxmltree::Node as XmlNode;
 use std::collections::BTreeMap;
 use std::fmt::Write;
 
 use super::node_parameter::param_xml;
 use super::sbs_value::{sbs_constant, to_natural_value};
-use super::xml::{child_element, child_value, children_named, parse_floats, xml_escape};
+use super::xml::{XmlNode, child_element, child_value, children_named, parse_floats, xml_escape};
 use super::{function_graph, sbs_writer::SbsWriter};
 
-pub(super) fn read(element: XmlNode<'_, '_>) -> Result<PatternGraph, String> {
+pub(super) fn read(element: XmlNode<'_>) -> Result<PatternGraph, String> {
     let mut data = BTreeMap::new();
     for element in child_element(element, "paramsGraphDatas").into_iter().flat_map(|data| children_named(data, "paramsGraphData")) {
         if data.len() >= 4096 {

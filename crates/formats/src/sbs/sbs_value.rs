@@ -1,7 +1,6 @@
 use super::type_code;
-use super::xml::{format_float, parse_floats, parse_ints, xml_escape};
+use super::xml::{XmlNode, format_float, parse_floats, parse_ints, xml_escape};
 use materialcraft_core::Value;
-use roxmltree::Node as XmlNode;
 
 #[derive(Clone, Debug, PartialEq)]
 pub(super) enum SbsValue {
@@ -47,13 +46,13 @@ impl SbsValue {
     }
 }
 
-pub(super) fn sbs_constant(holder: XmlNode) -> Option<SbsValue> {
-    sbs_constant_element(holder.children().find(|child| child.is_element())?)
+pub(super) fn sbs_constant(holder: XmlNode<'_>) -> Option<SbsValue> {
+    sbs_constant_element(holder.elements().next()?)
 }
 
-pub(super) fn sbs_constant_element(element: XmlNode) -> Option<SbsValue> {
-    let text = element.attribute("v").unwrap_or("");
-    let tag = element.tag_name().name();
+pub(super) fn sbs_constant_element(element: XmlNode<'_>) -> Option<SbsValue> {
+    let text = element.attr("v").unwrap_or("");
+    let tag = element.name.as_str();
 
     if tag == "constantValueBool" {
         Some(SbsValue::Bool(parse_ints(text).first().is_some_and(|b| *b != 0) || text.trim().eq_ignore_ascii_case("true")))

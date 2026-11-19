@@ -1,4 +1,4 @@
-use super::xml::{child_element, child_value, children_named};
+use super::xml::{XmlNode, child_element, child_value, children_named};
 use super::{
     function_graph,
     sbs_value::{constant_xml, sbs_constant, to_natural_value},
@@ -6,7 +6,6 @@ use super::{
     warnings::Warnings,
 };
 use materialcraft_core::{BaseParameter, BaseParameters, ParameterInheritance};
-use roxmltree::Node as XmlNode;
 use std::fmt::Write as _;
 
 pub(super) fn read_base_params(params: Option<XmlNode>, warnings: &mut Warnings) -> BaseParameters {

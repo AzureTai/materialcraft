@@ -1,11 +1,10 @@
 //! Import referenced resource declarations without recursively importing their owner's graphs.
 use super::{
-    constant::{MAX_XML_NODES, SELF_DEPENDENCY},
+    constant::{MAX_SBS_BYTES, MAX_XML_NODES, SELF_DEPENDENCY},
     sbs_reader::SbsReader,
-    xml::{child_element, child_value},
+    xml::{XmlNode, child_element, child_value},
 };
 use materialcraft_core::Package;
-use roxmltree::Node;
 use std::collections::{BTreeMap, BTreeSet};
 
 fn relative_to(owner: &str, file: &str) -> String {
@@ -18,14 +17,32 @@ fn relative_to(owner: &str, file: &str) -> String {
     owner.rsplit_once('/').map_or_else(|| file.clone(), |(folder, _)| format!("{folder}/{file}"))
 }
 
-fn resource_path(resource: Node<'_, '_>) -> String {
-    let mut parts: Vec<_> = resource.ancestors().skip(1).filter(|node| node.has_tag_name("group")).filter_map(|node| child_value(node, "identifier")).collect();
-    parts.reverse();
-    parts.push(child_value(resource, "identifier").unwrap_or(""));
-    parts.join("/")
+fn collect_resources<'a>(el: XmlNode<'a>, parts: &mut Vec<&'a str>, out: &mut Vec<(String, XmlNode<'a>)>) {
+    for child in el.elements() {
+        if child.is("resource") {
+            let mut path = parts.join("/");
+            let id = child_value(child, "identifier").unwrap_or("");
+            if !parts.is_empty() {
+                path.push('/');
+            }
+            path.push_str(id);
+            out.push((path, child));
+        } else if child.is("group") {
+            let id = child_value(child, "identifier");
+            if let Some(id) = id {
+                parts.push(id);
+            }
+            collect_resources(child, parts, out);
+            if id.is_some() {
+                parts.pop();
+            }
+        } else {
+            collect_resources(child, parts, out);
+        }
+    }
 }
 
-pub(super) fn read(reader: &mut SbsReader<'_, '_>, content: Node<'_, '_>, pkg: &mut Package, linked: &dyn Fn(&str) -> Option<Vec<u8>>) {
+pub(super) fn read(reader: &mut SbsReader<'_>, content: XmlNode<'_>, pkg: &mut Package, linked: &dyn Fn(&str) -> Option<Vec<u8>>) {
     const MAX_SOURCE_BYTES: usize = 64 * 1024 * 1024;
     const MAX_SOURCE_PACKAGES: usize = 64;
     const MAX_IMPORTED_RESOURCES: usize = 1024;
@@ -33,7 +50,7 @@ pub(super) fn read(reader: &mut SbsReader<'_, '_>, content: Node<'_, '_>, pkg: &
     let mut needed: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
     for parameter in content
         .descendants()
-        .filter(|node| node.has_tag_name("parameter") && matches!(child_value(*node, "name"), Some("bitmapresourcepath" | "vectorresourcepath" | "fontdata")))
+        .filter(|node| node.is("parameter") && matches!(child_value(*node, "name"), Some("bitmapresourcepath" | "vectorresourcepath" | "fontdata")))
     {
         let Some(url) = child_element(parameter, "paramValue").and_then(|value| child_value(value, "constantValueString")) else { continue };
         let (path, dependency) = reader.resolve_reference(url);
@@ -53,15 +70,26 @@ pub(super) fn read(reader: &mut SbsReader<'_, '_>, content: Node<'_, '_>, pkg: &
         let result = (|| -> Result<(), String> {
             let bytes = linked(&file).ok_or("source package is unavailable")?;
             remaining = remaining.checked_sub(bytes.len()).ok_or("linked resource XML exceeds 64 MiB")?;
-            let text = std::str::from_utf8(&bytes).map_err(|_| "source package is not UTF-8")?;
-            let document = roxmltree::Document::parse_with_options(text, roxmltree::ParsingOptions { allow_dtd: false, nodes_limit: MAX_XML_NODES })
-                .map_err(|_| "source package is not valid XML")?;
-            if !document.root_element().has_tag_name("package") {
+            let options = craft_xml::Options {
+                limits: craft_xml::Limits {
+                    max_input: MAX_SBS_BYTES as usize,
+                    max_nodes: MAX_XML_NODES as usize,
+                    max_depth: 1024,
+                    max_elements: usize::MAX,
+                    max_attrs: usize::MAX,
+                    max_attrs_total: usize::MAX,
+                },
+                doctype: craft_xml::Doctype::Reject,
+                ..craft_xml::Options::default().strict()
+            };
+            let document = options.parse(&bytes).map_err(|_| "source package is not valid XML")?;
+            if document.name != "package" {
                 return Err("source is not an SBS package".into());
             }
 
-            for resource in document.descendants().filter(|node| node.has_tag_name("resource")) {
-                let path = resource_path(resource);
+            let mut resources = Vec::new();
+            collect_resources(&document, &mut Vec::new(), &mut resources);
+            for (path, resource) in resources {
                 if !paths.contains(&path) || reader.external_resource_names.contains_key(&(file.clone(), path.clone())) {
                     continue;
                 }

@@ -1,4 +1,4 @@
-use roxmltree::Node as XmlNode;
+pub(super) type XmlNode<'a> = &'a craft_xml::El;
 
 pub(super) fn parse_floats(text: &str) -> Vec<f32> {
     text.split_whitespace().take(16).map(|t| t.parse::<f32>().ok().filter(|v| v.is_finite()).unwrap_or(0.0)).collect()
@@ -11,15 +11,15 @@ pub(super) fn format_float(v: f32) -> String {
     if v.is_finite() { format!("{v}") } else { "0".into() }
 }
 
-pub(super) fn child_element<'a, 'input>(node: XmlNode<'a, 'input>, tag: &str) -> Option<XmlNode<'a, 'input>> {
-    node.children().find(|c| c.is_element() && c.tag_name().name() == tag)
+pub(super) fn child_element<'a>(node: XmlNode<'a>, tag: &str) -> Option<XmlNode<'a>> {
+    node.child(tag)
 }
 
-pub(super) fn children_named<'a, 'input: 'a>(node: XmlNode<'a, 'input>, tag: &'a str) -> impl Iterator<Item = XmlNode<'a, 'input>> + 'a {
-    node.children().filter(move |c| c.is_element() && c.tag_name().name() == tag)
+pub(super) fn children_named<'a>(node: XmlNode<'a>, tag: &'a str) -> impl Iterator<Item = XmlNode<'a>> + 'a {
+    node.children(tag)
 }
-pub(super) fn child_value<'a>(node: XmlNode<'a, '_>, tag: &str) -> Option<&'a str> {
-    child_element(node, tag).and_then(|c| c.attribute("v"))
+pub(super) fn child_value<'a>(node: XmlNode<'a>, tag: &str) -> Option<&'a str> {
+    node.child_attr(tag, "v")
 }
 pub(super) fn xml_escape(text: &str) -> String {
     let mut out = String::with_capacity(text.len());
@@ -34,8 +34,19 @@ pub(super) fn xml_escape(text: &str) -> String {
     out
 }
 pub(super) fn is_parameters_element(xml: &str) -> bool {
-    let options = roxmltree::ParsingOptions { allow_dtd: false, nodes_limit: 1_000_000 };
-    xml.len() < (16 << 20) && roxmltree::Document::parse_with_options(xml, options).is_ok_and(|d| d.root_element().tag_name().name() == "parameters")
+    let options = craft_xml::Options {
+        limits: craft_xml::Limits {
+            max_input: (16 << 20) - 1,
+            max_nodes: 1_000_000,
+            max_depth: 1024,
+            max_elements: usize::MAX,
+            max_attrs: usize::MAX,
+            max_attrs_total: usize::MAX,
+        },
+        doctype: craft_xml::Doctype::Reject,
+        ..craft_xml::Options::default().strict()
+    };
+    options.parse(xml.as_bytes()).is_ok_and(|root| root.name == "parameters")
 }
 
 #[cfg(test)]

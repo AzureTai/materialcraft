@@ -5,43 +5,51 @@ use super::{
 use crate::{FormatError, Result};
 
 /// A validated SBS XML document that can supply layout and graph data without reparsing.
-pub struct SbsDocument<'input> {
-    document: roxmltree::Document<'input>,
+pub struct SbsDocument {
+    root: craft_xml::El,
 }
 
-impl<'input> SbsDocument<'input> {
+impl SbsDocument {
     /// Parse borrowed input with the same byte, XML-node, and DTD limits as the SBS reader.
-    pub fn parse(bytes: &'input [u8]) -> Result<Self> {
+    pub fn parse(bytes: &[u8]) -> Result<Self> {
         if bytes.len() as u64 > MAX_SBS_BYTES {
             return Err(FormatError::BadPackage(format!("the SBS file is {} bytes, over the {MAX_SBS_BYTES} byte limit", bytes.len())));
         }
 
-        let text = std::str::from_utf8(bytes).map_err(|error| FormatError::BadPackage(format!("the SBS file is not UTF-8 text: {error}")))?;
-        let text = text.trim_start_matches('\u{feff}');
-        let options = roxmltree::ParsingOptions { allow_dtd: false, nodes_limit: MAX_XML_NODES };
-        let document = roxmltree::Document::parse_with_options(text, options)
-            .map_err(|error| FormatError::BadPackage(format!("the SBS file is not valid XML: {error}")))?;
+        let options = craft_xml::Options {
+            limits: craft_xml::Limits {
+                max_input: MAX_SBS_BYTES as usize,
+                max_nodes: MAX_XML_NODES as usize,
+                max_depth: 1024,
+                max_elements: usize::MAX,
+                max_attrs: usize::MAX,
+                max_attrs_total: usize::MAX,
+            },
+            doctype: craft_xml::Doctype::Reject,
+            ..craft_xml::Options::default().strict()
+        };
+        let root = options.parse(bytes).map_err(|error| FormatError::BadPackage(format!("the SBS file is not valid XML: {error}")))?;
 
-        if document.root_element().tag_name().name() != "package" {
+        if root.name != "package" {
             return Err(FormatError::BadPackage("not an SBS package (the root element is not <package>)".into()));
         }
 
-        Ok(Self { document })
+        Ok(Self { root })
     }
 
     /// Read the layout independently of whether its frames name library categories.
     pub fn layout(&self, uri: &str) -> Result<Vec<LayoutFrame>> {
-        super::library_layout::read_document(&self.document, uri)
+        super::library_layout::read_document(&self.root, uri)
     }
 
     /// Apply one aggregate resource budget to inline data and the caller's linked reads.
     pub(crate) fn read_with_resource_budget(&self, name: &str, linked: &dyn Fn(&str) -> Option<Vec<u8>>, budget: &std::cell::Cell<u64>) -> Result<SbsRead> {
-        super::read::read_document(&self.document, name, linked, Some(budget))
+        super::read::read_document(&self.root, name, linked, Some(budget))
     }
 
     /// Read owned package data; the result does not retain the XML document or input bytes.
     pub fn read(&self, name: &str, linked: &dyn Fn(&str) -> Option<Vec<u8>>) -> Result<SbsRead> {
-        super::read::read_document(&self.document, name, linked, None)
+        super::read::read_document(&self.root, name, linked, None)
     }
 }
 

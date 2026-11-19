@@ -1,14 +1,13 @@
 use materialcraft_core::{Curve, CurvePoint, Gradient, GradientKey, Node, Value};
-use roxmltree::Node as XmlNode;
 use std::collections::BTreeMap;
 use std::fmt::Write;
 
 use super::node_parameter::param_xml;
 use super::sbs_value::{sbs_constant, to_natural_value};
 use super::sbs_writer::SbsWriter;
-use super::xml::{child_element, child_value, children_named};
+use super::xml::{XmlNode, child_element, child_value, children_named};
 
-pub(super) fn read(node: &mut Node, implementation: XmlNode<'_, '_>) {
+pub(super) fn read(node: &mut Node, implementation: XmlNode<'_>) {
     for array in child_element(implementation, "paramsArrays").into_iter().flat_map(|arrays| children_named(arrays, "paramsArray")) {
         let mut curve = Curve { points: Vec::new() };
         let mut gradient = Gradient { keys: Vec::new() };

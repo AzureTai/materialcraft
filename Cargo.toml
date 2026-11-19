@@ -42,8 +42,10 @@ license = "MIT OR Apache-2.0"
 craft-mime = { git = "https://github.com/storytold/craft-libs", rev = "453b0da782ccef39be9a6dac8d27c80b553ef1cc", version = "0.1.0" }
 # Read 3D meshes through craft-mesh; keep mesh processing app-local
 craft-mesh = { version = "0.1.0", git = "https://github.com/storytold/craft-libs", rev = "453b0da782ccef39be9a6dac8d27c80b553ef1cc", default-features = false, features = ["obj", "gltf"] }
-# Shared XML escaping; SBS model and serialization policy stay app-local
+# Shared XML escaping and bounded XML parsing; SBS model and serialization policy stay app-local
 craft-xml = { version = "0.1.0", git = "https://github.com/storytold/craft-libs", rev = "453b0da782ccef39be9a6dac8d27c80b553ef1cc" }
+# Shared bounded ZIP archive reader and deterministic writer (storytold/craft-libs#2411)
+craft-zip = { version = "0.1.0", git = "https://github.com/dylanmtaylor/craft-libs", rev = "fbb2d4b299d87191a79444c6e4e02d69d9325059" }
 # Bound SVG parsing and drawing through craft-svg
 craft-svg = { version = "0.1.0", git = "https://github.com/storytold/craft-libs", rev = "453b0da782ccef39be9a6dac8d27c80b553ef1cc", features = ["tree-render"] }
 # internal
