@@ -1141,7 +1141,7 @@ dependencies = [
 [[package]]
 name = "craft-zip"
 version = "0.1.0"
-source = "git+https://github.com/dylanmtaylor/craft-libs?rev=fbb2d4b299d87191a79444c6e4e02d69d9325059#fbb2d4b299d87191a79444c6e4e02d69d9325059"
+source = "git+https://github.com/storytold/craft-libs?rev=8dbe9705ffd23002c97f31a7727b1027ecd5c3fd#8dbe9705ffd23002c97f31a7727b1027ecd5c3fd"
 dependencies = [
  "flate2",
  "thiserror 2.0.21",
@@ -2923,7 +2923,7 @@ dependencies = [
  "craft-svg",
  "craft-texture",
  "craft-xml",
- "craft-zip 0.1.0 (git+https://github.com/dylanmtaylor/craft-libs?rev=fbb2d4b299d87191a79444c6e4e02d69d9325059)",
+ "craft-zip 0.1.0 (git+https://github.com/storytold/craft-libs?rev=8dbe9705ffd23002c97f31a7727b1027ecd5c3fd)",
  "dds",
  "flate2",
  "image",

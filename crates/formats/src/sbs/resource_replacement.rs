@@ -2,9 +2,10 @@
 use super::{
     library,
     sbs_reader::{SbsReader, unique_name},
-    xml::{XmlNode, child_element, child_value},
+    xml::{child_element, child_value},
 };
 use materialcraft_core::{Package, Resource, ResourceBytes};
+use roxmltree::Node;
 
 pub(super) fn target(reference: &str) -> Option<String> {
     let filename = reference.trim().rsplit(['/', '\\']).next()?;
@@ -16,7 +17,7 @@ pub(super) fn is_font(reference: &str) -> bool {
     reference.rsplit_once('.').is_some_and(|(_, extension)| matches!(extension.to_ascii_lowercase().as_str(), "ttf" | "otf" | "ttc" | "otc" | "woff" | "woff2"))
 }
 
-fn store(reader: &mut SbsReader<'_>, pkg: &mut Package, identifier: &str, path: &str, source: &str, bytes: Vec<u8>) -> String {
+fn store(reader: &mut SbsReader<'_, '_>, pkg: &mut Package, identifier: &str, path: &str, source: &str, bytes: Vec<u8>) -> String {
     let name = unique_name(&mut reader.used_resource_names, if identifier.is_empty() { "resource" } else { identifier });
     let mut resource = Resource::new(name.clone(), crate::safe_file_name(source.rsplit(['/', '\\']).next().unwrap_or("resource")), ResourceBytes::new(bytes));
     resource.source = source.into();
@@ -53,12 +54,12 @@ pub(super) fn load_font(
     Some(store(reader, pkg, identifier, path, library::FALLBACK_FONT, bytes))
 }
 
-pub(super) fn read_direct(reader: &mut SbsReader<'_>, content: XmlNode<'_>, pkg: &mut Package, linked: &dyn Fn(&str) -> Option<Vec<u8>>) {
+pub(super) fn read_direct(reader: &mut SbsReader<'_, '_>, content: Node<'_, '_>, pkg: &mut Package, linked: &dyn Fn(&str) -> Option<Vec<u8>>) {
     let mut remaining = crate::MAX_RESOURCE as usize;
     let mut targets = std::collections::HashMap::<String, String>::new();
     for parameter in content
         .descendants()
-        .filter(|node| node.is("parameter") && matches!(child_value(*node, "name"), Some("fontdata" | "bitmapresourcepath" | "vectorresourcepath")))
+        .filter(|node| node.has_tag_name("parameter") && matches!(child_value(*node, "name"), Some("fontdata" | "bitmapresourcepath" | "vectorresourcepath")))
     {
         let Some(reference) = child_element(parameter, "paramValue").and_then(|value| child_value(value, "constantValueString")) else { continue };
         if reference.trim().is_empty() || reader.direct_resource_names.contains_key(reference) {

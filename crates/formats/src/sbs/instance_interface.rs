@@ -1,11 +1,12 @@
 //! Preserve typed graph inputs, including unconnected inputs, when localizing graph references.
-use super::xml::{XmlNode, child_element, child_value, children_named, xml_escape};
+use super::xml::{child_element, child_value, children_named, xml_escape};
 use materialcraft_core::GraphPort;
+use roxmltree::Node;
 use std::{collections::BTreeSet, fmt::Write};
 
 pub(super) const MAX_INPUTS: usize = 4096;
 
-pub(super) fn read(element: XmlNode<'_>) -> Option<Result<Vec<GraphPort>, String>> {
+pub(super) fn read(element: Node<'_, '_>) -> Option<Result<Vec<GraphPort>, String>> {
     let interface = child_element(element, "materialcraftInterface")?;
     Some((|| {
         let mut inputs = Vec::new();

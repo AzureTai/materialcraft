@@ -1,8 +1,9 @@
-use super::xml::{XmlNode, child_element, child_value, children_named, format_float, xml_escape};
+use super::xml::{child_element, child_value, children_named, format_float, xml_escape};
 use materialcraft_core::{ExposedParameter, ParameterEditor, Value};
+use roxmltree::Node;
 use std::fmt::Write;
 
-pub(super) fn read(element: XmlNode<'_>, input: &mut ExposedParameter) {
+pub(super) fn read(element: Node<'_, '_>, input: &mut ExposedParameter) {
     input.description = child_element(element, "attributes").and_then(|attributes| child_value(attributes, "description")).unwrap_or("").into();
     let Some(widget) = child_element(element, "defaultWidget") else {
         return;

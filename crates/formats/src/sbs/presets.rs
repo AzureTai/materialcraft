@@ -3,9 +3,10 @@ use std::collections::HashMap;
 use std::fmt::Write;
 
 use materialcraft_core::{Graph, Preset};
+use roxmltree::Node;
 
 use super::sbs_value::{constant_xml, exposed_type_code, sbs_constant, to_param_value};
-use super::xml::{XmlNode, child_element, child_value, children_named, xml_escape};
+use super::xml::{child_element, child_value, children_named, xml_escape};
 
 pub(super) fn write(out: &mut String, graph: &Graph, uids: &HashMap<String, u64>) {
     if graph.presets.is_empty() {
@@ -30,7 +31,7 @@ pub(super) fn write(out: &mut String, graph: &Graph, uids: &HashMap<String, u64>
     out.push_str("</sbspresets>");
 }
 
-pub(super) fn read(element: XmlNode<'_>, graph: &mut Graph) {
+pub(super) fn read(element: Node<'_, '_>, graph: &mut Graph) {
     let Some(presets) = child_element(element, "sbspresets") else {
         return;
     };

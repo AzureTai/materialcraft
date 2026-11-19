@@ -1,5 +1,6 @@
-use super::xml::{XmlNode, child_value, xml_escape};
+use super::xml::{child_value, xml_escape};
 use materialcraft_core::Graph;
+use roxmltree::Node as XmlNode;
 use std::fmt::Write as _;
 
 const IMAGE_PREFIX: &str = "materialcraft.previewImage.";

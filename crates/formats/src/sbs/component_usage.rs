@@ -1,7 +1,8 @@
 use materialcraft_core::{ComponentUsage, Node, Value};
+use roxmltree::Node as XmlNode;
 use std::fmt::Write as _;
 
-use super::xml::{XmlNode, child_element, child_value};
+use super::xml::{child_element, child_value};
 
 pub(super) fn read(element: XmlNode) -> u32 {
     child_element(element, "usages")

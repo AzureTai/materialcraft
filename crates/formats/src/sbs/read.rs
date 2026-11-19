@@ -4,10 +4,11 @@ use super::{
     sbs_read::SbsRead,
     sbs_reader::SbsReader,
     warnings::Warnings,
-    xml::{XmlNode, child_element, child_value, children_named},
+    xml::{child_element, child_value, children_named},
 };
 use crate::Result;
 use materialcraft_core::Package;
+use roxmltree::Node as XmlNode;
 use std::collections::{HashMap, HashSet};
 
 pub fn read_sbs(bytes: &[u8], name: &str, linked: &dyn Fn(&str) -> Option<Vec<u8>>) -> Result<SbsRead> {
@@ -15,11 +16,14 @@ pub fn read_sbs(bytes: &[u8], name: &str, linked: &dyn Fn(&str) -> Option<Vec<u8
 }
 
 pub(super) fn read_document(
-    root: XmlNode<'_>,
+    doc: &roxmltree::Document<'_>,
     name: &str,
     linked: &dyn Fn(&str) -> Option<Vec<u8>>,
     resource_budget: Option<&std::cell::Cell<u64>>,
 ) -> Result<SbsRead> {
+    let text = doc.input_text();
+    let root = doc.root_element();
+
     let mut warnings = Warnings::default();
     let file_stem = name.rsplit(['/', '\\']).next().unwrap_or(name);
     let file_stem = file_stem.rsplit_once('.').map_or(file_stem, |(stem, _)| stem).trim();
@@ -34,6 +38,7 @@ pub(super) fn read_document(
     let mut reader = SbsReader {
         inflation_work,
         resource_budget,
+        text,
         warnings: &mut warnings,
         dependencies: HashMap::new(),
         graph_names: HashMap::new(),

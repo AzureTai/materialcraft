@@ -1,8 +1,9 @@
-use super::xml::{XmlNode, child_value, xml_escape};
+use super::xml::{child_value, xml_escape};
 use materialcraft_core::{Attributes, Graph};
+use roxmltree::Node;
 use std::fmt::Write;
 
-pub(super) fn read(element: XmlNode<'_>) -> Attributes {
+pub(super) fn read(element: Node<'_, '_>) -> Attributes {
     let text = |tag| child_value(element, tag).unwrap_or_default().to_string();
     Attributes {
         label: text("label"),

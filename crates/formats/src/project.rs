@@ -81,11 +81,8 @@ fn resolve(owner: &str, reference: &str) -> Result<String> {
 }
 
 pub fn read(bytes: &[u8], identity: &str) -> Result<sbs::SbsRead> {
-    let mut archive = craft_zip::Archive::open(
-        bytes,
-        craft_zip::Limits { max_entries: MAX_ENTRIES as u64, max_total_bytes: MAX_TOTAL_EXPANDED_BYTES },
-    )
-    .map_err(|error| bad(error.to_string()))?;
+    let mut archive = craft_zip::Archive::open(bytes, craft_zip::Limits { max_entries: MAX_ENTRIES as u64, max_total_bytes: MAX_TOTAL_EXPANDED_BYTES })
+        .map_err(|error| bad(error.to_string()))?;
     if archive.has_duplicate_names() {
         return Err(bad("Invalid or duplicate archive entry"));
     }
@@ -108,10 +105,7 @@ pub fn read(bytes: &[u8], identity: &str) -> Result<sbs::SbsRead> {
             continue;
         }
 
-        let content = archive
-            .read_index(index, MAX_ENTRY_BYTES)
-            .map_err(|error| bad(error.to_string()))?
-            .ok_or_else(|| bad("Missing archive entry"))?;
+        let content = archive.read_index(index, MAX_ENTRY_BYTES).map_err(|error| bad(error.to_string()))?.ok_or_else(|| bad("Missing archive entry"))?;
 
         files.insert(name, content);
     }

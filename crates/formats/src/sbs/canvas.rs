@@ -1,9 +1,10 @@
 use super::sbs_writer::SbsWriter;
 use super::warnings::Warnings;
-use super::xml::{XmlNode, child_element, child_value, children_named, parse_floats};
+use super::xml::{child_element, child_value, children_named, parse_floats};
 use super::xml::{format_float, xml_escape};
 use materialcraft_core::{Comment, Frame, Pin, srgb_to_linear};
 use materialcraft_core::{Graph, linear_to_srgb};
+use roxmltree::Node as XmlNode;
 use std::fmt::Write as _;
 
 pub(super) fn write_canvas_items(output: &mut String, graph: &Graph, writer: &mut SbsWriter) {

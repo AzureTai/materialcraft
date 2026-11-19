@@ -6,9 +6,10 @@
 use super::{
     LayoutFrame, LayoutItem,
     filter_map::FILTERS,
-    xml::{XmlNode, child_element, child_value, children_named, parse_floats},
+    xml::{child_element, child_value, children_named, parse_floats},
 };
 use crate::{FormatError, Result};
+use roxmltree::Node as XmlNode;
 use std::collections::HashMap;
 
 /// Bounds for hostile layouts: frames and placed nodes kept per file
@@ -20,7 +21,9 @@ pub fn read_layout(bytes: &[u8], uri: &str) -> Result<Vec<LayoutFrame>> {
     super::SbsDocument::parse(bytes)?.layout(uri)
 }
 
-pub(super) fn read_document(root: XmlNode<'_>, uri: &str) -> Result<Vec<LayoutFrame>> {
+pub(super) fn read_document(doc: &roxmltree::Document<'_>, uri: &str) -> Result<Vec<LayoutFrame>> {
+    let root = doc.root_element();
+
     let mut dependencies = HashMap::new();
     for dependency in child_element(root, "dependencies").into_iter().flat_map(|d| children_named(d, "dependency")) {
         if let (Some(uid), Some(file)) = (child_value(dependency, "uid"), child_value(dependency, "filename")) {
@@ -31,8 +34,8 @@ pub(super) fn read_document(root: XmlNode<'_>, uri: &str) -> Result<Vec<LayoutFr
 
     let mut frames = Vec::new();
     let mut items = 0;
-    for scope in root.descendants() {
-        let function = match scope.name.as_str() {
+    for scope in root.descendants().filter(|node| node.is_element()) {
+        let function = match scope.tag_name().name() {
             "graph" if child_element(scope, "compNodes").is_some() => false,
             _ if child_element(scope, "paramNodes").is_some() => true,
             _ => continue,
@@ -126,9 +129,9 @@ fn reference(path: &str, dependencies: &HashMap<&str, String>) -> Option<(String
 }
 
 /// Translate a graph node into a library placement without cooking it.
-fn graph_item(graph: XmlNode<'_>, node: XmlNode<'_>, dependencies: &HashMap<&str, String>) -> Option<LayoutItem> {
-    let implementation = child_element(node, "compImplementation")?.elements().next()?;
-    match implementation.name.as_str() {
+fn graph_item(graph: XmlNode, node: XmlNode, dependencies: &HashMap<&str, String>) -> Option<LayoutItem> {
+    let implementation = child_element(node, "compImplementation")?.children().find(|c| c.is_element())?;
+    match implementation.tag_name().name() {
         "compFilter" => {
             let filter = child_value(implementation, "filter")?;
             if filter == "bitmap"
