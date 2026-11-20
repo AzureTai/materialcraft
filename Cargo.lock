@@ -950,7 +950,7 @@ name = "craft-mcmat"
 version = "0.1.0"
 source = "git+https://github.com/storytold/craft-libs?rev=7a7a18cb40ac4cd5fca29c0dc224ac5178d40a89#7a7a18cb40ac4cd5fca29c0dc224ac5178d40a89"
 dependencies = [
- "craft-zip",
+ "craft-zip 0.1.0 (git+https://github.com/storytold/craft-libs?rev=7a7a18cb40ac4cd5fca29c0dc224ac5178d40a89)",
  "serde",
  "serde_json",
  "thiserror 2.0.21",
@@ -1126,6 +1126,16 @@ dependencies = [
  "quick-xml 0.41.0",
  "serde",
  "thiserror 2.0.21",
+]
+
+[[package]]
+name = "craft-zip"
+version = "0.1.0"
+source = "git+https://github.com/storytold/craft-libs?rev=512a1b8e8b59a7b325e7f69f6131aa8628470288#512a1b8e8b59a7b325e7f69f6131aa8628470288"
+dependencies = [
+ "flate2",
+ "thiserror 2.0.21",
+ "zip 9.5.0",
 ]
 
 [[package]]
@@ -2914,6 +2924,7 @@ dependencies = [
  "craft-svg",
  "craft-texture",
  "craft-xml",
+ "craft-zip 0.1.0 (git+https://github.com/storytold/craft-libs?rev=512a1b8e8b59a7b325e7f69f6131aa8628470288)",
  "dds",
  "flate2",
  "image",
